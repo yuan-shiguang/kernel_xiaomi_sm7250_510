@@ -28,6 +28,9 @@
 #include <linux/dma-mapping.h>
 #include <linux/fastcvpd.h>
 #include <linux/reset.h>
+
+/* STM trace hooks were dropped from coresight-stm.h in 5.10. */
+#define stm_log_inv_ts(...) 0
 #include "hfi_packetization.h"
 #include "msm_vidc_debug.h"
 #include "hfi_common.h"
@@ -3457,7 +3460,7 @@ static int __init_regs_and_interrupts(struct venus_hfi_device *device,
 
 	hal->irq = res->irq;
 	hal->firmware_base = res->firmware_base;
-	hal->register_base = devm_ioremap_nocache(&res->pdev->dev,
+	hal->register_base = devm_ioremap(&res->pdev->dev,
 			res->register_base, res->register_size);
 	hal->register_size = res->register_size;
 	if (!hal->register_base) {

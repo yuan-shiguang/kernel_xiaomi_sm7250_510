@@ -51,17 +51,6 @@ enum fps {
 #endif
 
 /*
- * (4.19: drivers/of/fdt.c + include/linux/of_fdt.h)
- * Returns the DDR type encoded in the /memory node.  Without the vendor DT
- * binding we cannot know it, so report -ENOENT (callers fall back to the
- * default DDR configuration).
- */
-static inline int of_fdt_get_ddrtype(void)
-{
-	return -ENOENT;
-}
-
-/*
  * (4.19: drivers/soc/qcom/rpmh.c + include/soc/qcom/rpmh.h)
  * Tells the RSC controller it runs in solver mode.  No-op on this tree.
  */
@@ -169,17 +158,6 @@ static inline int __drm_atomic_helper_set_config(struct drm_mode_set *set,
 /* 5.10 only ships the HDMI/DP specific colorimetry property helpers. */
 static inline int drm_mode_create_colorspace_property(
 		struct drm_connector *connector)
-{
-	return 0;
-}
-
-/* Vendor DDR helpers; the real ones live in the downstream DT parser. */
-static inline int of_fdt_get_ddrrank(int channel)
-{
-	return 0;
-}
-
-static inline int of_fdt_get_ddrhbb(int channel, int rank)
 {
 	return 0;
 }

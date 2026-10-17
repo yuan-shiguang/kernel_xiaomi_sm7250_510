@@ -120,4 +120,20 @@ static inline void unflatten_and_copy_device_tree(void) {}
 #endif /* CONFIG_OF_EARLY_FLATTREE */
 
 #endif /* __ASSEMBLY__ */
+/* Vendor DDR topology helpers (drivers/gpu + techpack). */
+static inline int of_fdt_get_ddrtype(void)
+{
+	return -ENOENT;
+}
+
+static inline int of_fdt_get_ddrrank(int channel)
+{
+	return -ENOENT;
+}
+
+static inline int of_fdt_get_ddrhbb(int channel, int rank)
+{
+	return -ENOENT;
+}
+
 #endif /* _LINUX_OF_FDT_H */

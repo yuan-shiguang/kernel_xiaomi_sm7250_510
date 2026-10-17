@@ -435,7 +435,7 @@ int msm_vidc_qbuf(void *instance, struct v4l2_buffer *b)
 		&& b->type == INPUT_MPLANE)
 		b->flags |= V4L2_BUF_FLAG_PERF_MODE;
 
-	rc = vb2_qbuf(&q->vb2_bufq, b);
+	rc = vb2_qbuf(&q->vb2_bufq, NULL, b);
 	if (rc)
 		s_vpr_e(inst->sid, "Failed to qbuf, %d\n", rc);
 unlock:
