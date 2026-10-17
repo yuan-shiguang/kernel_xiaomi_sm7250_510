@@ -275,6 +275,35 @@ struct drm_display_mode {
 	u32 flags;
 
 	/**
+	 * @private_flags:
+	 *
+	 * SDE/vendor private mode flags (e.g. DRM_MODE_FLAG_SEAMLESS).
+	 * Not exposed to generic DRM helpers.
+	 */
+	int private_flags;
+
+	/**
+	 * @private:
+	 *
+	 * Pointer for driver private data. Only used by non-atomic drivers.
+	 */
+	int *private;
+
+	/**
+	 * @vrefresh:
+	 *
+	 * Vertical refresh rate in Hz, for debug output only.
+	 */
+	int vrefresh;
+
+	/**
+	 * @hsync:
+	 *
+	 * Horizontal refresh rate in kHz, for debug output only.
+	 */
+	int hsync;
+
+	/**
 	 * @crtc_clock:
 	 *
 	 * Actual pixel or dot clock in the hardware. This differs from the

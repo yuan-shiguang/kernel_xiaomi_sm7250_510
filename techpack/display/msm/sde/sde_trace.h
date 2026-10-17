@@ -66,7 +66,7 @@ TRACE_EVENT(sde_perf_update_bus,
 	unsigned long long ib_quota),
 	TP_ARGS(bus_id, ab_quota, ib_quota),
 	TP_STRUCT__entry(
-			__field(u32, bus_id);
+			__field(u32, bus_id)
 			__field(u64, ab_quota)
 			__field(u64, ib_quota)
 	),

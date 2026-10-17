@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 #include "msm_drv.h"
+#include <drm/drm_probe_helper.h>
 #include "sde_dbg.h"
 
 #include "sde_kms.h"
@@ -2295,15 +2296,22 @@ sde_connector_atomic_best_encoder(struct drm_connector *connector,
 }
 
 static int sde_connector_atomic_check(struct drm_connector *connector,
-		struct drm_connector_state *new_conn_state)
+		struct drm_atomic_state *state)
 {
 	struct sde_connector *c_conn;
+	struct drm_connector_state *new_conn_state;
 
 	if (!connector) {
 		SDE_ERROR("invalid connector\n");
 		return -EINVAL;
 	}
 
+	if (!state) {
+		SDE_ERROR("invalid atomic state\n");
+		return -EINVAL;
+	}
+
+	new_conn_state = drm_atomic_get_new_connector_state(state, connector);
 	if (!new_conn_state) {
 		SDE_ERROR("invalid connector state\n");
 		return -EINVAL;
@@ -2313,7 +2321,7 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 
 	if (c_conn->ops.atomic_check)
 		return c_conn->ops.atomic_check(connector,
-				c_conn->display, new_conn_state);
+				c_conn->display, new_conn_state, state);
 
 	return 0;
 }

@@ -2185,13 +2185,8 @@ static int dp_debug_init(struct dp_debug *dp_debug)
 		       DEBUG_NAME, rc);
 	}
 
-	file = debugfs_create_u32("max_lclk_khz", 0644, dir,
+	debugfs_create_u32("max_lclk_khz", 0644, dir,
 			&debug->parser->max_lclk_khz);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_lclk_khz failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
 
 	return 0;
 

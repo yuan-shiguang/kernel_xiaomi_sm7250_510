@@ -24,7 +24,20 @@
 #include <xen/xen.h>
 #include <asm/xen/hypervisor.h>
 
+struct device;
+struct bus_type;
+struct iommu_ops;
+
 extern const struct dma_map_ops dummy_dma_ops;
+
+/*
+ * 5.10 removed the per-device dma_ops accessors; the vendor SMMU glue
+ * still saves/restores them around iommu_attach/detach.  Implemented as
+ * out-of-line helpers in arch/arm64/mm/dma-mapping.c because struct
+ * device is not complete at this point of the include chain.
+ */
+extern void set_dma_ops(struct device *dev, const struct dma_map_ops *ops);
+extern const struct dma_map_ops *get_dma_ops(struct device *dev);
 
 static inline const struct dma_map_ops *get_arch_dma_ops(struct bus_type *bus)
 {
@@ -47,7 +60,7 @@ void arch_teardown_dma_ops(struct device *dev);
 /* do not use this function in a driver */
 static inline bool is_device_dma_coherent(struct device *dev)
 {
-	return dev->archdata.dma_coherent;
+	return dev->dma_coherent;
 }
 
 #endif	/* __KERNEL__ */

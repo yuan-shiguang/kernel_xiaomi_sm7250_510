@@ -124,8 +124,8 @@ struct msm_gem_object {
 	struct list_head vmas;    /* list of msm_gem_vma */
 
 	/* normally (resv == &_resv) except for imported bo's */
-	struct reservation_object *resv;
-	struct reservation_object _resv;
+	struct dma_resv *resv;
+	struct dma_resv _resv;
 
 	/* For physically contiguous buffers.  Used when we don't have
 	 * an IOMMU.  Also used for stolen/splashscreen buffer.

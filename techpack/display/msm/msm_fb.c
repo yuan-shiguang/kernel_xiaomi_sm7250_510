@@ -204,7 +204,7 @@ static int msm_framebuffer_kmap(struct drm_framebuffer *fb)
 			continue;
 		}
 		dma_buf_begin_cpu_access(bo->dma_buf, DMA_BIDIRECTIONAL);
-		msm_fb->vaddr[i] = dma_buf_kmap(bo->dma_buf, 0);
+		msm_fb->vaddr[i] = dma_buf_vmap(bo->dma_buf);
 		DRM_INFO("FB[%u]: vaddr[%d]:%ux%u:0x%llx\n", fb->base.id, i,
 				fb->width, fb->height, (u64) msm_fb->vaddr[i]);
 	}
@@ -233,7 +233,7 @@ static void msm_framebuffer_kunmap(struct drm_framebuffer *fb)
 		if (!bo || !msm_fb->vaddr[i])
 			continue;
 		if (bo->dma_buf) {
-			dma_buf_kunmap(bo->dma_buf, 0, msm_fb->vaddr[i]);
+			dma_buf_vunmap(bo->dma_buf, msm_fb->vaddr[i]);
 			dma_buf_end_cpu_access(bo->dma_buf, DMA_BIDIRECTIONAL);
 		}
 		msm_fb->vaddr[i] = NULL;
@@ -371,7 +371,7 @@ struct drm_framebuffer *msm_framebuffer_create(struct drm_device *dev,
 
 out_unref:
 	for (i = 0; i < n; i++)
-		drm_gem_object_put_unlocked(bos[i]);
+		drm_gem_object_put(bos[i]);
 	return ERR_PTR(ret);
 }
 
@@ -522,7 +522,7 @@ msm_alloc_stolen_fb(struct drm_device *dev, int w, int h, int p, uint32_t format
 		/* note: if fb creation failed, we can't rely on fb destroy
 		 * to unref the bo:
 		 */
-		drm_gem_object_put_unlocked(bo);
+		drm_gem_object_put(bo);
 		return ERR_CAST(fb);
 	}
 

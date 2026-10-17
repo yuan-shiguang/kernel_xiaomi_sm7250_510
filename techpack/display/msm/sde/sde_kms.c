@@ -21,6 +21,9 @@
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
 #include <drm/drm_crtc.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_probe_helper.h>
 #include <drm/drm_fixed.h>
 #include <drm/drm_panel.h>
 #include <linux/debugfs.h>
@@ -28,7 +31,6 @@
 #include <linux/of_irq.h>
 #include <linux/dma-buf.h>
 #include <linux/memblock.h>
-#include <linux/bootmem.h>
 #include <soc/qcom/scm.h>
 
 #include "msm_drv.h"
@@ -519,7 +521,7 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 	if (smmu_state->sui_misr_state == SUI_MISR_ENABLE_REQ) {
 		ret = _sde_kms_sui_misr_ctrl(sde_kms, crtc, true);
 		if (ret) {
-			smmu_state->sui_misr_state == NONE;
+			smmu_state->sui_misr_state = NONE;
 			goto end;
 		}
 	}
@@ -1168,7 +1170,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		return;
 	priv = sde_kms->dev->dev_private;
 
-	if (sde_kms_power_resource_is_enabled(sde_kms->dev) < 0) {
+	if (!sde_kms_power_resource_is_enabled(sde_kms->dev)) {
 		SDE_ERROR("power resource is not enabled\n");
 		return;
 	}
@@ -2699,7 +2701,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		drm_mode = list_first_entry(&connector->modes,
 				struct drm_display_mode, head);
 		SDE_DEBUG("drm_mode->name = %s, id=%d, type=0x%x, flags=0x%x\n",
-				drm_mode->name, drm_mode->base.id,
+				drm_mode->name, 0,
 				drm_mode->type, drm_mode->flags);
 
 		/* Update CRTC drm structure */
@@ -3270,21 +3272,20 @@ void sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms,
 		u32 cpu_irq_latency;
 
 		req = &sde_kms->pm_qos_irq_req;
-		req->type = PM_QOS_REQ_AFFINE_CORES;
 		req->cpus_affine = sde_kms->irq_cpu_mask;
 		cpu_irq_latency = sde_kms->catalog->perf.cpu_irq_latency;
 
-		if (pm_qos_request_active(req))
-			pm_qos_update_request(req, cpu_irq_latency);
+		if (cpu_latency_qos_request_active(req))
+			cpu_latency_qos_update_request(req, cpu_irq_latency);
 		else if (!cpumask_empty(&req->cpus_affine)) {
 			/** If request is not active yet and mask is not empty
 			 *  then it needs to be added initially
 			 */
-			pm_qos_add_request(req, PM_QOS_CPU_DMA_LATENCY,
+			cpu_latency_qos_add_request(req,
 					cpu_irq_latency);
 		}
-	} else if (!enable && pm_qos_request_active(&sde_kms->pm_qos_irq_req)) {
-		pm_qos_update_request(&sde_kms->pm_qos_irq_req,
+	} else if (!enable && cpu_latency_qos_request_active(&sde_kms->pm_qos_irq_req)) {
+		cpu_latency_qos_update_request(&sde_kms->pm_qos_irq_req,
 				PM_QOS_DEFAULT_VALUE);
 	}
 

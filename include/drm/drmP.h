@@ -72,7 +72,7 @@
 #include <drm/drm_hashtab.h>
 #include <drm/drm_mm.h>
 #include <drm/drm_os_linux.h>
-#include <drm/drm_sarea.h>
+#include <uapi/drm/drm_sarea.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_prime.h>
 #include <drm/drm_print.h>
@@ -84,6 +84,14 @@
 #include <drm/drm_vblank.h>
 #include <drm/drm_irq.h>
 #include <drm/drm_device.h>
+#include <drm/drm_print.h>
+#include <drm/drm_util.h>
+
+/*
+ * 5.10 renamed the global debug mask from drm_debug to __drm_debug.
+ * Keep the vendor (4.19) spelling working for techpack code.
+ */
+#define drm_debug __drm_debug
 
 struct module;
 
@@ -102,15 +110,10 @@ struct pci_controller;
 #define DRM_SWITCH_POWER_CHANGING 2
 #define DRM_SWITCH_POWER_DYNAMIC_OFF 3
 
-/* returns true if currently okay to sleep */
-static inline bool drm_can_sleep(void)
-{
-	if (in_atomic() || in_dbg_master() || irqs_disabled())
-		return false;
-	return true;
-}
+/* 5.10 dropped DRIVER_PRIME: PRIME support is always enabled */
+#ifndef DRIVER_PRIME
+#define DRIVER_PRIME 0
+#endif
 
-/* helper for handling conditionals in various for_each macros */
-#define for_each_if(condition) if (!(condition)) {} else
 
 #endif

@@ -685,6 +685,17 @@ struct drm_device;
 #define DP_TEST_V_HEIGHT_HI                 0x230
 #define DP_TEST_V_HEIGHT_LO                 0x231
 
+/* DP 1.4 PHY test pattern (DPCD 0x248) */
+#define DP_TEST_PHY_PATTERN                 0x248
+# define DP_TEST_PHY_PATTERN_NONE			0x0
+# define DP_TEST_PHY_PATTERN_D10_2_NO_SCRAMBLING	0x1
+# define DP_TEST_PHY_PATTERN_SYMBOL_ERR_MEASUREMENT_CNT 0x2
+# define DP_TEST_PHY_PATTERN_PRBS7			0x3
+# define DP_TEST_PHY_PATTERN_80_BIT_CUSTOM_PATTERN	0x4
+# define DP_TEST_PHY_PATTERN_CP2520_PATTERN_1		0x5
+# define DP_TEST_PHY_PATTERN_CP2520_PATTERN_2		0x6
+# define DP_TEST_PHY_PATTERN_CP2520_PATTERN_3		0x7
+
 #define DP_TEST_MISC0                       0x232
 # define DP_TEST_SYNC_CLOCK                 (1 << 0)
 # define DP_TEST_COLOR_FORMAT_MASK          (3 << 1)
@@ -1853,4 +1864,26 @@ int drm_dp_get_phy_test_pattern(struct drm_dp_aux *aux,
 				struct drm_dp_phy_test_params *data);
 int drm_dp_set_phy_test_pattern(struct drm_dp_aux *aux,
 				struct drm_dp_phy_test_params *data, u8 dp_rev);
+
+/*
+ * DisplayPort link
+ *
+ * 5.10 dropped struct drm_dp_link and the drm_dp_link_*() helpers from the
+ * DRM core; the vendor display driver still relies on them, so keep a local
+ * copy of the 4.19 API.
+ */
+#define DP_LINK_CAP_ENHANCED_FRAMING (1 << 0)
+
+struct drm_dp_link {
+	unsigned char revision;
+	unsigned int rate;
+	unsigned int num_lanes;
+	unsigned long capabilities;
+};
+
+int drm_dp_link_probe(struct drm_dp_aux *aux, struct drm_dp_link *link);
+int drm_dp_link_power_up(struct drm_dp_aux *aux, struct drm_dp_link *link);
+int drm_dp_link_power_down(struct drm_dp_aux *aux, struct drm_dp_link *link);
+int drm_dp_link_configure(struct drm_dp_aux *aux, struct drm_dp_link *link);
+
 #endif /* _DRM_DP_HELPER_H_ */

@@ -215,6 +215,22 @@ struct io_uring_task;
 
 extern void scheduler_tick(void);
 
+/*
+ * Enum for display driver to provide varying refresh rates
+ */
+#ifndef __MSM_COMPAT_FPS_DEFINED
+#define __MSM_COMPAT_FPS_DEFINED
+enum fps {
+	FPS0 = 0,
+	FPS30 = 30,
+	FPS48 = 48,
+	FPS60 = 60,
+	FPS90 = 90,
+	FPS120 = 120,
+	FPS144 = 144,
+};
+#endif
+
 #define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
 
 extern long schedule_timeout(long timeout);
@@ -2143,5 +2159,10 @@ int sched_trace_rq_cpu_capacity(struct rq *rq);
 int sched_trace_rq_nr_running(struct rq *rq);
 
 const struct cpumask *sched_trace_rd_span(struct root_domain *rd);
+
+/* Vendor scheduler hint used by the display notifier chain. */
+static inline void sched_set_refresh_rate(int refresh_rate)
+{
+}
 
 #endif

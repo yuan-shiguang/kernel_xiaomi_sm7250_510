@@ -12,6 +12,7 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
 	dp/dp_aux.o \
 	dp/dp_panel.o \
 	dp/dp_link.o \
+	dp/dp_link_legacy.o \
 	dp/dp_ctrl.o \
 	dp/dp_audio.o \
 	dp/dp_debug.o \

@@ -694,7 +694,7 @@ static int sde_encoder_phys_wb_atomic_check(
 	bool clone_mode_curr = false;
 
 	SDE_DEBUG("[atomic_check:%d,%d,\"%s\",%d,%d]\n",
-			hw_wb->idx - WB_0, mode->base.id, mode->name,
+			hw_wb->idx - WB_0, 0, mode->name,
 			mode->hdisplay, mode->vdisplay);
 
 	if (!conn_state || !conn_state->connector) {
@@ -964,7 +964,7 @@ static void sde_encoder_phys_wb_setup(
 	struct sde_rect *wb_roi = &wb_enc->wb_roi;
 
 	SDE_DEBUG("[mode_set:%d,%d,\"%s\",%d,%d]\n",
-			hw_wb->idx - WB_0, mode.base.id, mode.name,
+			hw_wb->idx - WB_0, 0, mode.name,
 			mode.hdisplay, mode.vdisplay);
 
 	memset(wb_roi, 0, sizeof(struct sde_rect));
@@ -1155,7 +1155,7 @@ static void sde_encoder_phys_wb_mode_set(
 	instance = phys_enc->split_role == ENC_ROLE_SLAVE ? 1 : 0;
 
 	SDE_DEBUG("[mode_set_cache:%d,%d,\"%s\",%d,%d]\n",
-			hw_wb->idx - WB_0, mode->base.id,
+			hw_wb->idx - WB_0, 0,
 			mode->name, mode->hdisplay, mode->vdisplay);
 
 	phys_enc->hw_ctl = NULL;

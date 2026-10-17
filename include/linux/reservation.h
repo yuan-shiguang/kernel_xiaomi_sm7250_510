@@ -36,8 +36,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef _LINUX_RESERVATION_H
-#define _LINUX_RESERVATION_H
+/*
+ * NOTE: 5.10 renamed reservation.h -> dma-resv.h but kept the same
+ * include guard (_LINUX_RESERVATION_H).  Use a distinct guard here so
+ * the legacy reservation_object API stays visible to vendor code.
+ */
+#ifndef _LINUX_RESERVATION_LEGACY_H
+#define _LINUX_RESERVATION_LEGACY_H
 
 #include <linux/ww_mutex.h>
 #include <linux/dma-fence.h>

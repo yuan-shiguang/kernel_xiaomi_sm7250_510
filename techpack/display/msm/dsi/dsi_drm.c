@@ -158,7 +158,8 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 			video_mode ? "vid" : "cmd");
 }
 
-static int dsi_bridge_attach(struct drm_bridge *bridge)
+static int dsi_bridge_attach(struct drm_bridge *bridge,
+		enum drm_bridge_attach_flags flags)
 {
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 
@@ -434,8 +435,8 @@ static void prim_panel_off_delayed_work(struct work_struct *work)
 }
 
 static void dsi_bridge_mode_set(struct drm_bridge *bridge,
-				struct drm_display_mode *mode,
-				struct drm_display_mode *adjusted_mode)
+				const struct drm_display_mode *mode,
+				const struct drm_display_mode *adjusted_mode)
 {
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 
@@ -1171,7 +1172,7 @@ struct dsi_bridge *dsi_drm_bridge_init(struct dsi_display *display,
 	bridge->base.funcs = &dsi_bridge_ops;
 	bridge->base.encoder = encoder;
 
-	rc = drm_bridge_attach(encoder, &bridge->base, NULL);
+	rc = drm_bridge_attach(encoder, &bridge->base, NULL, 0);
 	if (rc) {
 		DSI_ERR("failed to attach bridge, rc=%d\n", rc);
 		goto error_free_bridge;

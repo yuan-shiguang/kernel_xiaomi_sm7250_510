@@ -58,7 +58,8 @@ void convert_to_drm_mode(const struct dp_display_mode *dp_mode,
 	drm_mode_set_name(drm_mode);
 }
 
-static int dp_bridge_attach(struct drm_bridge *dp_bridge)
+static int dp_bridge_attach(struct drm_bridge *dp_bridge,
+		enum drm_bridge_attach_flags flags)
 {
 	struct dp_bridge *bridge = to_dp_bridge(dp_bridge);
 
@@ -231,8 +232,8 @@ static void dp_bridge_post_disable(struct drm_bridge *drm_bridge)
 }
 
 static void dp_bridge_mode_set(struct drm_bridge *drm_bridge,
-				struct drm_display_mode *mode,
-				struct drm_display_mode *adjusted_mode)
+				const struct drm_display_mode *mode,
+				const struct drm_display_mode *adjusted_mode)
 {
 	struct dp_bridge *bridge;
 	struct dp_display *dp;
@@ -498,7 +499,8 @@ void dp_connector_post_open(struct drm_connector *connector, void *display)
 
 int dp_connector_atomic_check(struct drm_connector *connector,
 	void *display,
-	struct drm_connector_state *c_state)
+	struct drm_connector_state *c_state,
+	struct drm_atomic_state *state)
 {
 	struct sde_connector *sde_conn;
 	struct drm_connector_state *old_state;
@@ -614,7 +616,7 @@ int dp_drm_bridge_init(void *data, struct drm_encoder *encoder)
 
 	priv = dev->dev_private;
 
-	rc = drm_bridge_attach(encoder, &bridge->base, NULL);
+	rc = drm_bridge_attach(encoder, &bridge->base, NULL, 0);
 	if (rc) {
 		DP_ERR("failed to attach bridge, rc=%d\n", rc);
 		goto error_free_bridge;

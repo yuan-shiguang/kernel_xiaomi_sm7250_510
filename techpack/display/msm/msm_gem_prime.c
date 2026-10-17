@@ -33,7 +33,7 @@ struct sg_table *msm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 	if (WARN_ON(!msm_obj->pages))  /* should have already pinned! */
 		return NULL;
 
-	return drm_prime_pages_to_sg(msm_obj->pages, npages);
+	return drm_prime_pages_to_sg(obj->dev, msm_obj->pages, npages);
 }
 
 void *msm_gem_prime_vmap(struct drm_gem_object *obj)
@@ -76,7 +76,7 @@ void msm_gem_prime_unpin(struct drm_gem_object *obj)
 		msm_gem_put_pages(obj);
 }
 
-struct reservation_object *msm_gem_prime_res_obj(struct drm_gem_object *obj)
+struct dma_resv *msm_gem_prime_res_obj(struct drm_gem_object *obj)
 {
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 

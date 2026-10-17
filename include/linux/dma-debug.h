@@ -110,11 +110,6 @@ static inline void debug_dma_map_page(struct device *dev, struct page *page,
 {
 }
 
-static inline void debug_dma_mapping_error(struct device *dev,
-					  dma_addr_t dma_addr)
-{
-}
-
 static inline void debug_dma_unmap_page(struct device *dev, dma_addr_t addr,
 					size_t size, int direction,
 					bool map_single)

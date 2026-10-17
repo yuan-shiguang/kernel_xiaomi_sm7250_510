@@ -59,6 +59,8 @@ struct pm_qos_constraints {
 };
 
 struct pm_qos_request {
+	/* vendor: CPU affinity hint for the request */
+	struct cpumask cpus_affine;
 	struct plist_node node;
 	struct pm_qos_constraints *qos;
 };

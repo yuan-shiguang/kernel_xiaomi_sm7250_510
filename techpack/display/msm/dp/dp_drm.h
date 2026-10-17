@@ -47,7 +47,8 @@ int dp_connector_config_hdr(struct drm_connector *connector,
  */
 int dp_connector_atomic_check(struct drm_connector *connector,
 	void *display,
-	struct drm_connector_state *c_state);
+	struct drm_connector_state *c_state,
+	struct drm_atomic_state *state);
 
 /**
  * dp_connector_set_colorspace - callback to set new colorspace
@@ -198,7 +199,8 @@ static inline int dp_connector_config_hdr(struct drm_connector *connector,
 
 int dp_connector_atomic_check(struct drm_connector *connector,
 	void *display,
-	struct drm_connector_state *c_state)
+	struct drm_connector_state *c_state,
+	struct drm_atomic_state *state)
 {
 	return 0;
 }

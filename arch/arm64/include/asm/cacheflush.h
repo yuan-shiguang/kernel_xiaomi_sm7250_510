@@ -64,6 +64,14 @@
 extern void __flush_icache_range(unsigned long start, unsigned long end);
 extern int  invalidate_icache_range(unsigned long start, unsigned long end);
 extern void __flush_dcache_area(void *addr, size_t len);
+
+/*
+ * ARM32 compatibility shim: the rotator driver uses dmac_flush_range()
+* to push a range out of the D-cache.
+ */
+#define dmac_flush_range(start, end)				\
+	__flush_dcache_area((start), (unsigned long)(end) - \
+			    (unsigned long)(start))
 extern void __inval_dcache_area(void *addr, size_t len);
 extern void __clean_dcache_area_poc(void *addr, size_t len);
 extern void __clean_dcache_area_pop(void *addr, size_t len);

@@ -704,6 +704,16 @@ enum drm_bridge_ops {
  * struct drm_bridge - central DRM bridge control structure
  */
 struct drm_bridge {
+	/*
+	 * @lock:
+	 *
+	 * Protects the bridge chain state (vendor compatibility).
+	 */
+	struct mutex lock;
+
+	/* vendor: mark bridges created by the DSI driver */
+	bool is_dsi_drm_bridge;
+
 	/** @base: inherit from &drm_private_object */
 	struct drm_private_obj base;
 	/** @dev: DRM device this bridge belongs to */

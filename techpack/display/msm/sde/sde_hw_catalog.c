@@ -3077,6 +3077,7 @@ static int sde_vbif_parse_dt(struct device_node *np,
 		vbif_len = DEFAULT_SDE_HW_BLOCK_LEN;
 
 	for (i = 0; i < off_count; i++) {
+		vbif = &sde_cfg->vbif[i];
 		rc = _sde_vbif_populate(sde_cfg, vbif, prop_value,
 				prop_count, vbif_len, i);
 		if (rc)

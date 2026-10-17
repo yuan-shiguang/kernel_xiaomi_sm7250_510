@@ -174,6 +174,7 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_MANUFACTURE_YEAR,
 	POWER_SUPPLY_PROP_MANUFACTURE_MONTH,
 	POWER_SUPPLY_PROP_MANUFACTURE_DAY,
+	POWER_SUPPLY_PROP_TYPEC_MODE,
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
@@ -558,4 +559,22 @@ static inline
 void power_supply_remove_hwmon_sysfs(struct power_supply *psy) {}
 #endif
 
+
+/* Indicates USB Type-C CC connection status */
+enum power_supply_typec_mode {
+	POWER_SUPPLY_TYPEC_NONE,
+
+	/* Acting as source */
+	POWER_SUPPLY_TYPEC_SINK,		/* Rd only */
+	POWER_SUPPLY_TYPEC_SINK_POWERED_CABLE,	/* Rd/Ra */
+	POWER_SUPPLY_TYPEC_SINK_DEBUG_ACCESSORY,/* Rd/Rd */
+	POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER,	/* Ra/Ra */
+	POWER_SUPPLY_TYPEC_POWERED_CABLE_ONLY,	/* Ra only */
+
+	/* Acting as sink */
+	POWER_SUPPLY_TYPEC_SOURCE_DEFAULT,	/* Rp default */
+	POWER_SUPPLY_TYPEC_SOURCE_MEDIUM,	/* Rp 1.5A */
+	POWER_SUPPLY_TYPEC_SOURCE_HIGH,		/* Rp 3A */
+	POWER_SUPPLY_TYPEC_NON_COMPLIANT,
+};
 #endif /* __LINUX_POWER_SUPPLY_H__ */

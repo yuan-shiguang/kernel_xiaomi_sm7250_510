@@ -132,8 +132,8 @@ static int msm_fbdev_create(struct drm_fb_helper *helper,
 
 	strlcpy(fbi->fix.id, "msm", sizeof(fbi->fix.id));
 
-	drm_fb_helper_fill_fix(fbi, fb->pitches[0], fb->format->depth);
-	drm_fb_helper_fill_var(fbi, helper, sizes->fb_width, sizes->fb_height);
+	/* 5.10: fill_fix()/fill_var() were merged into fill_info() */
+	drm_fb_helper_fill_info(fbi, helper, sizes);
 
 	dev->mode_config.fb_base = paddr;
 
@@ -179,15 +179,11 @@ struct drm_fb_helper *msm_fbdev_init(struct drm_device *dev)
 
 	drm_fb_helper_prepare(dev, helper, &msm_fb_helper_funcs);
 
-	ret = drm_fb_helper_init(dev, helper, priv->num_connectors);
+	ret = drm_fb_helper_init(dev, helper);
 	if (ret) {
 		dev_err(dev->dev, "could not init fbdev: ret=%d\n", ret);
 		goto fail;
 	}
-
-	ret = drm_fb_helper_single_add_all_connectors(helper);
-	if (ret)
-		goto fini;
 
 	ret = drm_fb_helper_initial_config(helper, 32);
 	if (ret)

@@ -58,7 +58,7 @@ Phase 3 延期项（编译通过但功能待验证，记入 Phase 7/8）：
 ### Phase 4: Techpack 移植
 
 - [x] `techpack/audio/` — ALSA/ASoC 框架
-- [ ] `techpack/display/` — DRM/KMS/mdss
+- [x] `techpack/display/` — DRM/KMS/mdss
 - [ ] `techpack/camera/` — V4L2/media
 - [ ] `techpack/video/` — V4L2 M2M
 

@@ -226,7 +226,7 @@ static int dsi_panel_vreg_get(struct dsi_panel *panel)
 	for (i = 0; i < panel->power_info.count; i++) {
 		vreg = devm_regulator_get(panel->parent,
 					  panel->power_info.vregs[i].vreg_name);
-		rc = PTR_RET(vreg);
+		rc = PTR_ERR_OR_ZERO(vreg);
 		if (rc) {
 			DSI_ERR("failed to get %s regulator\n",
 			       panel->power_info.vregs[i].vreg_name);
@@ -677,6 +677,16 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	return 0;
 }
 
+static int dsi_panel_dcs_set_display_brightness_be(
+			struct mipi_dsi_device *dsi, u32 bl_lvl)
+{
+	u16 brightness = (u16)bl_lvl;
+	u8 payload[2] = { brightness >> 8, brightness & 0xff };
+
+	return mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+			payload, sizeof(payload));
+}
+
 static int dsi_panel_dcs_set_display_brightness_c2(struct mipi_dsi_device *dsi,
 			u32 bl_lvl)
 {
@@ -707,7 +717,7 @@ int dsi_panel_update_backlight(struct dsi_panel *panel,
 	bl = &panel->bl_config;
 
 	if (panel->mi_cfg.bl_is_big_endian)
-		rc = mipi_dsi_dcs_set_display_brightness_big_endian(dsi, bl_lvl);
+		rc = dsi_panel_dcs_set_display_brightness_be(dsi, bl_lvl);
 	else if (panel->bl_config.bl_dcs_subtype == 0xc2)
 		rc = dsi_panel_dcs_set_display_brightness_c2(dsi, bl_lvl);
 	else
@@ -3718,13 +3728,11 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 		pr_debug("failed to parse mi config, rc=%d\n", rc);
 
 	panel->power_mode = SDE_MODE_DPMS_OFF;
-	drm_panel_init(&panel->drm_panel);
-	panel->drm_panel.dev = &panel->mipi_device.dev;
+	drm_panel_init(&panel->drm_panel, &panel->mipi_device.dev, NULL,
+			DRM_MODE_CONNECTOR_DSI);
 	panel->mipi_device.dev.of_node = of_node;
 
-	rc = drm_panel_add(&panel->drm_panel);
-	if (rc)
-		goto error;
+	drm_panel_add(&panel->drm_panel);
 
 	mutex_init(&panel->panel_lock);
 
@@ -4073,10 +4081,11 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 
 void dsi_panel_printf_andorid_time(const char *msg)
 {
-	struct timespec ts;
+	struct timespec64 ts;
 	struct rtc_time tm;
-	getnstimeofday(&ts);
-	rtc_time_to_tm(ts.tv_sec, &tm);
+
+	ktime_get_real_ts64(&ts);
+	rtc_time64_to_tm(ts.tv_sec, &tm);
 	DSI_INFO("%s: systime:[%d-%02d-%02d %02d:%02d:%02d.%02lu]",msg,tm.tm_year + 1900,
 		tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
 }

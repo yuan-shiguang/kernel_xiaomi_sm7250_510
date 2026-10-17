@@ -1259,7 +1259,7 @@ static void sde_rotator_pm_qos_remove(struct sde_rot_data_type *rot_mdata)
 		return;
 
 	req = &rot_mdata->pm_qos_rot_cpu_req;
-	pm_qos_remove_request(req);
+	cpu_latency_qos_remove_request(req);
 }
 
 void sde_rotator_pm_qos_add(struct sde_rot_data_type *rot_mdata)
@@ -1279,13 +1279,12 @@ void sde_rotator_pm_qos_add(struct sde_rot_data_type *rot_mdata)
 		return;
 
 	req = &rot_mdata->pm_qos_rot_cpu_req;
-	req->type = PM_QOS_REQ_AFFINE_CORES;
 	cpumask_empty(&req->cpus_affine);
 	for_each_possible_cpu(cpu) {
 		if ((1 << cpu) & cpu_mask)
 			cpumask_set_cpu(cpu, &req->cpus_affine);
 	}
-	pm_qos_add_request(req, PM_QOS_CPU_DMA_LATENCY,
+	cpu_latency_qos_add_request(req,
 		PM_QOS_DEFAULT_VALUE);
 
 	SDEROT_DBG("rotator pmqos add mask %x latency %x\n",
@@ -1332,12 +1331,12 @@ static void sde_rotator_pm_qos_request(struct sde_rotator_device *rot_dev,
 	SDEROT_EVTLOG(add_request, cpu_mask, cpu_dma_latency);
 
 	if (!add_request) {
-		pm_qos_update_request(&rot_dev->mdata->pm_qos_rot_cpu_req,
+		cpu_latency_qos_update_request(&rot_dev->mdata->pm_qos_rot_cpu_req,
 			PM_QOS_DEFAULT_VALUE);
 		return;
 	}
 
-	pm_qos_update_request(&rot_dev->mdata->pm_qos_rot_cpu_req,
+	cpu_latency_qos_update_request(&rot_dev->mdata->pm_qos_rot_cpu_req,
 		cpu_dma_latency);
 }
 
@@ -2530,7 +2529,7 @@ static int sde_rotator_streamoff(struct file *file,
  * @fh: V4l2 File handle.
  * @a: Pointer to v4l2_cropcap struct need to be set.
  */
-static int sde_rotator_cropcap(struct file *file, void *fh,
+static int __maybe_unused sde_rotator_cropcap(struct file *file, void *fh,
 	struct v4l2_cropcap *a)
 {
 	struct sde_rotator_ctx *ctx = sde_rotator_ctx_from_fh(fh);
@@ -2570,7 +2569,7 @@ static int sde_rotator_cropcap(struct file *file, void *fh,
  * @fh: V4l2 File handle.
  * @crop: Pointer to v4l2_crop struct need to be set.
  */
-static int sde_rotator_g_crop(struct file *file, void *fh,
+static int __maybe_unused sde_rotator_g_crop(struct file *file, void *fh,
 	struct v4l2_crop *crop)
 {
 	struct sde_rotator_ctx *ctx = sde_rotator_ctx_from_fh(fh);
@@ -2594,7 +2593,7 @@ static int sde_rotator_g_crop(struct file *file, void *fh,
  * @fh: V4l2 File handle.
  * @crop: Pointer to v4l2_crop struct need to be set.
  */
-static int sde_rotator_s_crop(struct file *file, void *fh,
+static int __maybe_unused sde_rotator_s_crop(struct file *file, void *fh,
 	const struct v4l2_crop *crop)
 {
 	struct sde_rotator_ctx *ctx = sde_rotator_ctx_from_fh(fh);
@@ -2983,9 +2982,6 @@ static const struct v4l2_ioctl_ops sde_rotator_ioctl_ops = {
 	.vidioc_querybuf          = sde_rotator_querybuf,
 	.vidioc_streamon          = sde_rotator_streamon,
 	.vidioc_streamoff         = sde_rotator_streamoff,
-	.vidioc_cropcap           = sde_rotator_cropcap,
-	.vidioc_g_crop            = sde_rotator_g_crop,
-	.vidioc_s_crop            = sde_rotator_s_crop,
 	.vidioc_g_parm            = sde_rotator_g_parm,
 	.vidioc_s_parm            = sde_rotator_s_parm,
 	.vidioc_default           = sde_rotator_private_ioctl,
@@ -3620,10 +3616,10 @@ static int sde_rotator_probe(struct platform_device *pdev)
 	vdev->release = video_device_release;
 	vdev->v4l2_dev = &rot_dev->v4l2_dev;
 	vdev->vfl_dir = VFL_DIR_M2M;
-	vdev->vfl_type = VFL_TYPE_GRABBER;
+	vdev->vfl_type = VFL_TYPE_VIDEO;
 	strlcpy(vdev->name, SDE_ROTATOR_DRV_NAME, sizeof(vdev->name));
 
-	ret = video_register_device(vdev, VFL_TYPE_GRABBER,
+	ret = video_register_device(vdev, VFL_TYPE_VIDEO,
 			SDE_ROTATOR_BASE_DEVICE_NUMBER);
 	if (ret < 0) {
 		SDEDEV_ERR(&pdev->dev, "fail register video device %d\n",

@@ -2047,12 +2047,13 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 		goto end;
 	}
 
+	conn = _sde_rm_get_connector(enc);
+
 	if (_sde_rm_is_display_in_cont_splash(sde_kms, enc)) {
 		_sde_rm_release_rsvp(rm, rsvp, conn);
 		goto end;
 	}
 
-	conn = _sde_rm_get_connector(enc);
 	if (!conn) {
 		SDE_ERROR("failed to get conn for enc %d nxt %d rsvp[s%de%d]\n",
 				enc->base.id, nxt, rsvp->seq, rsvp->enc_id);

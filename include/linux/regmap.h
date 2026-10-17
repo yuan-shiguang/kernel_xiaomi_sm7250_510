@@ -29,6 +29,7 @@ struct i2c_client;
 struct i3c_device;
 struct irq_domain;
 struct slim_device;
+struct swr_device;
 struct spi_device;
 struct spmi_device;
 struct regmap;
@@ -630,6 +631,10 @@ struct regmap *__devm_regmap_init_slimbus(struct slim_device *slimbus,
 				 const struct regmap_config *config,
 				 struct lock_class_key *lock_key,
 				 const char *lock_name);
+struct regmap *__devm_regmap_init_swr(struct swr_device *swr,
+				 const struct regmap_config *config,
+				 struct lock_class_key *lock_key,
+				 const char *lock_name);
 struct regmap *__devm_regmap_init_i3c(struct i3c_device *i3c,
 				 const struct regmap_config *config,
 				 struct lock_class_key *lock_key,
@@ -716,6 +721,9 @@ int regmap_attach_dev(struct device *dev, struct regmap *map,
 #define regmap_init_slimbus(slimbus, config)				\
 	__regmap_lockdep_wrapper(__regmap_init_slimbus, #config,	\
 				slimbus, config)
+#define devm_regmap_init_swr(swr, config)			\
+	__regmap_lockdep_wrapper(__devm_regmap_init_swr, #config,	\
+				swr, config)
 
 /**
  * regmap_init_spi() - Initialise register map

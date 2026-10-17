@@ -61,3 +61,22 @@ void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
 		dev->dma_ops = &xen_swiotlb_dma_ops;
 #endif
 }
+
+/*
+ * 5.10 dropped the per-device dma_ops accessors.  The vendor SMMU/display
+ * glue still saves and restores them around iommu_attach/detach, so keep
+ * the old API available as real functions.
+ */
+void set_dma_ops(struct device *dev, const struct dma_map_ops *ops)
+{
+	dev->dma_ops = ops;
+}
+EXPORT_SYMBOL(set_dma_ops);
+
+const struct dma_map_ops *get_dma_ops(struct device *dev)
+{
+	if (dev->dma_ops)
+		return dev->dma_ops;
+	return get_arch_dma_ops(dev->bus);
+}
+EXPORT_SYMBOL(get_dma_ops);

@@ -21,6 +21,7 @@
 #include <drm/drmP.h>
 #include <drm/drm_irq.h>
 #include "sde_rsc_priv.h"
+#include "msm_compat.h"
 #include "sde_dbg.h"
 #include "sde_trace.h"
 

@@ -183,6 +183,15 @@ struct drm_encoder {
 	 */
 	struct list_head bridge_chain;
 
+	/*
+	 * @bridge:
+	 *
+	 * Single bridge attached to this encoder (vendor compatibility).
+	 * Upstream 5.10 only keeps @bridge_chain; techpack still uses this
+	 * shortcut, so keep it in sync with the head of the chain.
+	 */
+	struct drm_bridge *bridge;
+
 	const struct drm_encoder_funcs *funcs;
 	const struct drm_encoder_helper_funcs *helper_private;
 };

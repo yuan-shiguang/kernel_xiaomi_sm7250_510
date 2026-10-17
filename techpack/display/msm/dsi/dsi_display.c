@@ -5694,12 +5694,13 @@ static enum drm_mode_status dsi_display_drm_ext_mode_valid(
 
 static int dsi_display_drm_ext_atomic_check(struct drm_connector *connector,
 		void *disp,
-		struct drm_connector_state *c_state)
+		struct drm_connector_state *c_state,
+		struct drm_atomic_state *state)
 {
 	struct dsi_display *display = disp;
 
 	return display->ext_conn->helper_private->atomic_check(
-			display->ext_conn, c_state);
+			display->ext_conn, state);
 }
 
 static int dsi_display_ext_get_info(struct drm_connector *connector,
@@ -5817,6 +5818,7 @@ static void dsi_display_drm_ext_adjust_timing(
 
 static enum drm_mode_status dsi_display_drm_ext_bridge_mode_valid(
 		struct drm_bridge *bridge,
+		const struct drm_display_info *info,
 		const struct drm_display_mode *mode)
 {
 	struct dsi_display_ext_bridge *ext_bridge;
@@ -5828,7 +5830,7 @@ static enum drm_mode_status dsi_display_drm_ext_bridge_mode_valid(
 
 	tmp = *mode;
 	dsi_display_drm_ext_adjust_timing(ext_bridge->display, &tmp);
-	return ext_bridge->orig_funcs->mode_valid(bridge, &tmp);
+	return ext_bridge->orig_funcs->mode_valid(bridge, info, &tmp);
 }
 
 static bool dsi_display_drm_ext_bridge_mode_fixup(
@@ -5850,8 +5852,8 @@ static bool dsi_display_drm_ext_bridge_mode_fixup(
 
 static void dsi_display_drm_ext_bridge_mode_set(
 		struct drm_bridge *bridge,
-		struct drm_display_mode *mode,
-		struct drm_display_mode *adjusted_mode)
+		const struct drm_display_mode *mode,
+		const struct drm_display_mode *adjusted_mode)
 {
 	struct dsi_display_ext_bridge *ext_bridge;
 	struct drm_display_mode tmp;
@@ -6012,7 +6014,7 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 			ext_bridge->funcs = &ext_bridge_info->bridge_funcs;
 		}
 
-		rc = drm_bridge_attach(encoder, ext_bridge, prev_bridge);
+		rc = drm_bridge_attach(encoder, ext_bridge, prev_bridge, 0);
 		if (rc) {
 			DSI_ERR("[%s] ext brige attach failed, %d\n",
 				display->name, rc);

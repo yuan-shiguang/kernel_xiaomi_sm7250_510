@@ -551,7 +551,7 @@ static bool is_iommu_pt_coherent(struct arm_smmu_domain *smmu_domain)
 			(1 << DOMAIN_ATTR_PAGE_TABLE_FORCE_COHERENT))
 		return true;
 	else if (smmu_domain->smmu && smmu_domain->smmu->dev)
-		return smmu_domain->smmu->dev->archdata.dma_coherent;
+		return smmu_domain->smmu->dev->dma_coherent;
 	else
 		return false;
 }

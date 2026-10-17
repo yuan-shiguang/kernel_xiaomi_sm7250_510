@@ -298,6 +298,12 @@ struct drm_monitor_range_info {
 /* Additional Colorimetry extension added as part of CTA 861.G */
 #define DRM_MODE_COLORIMETRY_DCI_P3_RGB_D65		11
 #define DRM_MODE_COLORIMETRY_DCI_P3_RGB_THEATER		12
+/* DP MSA Colorimetry Options */
+#define DRM_MODE_DP_COLORIMETRY_BT601_YCC		13
+#define DRM_MODE_DP_COLORIMETRY_BT709_YCC		14
+#define DRM_MODE_DP_COLORIMETRY_SRGB			15
+#define DRM_MODE_DP_COLORIMETRY_RGB_WIDE_GAMUT		16
+#define DRM_MODE_DP_COLORIMETRY_SCRGB			17
 /* Additional Colorimetry Options added for DP 1.4a VSC Colorimetry Format */
 #define DRM_MODE_COLORIMETRY_RGB_WIDE_FIXED		13
 #define DRM_MODE_COLORIMETRY_RGB_WIDE_FLOAT		14
@@ -1167,6 +1173,11 @@ struct drm_cmdline_mode {
  * position in the broader display (referred to as a 'screen' though it could
  * span multiple monitors).
  */
+/* vendor: max encoders referenced by one connector */
+#define DRM_CONNECTOR_MAX_ENCODER 3
+
+struct drm_panel;
+
 struct drm_connector {
 	/** @dev: parent DRM device */
 	struct drm_device *dev;
@@ -1428,6 +1439,36 @@ struct drm_connector {
 
 	/** @bad_edid_counter: track sinks that give us an EDID with invalid checksum */
 	unsigned bad_edid_counter;
+
+	/** @color_enc_fmt: Colorimetry encoding formats of sink */
+	u32 color_enc_fmt;
+	/** @hdr_eotf: Electro optical transfer function obtained from HDR block */
+	u32 hdr_eotf;
+	/** @hdr_metadata_type_one: Metadata type one obtained from HDR block */
+	bool hdr_metadata_type_one;
+	/** @hdr_max_luminance: desired max luminance obtained from HDR block */
+	u32 hdr_max_luminance;
+	/** @hdr_avg_luminance: desired avg luminance obtained from HDR block */
+	u32 hdr_avg_luminance;
+	/** @hdr_min_luminance: desired min luminance obtained from HDR block */
+	u32 hdr_min_luminance;
+	/** @hdr_supported: does the sink support HDR content */
+	bool hdr_supported;
+	/** @hdr_plus_app_ver: HDR+ application version */
+	u8 hdr_plus_app_ver;
+
+	/**
+	 * @checksum:
+	 *
+	 * The calculated checksum value of first 127 bytes of associated EDID.
+	 */
+	u8 checksum;
+
+	/** @panel: DRM panel backing this connector, if any */
+	struct drm_panel *panel;
+
+	/** @encoder_ids: Valid encoders for this connector */
+	uint32_t encoder_ids[DRM_CONNECTOR_MAX_ENCODER];
 
 	/**
 	 * @edid_corrupt: Indicates whether the last read EDID was corrupt. Used

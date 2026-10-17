@@ -79,6 +79,19 @@
 #define DMA_ATTR_SYS_CACHE_ONLY_NWA	(1UL << 15)
 
 /*
+ * DMA_ATTR_DELAYED_UNMAP: Used by ION/msm lazy mapping, it will ensure that
+ * mappings are not unmapped immediately after the last put.
+ */
+#define DMA_ATTR_DELAYED_UNMAP		(1UL << 16)
+
+/*
+ * DMA_ATTR_IOMMU_USE_UPSTREAM_HINT: normally an smmu will override any bus
+ * attributes provided by the client, this attribute makes it use the
+ * upstream (client supplied) hint instead.
+ */
+#define DMA_ATTR_IOMMU_USE_UPSTREAM_HINT	(1UL << 17)
+
+/*
  * A dma_addr_t can hold any valid DMA or bus address for the platform.  It can
  * be given to a device to use as a DMA source or target.  It is specific to a
  * given device and there may be a translation between the CPU physical address
@@ -603,5 +616,10 @@ int dma_direct_set_offset(struct device *dev, phys_addr_t cpu_start,
 		dma_addr_t dma_start, u64 size);
 
 extern const struct dma_map_ops dma_virt_ops;
+
+/* Removed in 5.10 together with dma_declare_coherent_memory(). */
+static inline void dma_release_declared_memory(struct device *dev)
+{
+}
 
 #endif /* _LINUX_DMA_MAPPING_H */
