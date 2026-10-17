@@ -15,6 +15,7 @@
 #include <linux/workqueue.h>
 #include <linux/genalloc.h>
 #include <linux/debugfs.h>
+#include "cam_debugfs_compat.h"
 #include <linux/dma-iommu.h>
 
 #include <soc/qcom/scm.h>
@@ -3707,10 +3708,10 @@ static int cam_smmu_create_debug_fs(void)
 		return -ENOMEM;
 	}
 
-	if (!debugfs_create_bool("cb_dump_enable",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("cb_dump_enable",
 		0644,
 		iommu_cb_set.dentry,
-		&iommu_cb_set.cb_dump_enable)) {
+		&iommu_cb_set.cb_dump_enable))) {
 		CAM_ERR(CAM_SMMU,
 			"failed to create dump_enable_debug");
 		goto err;

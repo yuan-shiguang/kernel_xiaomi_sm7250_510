@@ -17,6 +17,7 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/debugfs.h>
+#include "cam_debugfs_compat.h"
 #include <media/cam_defs.h>
 #include <media/cam_icp.h>
 #include <media/cam_cpas.h>
@@ -1829,63 +1830,63 @@ static int cam_icp_hw_mgr_create_debugfs_entry(void)
 	if (!icp_hw_mgr.dentry)
 		return -ENOMEM;
 
-	if (!debugfs_create_bool("icp_pc",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("icp_pc",
 		0644,
 		icp_hw_mgr.dentry,
-		&icp_hw_mgr.icp_pc_flag)) {
+		&icp_hw_mgr.icp_pc_flag))) {
 		CAM_ERR(CAM_ICP, "failed to create icp_pc entry");
 		rc = -ENOMEM;
 		goto err;
 	}
 
-	if (!debugfs_create_bool("ipe_bps_pc",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("ipe_bps_pc",
 		0644,
 		icp_hw_mgr.dentry,
-		&icp_hw_mgr.ipe_bps_pc_flag)) {
+		&icp_hw_mgr.ipe_bps_pc_flag))) {
 		CAM_ERR(CAM_ICP, "failed to create ipe_bps_pc entry");
 		rc = -ENOMEM;
 		goto err;
 	}
 
-	if (!debugfs_create_file("icp_debug_clk",
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("icp_debug_clk",
 		0644,
 		icp_hw_mgr.dentry, NULL,
-		&cam_icp_debug_default_clk)) {
+		&cam_icp_debug_default_clk))) {
 		CAM_ERR(CAM_ICP, "failed to create icp_debug_clk entry");
 		rc = -ENOMEM;
 		goto err;
 	}
 
-	if (!debugfs_create_bool("a5_jtag_debug",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("a5_jtag_debug",
 		0644,
 		icp_hw_mgr.dentry,
-		&icp_hw_mgr.a5_jtag_debug)) {
+		&icp_hw_mgr.a5_jtag_debug))) {
 		rc = -ENOMEM;
 		goto err;
 	}
 
-	if (!debugfs_create_file("a5_debug_type",
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("a5_debug_type",
 		0644,
 		icp_hw_mgr.dentry,
-		NULL, &cam_icp_debug_type_fs)) {
+		NULL, &cam_icp_debug_type_fs))) {
 		CAM_ERR(CAM_ICP, "failed to create a5_debug_type");
 		rc = -ENOMEM;
 		goto err;
 	}
 
-	if (!debugfs_create_file("a5_debug_lvl",
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("a5_debug_lvl",
 		0644,
 		icp_hw_mgr.dentry,
-		NULL, &cam_icp_debug_fs)) {
+		NULL, &cam_icp_debug_fs))) {
 		CAM_ERR(CAM_ICP, "failed to create a5_dbg_lvl");
 		rc = -ENOMEM;
 		goto err;
 	}
 
-	if (!debugfs_create_file("a5_fw_dump_lvl",
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("a5_fw_dump_lvl",
 		0644,
 		icp_hw_mgr.dentry,
-		NULL, &cam_icp_debug_fw_dump)) {
+		NULL, &cam_icp_debug_fw_dump))) {
 		CAM_ERR(CAM_ICP, "failed to create a5_fw_dump_lvl");
 		rc = -ENOMEM;
 		goto err;

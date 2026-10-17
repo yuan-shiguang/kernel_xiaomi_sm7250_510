@@ -15,6 +15,7 @@
 #include "cam_cpas_hw.h"
 #include "cam_cpas_hw_intf.h"
 #include "cam_cpas_soc.h"
+#include "cam_debugfs_compat.h"
 
 static uint cam_min_camnoc_ib_bw;
 module_param(cam_min_camnoc_ib_bw, uint, 0644);
@@ -1683,10 +1684,10 @@ static int cam_cpas_util_create_debugfs(
 	if (!cpas_core->dentry)
 		return -ENOMEM;
 
-	if (!debugfs_create_bool("ahb_bus_scaling_disable",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("ahb_bus_scaling_disable",
 		0644,
 		cpas_core->dentry,
-		&cpas_core->ahb_bus_scaling_disable)) {
+		&cpas_core->ahb_bus_scaling_disable))) {
 		CAM_ERR(CAM_CPAS,
 			"failed to create ahb_bus_scaling_disable entry");
 		rc = -ENOMEM;

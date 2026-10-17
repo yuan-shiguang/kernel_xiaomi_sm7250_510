@@ -8,6 +8,7 @@
 #include <linux/string.h>
 #include <linux/uaccess.h>
 #include <linux/debugfs.h>
+#include "cam_debugfs_compat.h"
 #include <soc/qcom/scm.h>
 #include <uapi/media/cam_isp.h>
 #include "cam_smmu_api.h"
@@ -2794,7 +2795,7 @@ static int cam_ife_mgr_acquire_hw(void *hw_mgr_priv, void *acquire_hw_args)
 	acquire_args->valid_acquired_hw =
 		acquire_hw_info->num_inputs;
 
-	getnstimeofday64(&ife_ctx->ts);
+	ktime_get_real_ts64(&ife_ctx->ts);
 	CAM_INFO(CAM_ISP,
 		"Acquire HW success with total_pix: %u total_rdi: %u is_dual: %u in ctx: %u",
 		total_pix_port, total_rdi_port,
@@ -6644,42 +6645,42 @@ static int cam_ife_hw_mgr_debug_register(void)
 		return -ENOMEM;
 	}
 
-	if (!debugfs_create_file("ife_csid_debug",
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("ife_csid_debug",
 		0644,
 		g_ife_hw_mgr.debug_cfg.dentry, NULL,
-		&cam_ife_csid_debug)) {
+		&cam_ife_csid_debug))) {
 		CAM_ERR(CAM_ISP, "failed to create cam_ife_csid_debug");
 		goto err;
 	}
 
-	if (!debugfs_create_u32("enable_recovery",
+	if (!CAM_DEBUGFS_OK(debugfs_create_u32("enable_recovery",
 		0644,
 		g_ife_hw_mgr.debug_cfg.dentry,
-		&g_ife_hw_mgr.debug_cfg.enable_recovery)) {
+		&g_ife_hw_mgr.debug_cfg.enable_recovery))) {
 		CAM_ERR(CAM_ISP, "failed to create enable_recovery");
 		goto err;
 	}
 
-	if (!debugfs_create_bool("enable_req_dump",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("enable_req_dump",
 		0644,
 		g_ife_hw_mgr.debug_cfg.dentry,
-		&g_ife_hw_mgr.debug_cfg.enable_req_dump)) {
+		&g_ife_hw_mgr.debug_cfg.enable_req_dump))) {
 		CAM_ERR(CAM_ISP, "failed to create enable_req_dump");
 		goto err;
 	}
 
-	if (!debugfs_create_file("ife_camif_debug",
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("ife_camif_debug",
 		0644,
 		g_ife_hw_mgr.debug_cfg.dentry, NULL,
-		&cam_ife_camif_debug)) {
+		&cam_ife_camif_debug))) {
 		CAM_ERR(CAM_ISP, "failed to create cam_ife_camif_debug");
 		goto err;
 	}
 
-	if (!debugfs_create_bool("per_req_reg_dump",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("per_req_reg_dump",
 		0644,
 		g_ife_hw_mgr.debug_cfg.dentry,
-		&g_ife_hw_mgr.debug_cfg.per_req_reg_dump)) {
+		&g_ife_hw_mgr.debug_cfg.per_req_reg_dump))) {
 		CAM_ERR(CAM_ISP, "failed to create per_req_reg_dump entry");
 		goto err;
 	}

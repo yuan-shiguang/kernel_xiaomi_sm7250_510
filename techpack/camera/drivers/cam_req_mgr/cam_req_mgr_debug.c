@@ -4,6 +4,7 @@
  */
 
 #include "cam_req_mgr_debug.h"
+#include "cam_debugfs_compat.h"
 
 #define MAX_SESS_INFO_LINE_BUFF_LEN 256
 
@@ -120,12 +121,12 @@ int cam_req_mgr_debug_register(struct cam_req_mgr_core_device *core_dev)
 	if (!debugfs_root)
 		return -ENOMEM;
 
-	if (!debugfs_create_file("sessions_info", 0644,
-		debugfs_root, core_dev, &session_info))
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("sessions_info", 0644,
+		debugfs_root, core_dev, &session_info)))
 		return -ENOMEM;
 
-	if (!debugfs_create_file("bubble_recovery", 0644,
-		debugfs_root, core_dev, &bubble_recovery))
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("bubble_recovery", 0644,
+		debugfs_root, core_dev, &bubble_recovery)))
 		return -ENOMEM;
 
 	return 0;

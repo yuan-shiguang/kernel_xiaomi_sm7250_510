@@ -13,6 +13,7 @@
 #include "cam_debug_util.h"
 #include "cam_cx_ipeak.h"
 #include "cam_mem_mgr.h"
+#include "cam_debugfs_compat.h"
 
 static char supported_clk_info[256];
 static char debugfs_dir_name[64];
@@ -206,14 +207,14 @@ static int cam_soc_util_create_clk_lvl_debugfs(
 		return -ENOMEM;
 	}
 
-	if (!debugfs_create_file("clk_lvl_options", 0444,
-		dentry, soc_info, &cam_soc_util_clk_lvl_options)) {
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("clk_lvl_options", 0444,
+		dentry, soc_info, &cam_soc_util_clk_lvl_options))) {
 		CAM_ERR(CAM_UTIL, "failed to create clk_lvl_options");
 		goto err;
 	}
 
-	if (!debugfs_create_file("clk_lvl_control", 0644,
-		dentry, soc_info, &cam_soc_util_clk_lvl_control)) {
+	if (!CAM_DEBUGFS_OK(debugfs_create_file("clk_lvl_control", 0644,
+		dentry, soc_info, &cam_soc_util_clk_lvl_control))) {
 		CAM_ERR(CAM_UTIL, "failed to create clk_lvl_control");
 		goto err;
 	}

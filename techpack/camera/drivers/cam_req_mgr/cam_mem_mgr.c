@@ -40,7 +40,7 @@ static int cam_mem_util_map_cpu_va(struct dma_buf *dmabuf,
 	uintptr_t *vaddr,
 	size_t *len)
 {
-	int i, j, rc;
+	int rc;
 	void *addr;
 
 	/*
@@ -54,29 +54,19 @@ static int cam_mem_util_map_cpu_va(struct dma_buf *dmabuf,
 	}
 
 	/*
-	 * Code could be simplified if ION support of dma_buf_vmap is
-	 * available. This workaround takes the avandaage that ion_alloc
-	 * returns a virtually contiguous memory region, so we just need
-	 * to _kmap each individual page and then only use the virtual
-	 * address returned from the first call to _kmap.
+	 * 5.10: dma_buf_kmap()/dma_buf_kunmap() have been removed.
+	 * ion_alloc() returns a virtually contiguous buffer, so a single
+	 * dma_buf_vmap() covers the whole region.
 	 */
-	for (i = 0; i < PAGE_ALIGN(dmabuf->size) / PAGE_SIZE; i++) {
-		addr = dma_buf_kmap(dmabuf, i);
-		if (IS_ERR_OR_NULL(addr)) {
-			CAM_ERR(CAM_MEM, "kernel map fail");
-			for (j = 0; j < i; j++)
-				dma_buf_kunmap(dmabuf,
-					j,
-					(void *)(*vaddr + (j * PAGE_SIZE)));
-			*vaddr = 0;
-			*len = 0;
-			rc = -ENOSPC;
-			goto fail;
-		}
-		if (i == 0)
-			*vaddr = (uint64_t)addr;
+	addr = dma_buf_vmap(dmabuf);
+	if (IS_ERR_OR_NULL(addr)) {
+		CAM_ERR(CAM_MEM, "kernel map fail");
+		*vaddr = 0;
+		*len = 0;
+		rc = -ENOSPC;
+		goto fail;
 	}
-
+	*vaddr = (uint64_t)addr;
 	*len = dmabuf->size;
 
 	return 0;
@@ -85,22 +75,19 @@ fail:
 	dma_buf_end_cpu_access(dmabuf, DMA_BIDIRECTIONAL);
 	return rc;
 }
+
 static int cam_mem_util_unmap_cpu_va(struct dma_buf *dmabuf,
 	uint64_t vaddr)
 {
-	int i, rc = 0, page_num;
+	int rc = 0;
 
 	if (!dmabuf || !vaddr) {
 		CAM_ERR(CAM_MEM, "Invalid input args %pK %llX", dmabuf, vaddr);
 		return -EINVAL;
 	}
 
-	page_num = PAGE_ALIGN(dmabuf->size) / PAGE_SIZE;
-
-	for (i = 0; i < page_num; i++) {
-		dma_buf_kunmap(dmabuf, i,
-			(void *)(vaddr + (i * PAGE_SIZE)));
-	}
+	/* 5.10: dma_buf_kunmap() is gone; unmap the single vmap once */
+	dma_buf_vunmap(dmabuf, (void *)vaddr);
 
 	/*
 	 * dma_buf_begin_cpu_access() and

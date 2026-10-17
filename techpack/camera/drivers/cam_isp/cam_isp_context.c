@@ -5,6 +5,7 @@
  */
 
 #include <linux/debugfs.h>
+#include "cam_debugfs_compat.h"
 #include <linux/videodev2.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
@@ -4363,10 +4364,10 @@ static int cam_isp_context_debug_register(void)
 		return -ENOMEM;
 	}
 
-	if (!debugfs_create_u32("enable_state_monitor_dump",
+	if (!CAM_DEBUGFS_OK(debugfs_create_u32("enable_state_monitor_dump",
 		0644,
 		isp_ctx_debug.dentry,
-		&isp_ctx_debug.enable_state_monitor_dump)) {
+		&isp_ctx_debug.enable_state_monitor_dump))) {
 		CAM_ERR(CAM_ISP, "failed to create enable_state_monitor_dump");
 		goto err;
 	}

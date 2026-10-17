@@ -9,6 +9,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/debugfs.h>
+#include "cam_debugfs_compat.h"
 #include "cam_sync_util.h"
 #include "cam_debug_util.h"
 #include "cam_common_util.h"
@@ -986,9 +987,9 @@ static int cam_sync_create_debugfs(void)
 		return -ENOMEM;
 	}
 
-	if (!debugfs_create_bool("trigger_cb_without_switch",
+	if (!CAM_DEBUGFS_OK(debugfs_create_bool("trigger_cb_without_switch",
 		0644, sync_dev->dentry,
-		&trigger_cb_without_switch)) {
+		&trigger_cb_without_switch))) {
 		CAM_ERR(CAM_SYNC,
 			"failed to create trigger_cb_without_switch entry");
 		return -ENOMEM;
@@ -1053,9 +1054,9 @@ static int cam_sync_probe(struct platform_device *pdev)
 	sync_dev->vdev->fops     = &cam_sync_v4l2_fops;
 	sync_dev->vdev->ioctl_ops = &g_cam_sync_ioctl_ops;
 	sync_dev->vdev->minor     = -1;
-	sync_dev->vdev->vfl_type  = VFL_TYPE_GRABBER;
+	sync_dev->vdev->vfl_type  = VFL_TYPE_VIDEO;
 	rc = video_register_device(sync_dev->vdev,
-		VFL_TYPE_GRABBER, -1);
+		VFL_TYPE_VIDEO, -1);
 	if (rc < 0)
 		goto v4l2_fail;
 
