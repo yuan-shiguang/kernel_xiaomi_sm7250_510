@@ -297,4 +297,60 @@
 #define ADC7_SBUx				0x94
 #define ADC7_VBAT_2S_MID			0x96
 
+
+/*
+ * VENDOR COMPAT (Phase 5: picasso / LITO 设备树移植)
+ *
+ * 5.10 上游把这块头文件里的通道命名从 ADC_XXX 改成了 ADC5_XXX，并搬走了
+ * ADC_SCALE_* 组；vendor DTS（4.19 原样）仍在用旧命名。按枚举值等价补别名。
+ */
+#define ADC_SBUx                           ADC5_SBUx
+#define ADC_1P25VREF                       ADC5_1P25VREF
+#define ADC_AMUX_THM1_PU2                  ADC5_AMUX_THM1_100K_PU
+#define ADC_AMUX_THM2                      ADC5_AMUX_THM2
+#define ADC_AMUX_THM2_PU2                  ADC5_AMUX_THM2_100K_PU
+#define ADC_AMUX_THM3_PU2                  ADC5_AMUX_THM3_100K_PU
+#define ADC_AMUX_THM5_PU2                  ADC5_AMUX_THM5_100K_PU
+#define ADC_BAT_ID_PU2                     ADC5_BAT_ID_100K_PU
+#define ADC_BAT_THERM_PU1                  ADC5_BAT_THERM_30K_PU
+#define ADC_BAT_THERM_PU2                  ADC5_BAT_THERM_100K_PU
+#define ADC_BAT_THERM_PU3                  ADC5_BAT_THERM_400K_PU
+#define ADC_CHG_TEMP                       ADC5_CHG_TEMP
+#define ADC_DIE_TEMP                       ADC5_DIE_TEMP
+#define ADC_GPIO1_PU2                      ADC5_GPIO1_100K_PU
+#define ADC_GPIO2_PU2                      ADC5_GPIO2_100K_PU
+#define ADC_GPIO3_PU2                      ADC5_GPIO3_100K_PU
+#define ADC_GPIO4_PU2                      ADC5_GPIO4_100K_PU
+#define ADC_INT_EXT_ISENSE_VBAT_VDATA      ADC5_INT_EXT_ISENSE_VBAT_VDATA
+#define ADC_MID_CHG_DIV6                   ADC5_MID_CHG_DIV6
+#define ADC_PARALLEL_ISENSE                ADC5_PARALLEL_ISENSE
+#define ADC_PARALLEL_ISENSE_VBAT_VDATA     ADC5_PARALLEL_ISENSE_VBAT_VDATA
+#define ADC_REF_GND                        ADC5_REF_GND
+#define ADC_USB_IN_I                       ADC5_USB_IN_I
+#define ADC_USB_IN_V_16                    ADC5_USB_IN_V_16
+#define ADC_VBAT_SNS                       ADC5_VBAT_SNS
+#define ADC_VCOIN                          ADC5_VCOIN
+#define ADC_VPH_PWR                        ADC5_VPH_PWR
+#define ADC_XO_THERM_PU2                   ADC5_XO_THERM_100K_PU
+#define ANA_IN                            0x1d
+
+/* VADC scale function index */
+#define ADC_SCALE_DEFAULT			0x0
+#define ADC_SCALE_THERM_100K_PULLUP		0x1
+#define ADC_SCALE_PMIC_THERM			0x2
+#define ADC_SCALE_XOTHERM			0x3
+#define ADC_SCALE_PMI_CHG_TEMP			0x4
+#define ADC_SCALE_HW_CALIB_DEFAULT		0x5
+#define ADC_SCALE_HW_CALIB_THERM_100K_PULLUP	0x6
+#define ADC_SCALE_HW_CALIB_XOTHERM		0x7
+#define ADC_SCALE_HW_CALIB_PMIC_THERM		0x8
+#define ADC_SCALE_HW_CALIB_CUR			0x9
+#define ADC_SCALE_HW_CALIB_PM5_CHG_TEMP		0xA
+#define ADC_SCALE_HW_CALIB_PM5_SMB_TEMP		0xB
+#define ADC_SCALE_HW_CALIB_BATT_THERM_100K	0xC
+#define ADC_SCALE_HW_CALIB_BATT_THERM_30K	0xD
+#define ADC_SCALE_HW_CALIB_BATT_THERM_400K	0xE
+#define ADC_SCALE_HW_CALIB_PM5_SMB1398_TEMP	0xF
+#define ADC_SCALE_HW_CALIB_PM2250_S3_DIE_TEMP	0x10
+
 #endif /* _DT_BINDINGS_QCOM_SPMI_VADC_H */

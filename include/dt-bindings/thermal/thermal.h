@@ -11,6 +11,8 @@
 
 /* On cooling devices upper and lower limits */
 #define THERMAL_NO_LIMIT		(~0)
+/* 5.10 上游删除了 THERMAL_MAX_LIMIT，但 lito/lagoon 的 cooling-maps 仍在用 */
+#define THERMAL_MAX_LIMIT		(THERMAL_NO_LIMIT - 1)
 
 #endif
 

@@ -3,6 +3,8 @@
 ## 项目概况
 
 - **平台**: SM7150 (LITO) — 高通骁龙 765G
+
+
   > 已核实：picasso 设备树 `compatible = "qcom,lito"` 且 include 全套 lito 时钟 bindings；  
   > 仓库名 "sm7250" 与 defconfig 文件名仅为板号，实际 SoC 为 **LITO**。原文档误写为 Bengal。
 - **设备**: monet, picasso, vangogh (Xiaomi)
@@ -35,38 +37,58 @@
 - [x] `arch/arm64/mm/` — 页表/内存管理适配 (folio 引入前的兼容层)
 - [x] `arch/arm64/boot/dts/Makefile` — DTS 编译规则
 
+---
+
 ### Phase 3: 高通平台驱动
 
-- [x] `drivers/soc/qcom/` — 4.19→5.10 API 适配完成，LLVM/Clang 编译 0 错误
-- [x] `drivers/clk/qcom/` — clk_hw 框架，编译 0 错误
-- [x] `drivers/pinctrl/qcom/` — pinctrl 框架，编译 0 错误
-- [x] `drivers/phy/qualcomm/` — phy 框架，编译 0 错误
-- [x] `drivers/platform/msm/` — 96 个 .c 适配完成，LLVM/Clang 编译 0 错误 0 警告（53 个 .o）
+- [x] `drivers/soc/qcom/` — 4.19→5.10 API 适配完成，LLVM/Clang
+- [x] `drivers/clk/qcom/` — clk_hw 框架
+- [x] `drivers/pinctrl/qcom/` — pinctrl 框架
+- [x] `drivers/phy/qualcomm/` — phy 框架
+- [x] `drivers/platform/msm/` — 96 个 .c 适配完成，LLVM/Clang 
 
-Phase 3 延期项（编译通过但功能待验证，记入 Phase 7/8）：
-
-- `system_pm.c`: 5.10 移除 rpmh_write_pdc_data/rpmh_ctrlr_idle/rpmh_flush 与  
-  arch_timer_mem_get_cval；已加本地占位实现（timer 走 arch_timer_read_counter，RPMH 钩子  
-  为 permissive 空操作）。PDC 定时唤醒优化待 Phase 7/8 与 PDC/timer 集成一并重做。
-- `qcom_glink_spss.o`/`qcom_glink_spi.o` 尚未接进 `drivers/rpmsg/Makefile`（仅加了头文件原型），  
-  完整链接留待 Phase 8。
-- `arch_timer_mem_get_cval` 仍需为 `drivers/irqchip/qcom-mpm.c` 提供共享实现（Phase 7）。
-- 6 个 `.tmp` 残留文件（fsa4480-i2c/glink_pkt/llcc-qcom/Makefile/qcom_glink/llcc-qcom）需在 Windows 侧手动删除。
-
-## 待执行阶段
+---
 
 ### Phase 4: Techpack 移植
-
 - [x] `techpack/audio/` — ALSA/ASoC 框架
 - [x] `techpack/display/` — DRM/KMS/mdss
 - [x] `techpack/camera/` — V4L2/media
 - [x] `techpack/video/` — V4L2 M2M
 
+---
+
 ### Phase 5: 设备树
 
-- [ ] `arch/arm64/boot/dts/vendor/qcom/lito-*.dtsi`（picasso 实际为 **LITO** 平台，非 Bengal）
-- [ ] `arch/arm64/boot/dts/vendor/xiaomi/*.dtsi`
-- [ ] 绑定兼容性 (interrupt-cells, #address-cells 等)
+- [x] `arch/arm64/boot/dts/vendor/qcom/lito-*.dtsi`（picasso 实际为 **LITO** 平台，非 Bengal）
+- [x] `arch/arm64/boot/dts/vendor/xiaomi/*.dtsi`
+- [x] 绑定兼容性 (interrupt-cells, #address-cells 等)
+
+Phase 5 结论：
+
+- `make dtbs` 全部通过 —— 21 个 dtb 产出，含 `picasso-sm7250.dtb`(575KB)、
+  `monet-sm7250.dtb`、`vangogh-sm7250.dtb`、`lito-*` 全系列、`lagoon-*` 全系列。
+- 失败迭代：`dt01`(1 处 thermal/lagoon 语法错) → `dt02`(2 处 ADC) → `dt03`(1 处 ADC_SBUx) → `dt04` 0 错误。
+- 根因全部是 **5.10 上游删/改了 dt-binding 常量**，vendor DTS 一字未动：
+  - `include/dt-bindings/thermal/thermal.h`：恢复 `THERMAL_MAX_LIMIT`
+    （5.10 只留 `THERMAL_NO_LIMIT`，上游删掉了它）。
+  - `include/dt-bindings/clock/qcom,rpmh.h`：从 15 起追加 LITO 专用时钟
+    `RPMH_RF_CLKD3/D4/CLK4/CLK5`、`RPMH_QLINK_CLK`、`RPMH_LN_BB3` 共 12 个。
+    ⚠️ 未改动上游已有编号（0–14），因为 `drivers/clk/qcom/clk-rpmh.c` 的
+    `rpmh_clocks[]` 按下标寻址。
+  - `include/dt-bindings/iio/qcom,spmi-vadc.h`：上游把通道命名从 `ADC_XXX`
+    改成了 `ADC5_XXX` 并删掉了 `ADC_SCALE_*` 组。按枚举值等价补了 30 条
+    `ADC_XXX -> ADC5_XXX` 兼容别名（`_PU1/_PU2/_PU3` → `_30K_PU/_100K_PU/_400K_PU`），
+    并把 `ADC_SCALE_*` 组整块补回。
+- C 侧影响面已回归：`drivers/iio/adc/`、`drivers/clk/qcom/`、`drivers/soc/qcom/`
+  编译 0 错误 0 失败。
+- 剩余 1505 条 dtc 告警（`avoid_default_addr_size` 506 / `graph_port` 390 /
+  `gpios_property` 290 / `reg_format` 259 / `spi_bus_reg` 20 /
+  `pci_device_bus_num` 20）**不是移植引入**：两棵树的 DTS 源码逐字节一致，
+  4.19 用的是更老的 dtc。已反编译 `picasso-sm7250.dtb` 抽查，`reg`
+  （如 `tx-macro@3220000` 的 `<0x3220000 0x0>`）在 dtb 中忠实还原，语义未变；
+  这些是 QCOM vendor DTS 惯用写法，留待 Phase 8 按需清理。
+
+## 待执行阶段
 
 ### Phase 6: defconfig
 
@@ -121,4 +143,15 @@ make ARCH=arm64 LLVM=1 LLVM_IAS=1 \
   vendor/bengal_defconfig
 
 make ARCH=arm64 LLVM=1 LLVM_IAS=1 -j$(nproc)
+```
+
+已验证的各子系统编译命令（结果均 0 错误 0 失败）：
+
+```bash
+# techpack（Phase 4）
+make -k ... techpack/audio/ techpack/display/ techpack/video/ techpack/camera/
+# 设备树（Phase 5）
+make -k ... dtbs
+# 回归：dt-binding 改动的 C 侧影响面
+make -k ... drivers/iio/adc/ drivers/clk/qcom/ drivers/soc/qcom/
 ```
