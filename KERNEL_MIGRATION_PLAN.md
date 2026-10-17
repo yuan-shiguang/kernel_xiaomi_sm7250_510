@@ -88,12 +88,52 @@ Phase 5 结论：
   （如 `tx-macro@3220000` 的 `<0x3220000 0x0>`）在 dtb 中忠实还原，语义未变；
   这些是 QCOM vendor DTS 惯用写法，留待 Phase 8 按需清理。
 
-## 待执行阶段
-
 ### Phase 6: defconfig
 
-- [ ] `vendor/bengal_defconfig`, `*_user_defconfig`
-- [ ] 新增/废弃配置项清理
+- [x] 5 个 vendor defconfig 全量适配：`vendor/picasso_user_defconfig`、
+  `vendor/lito_defconfig`、`vendor/lito-perf_defconfig`、
+  `vendor/monet_user_defconfig`、`vendor/vangogh_user_defconfig`
+- [x] 新增/废弃配置项清理（78 个并集缺口符号分类决策）
+- [x] 补建 `arch/arm64/configs/lito{,-perf}_defconfig` → `vendor/*` 符号链接
+  （此前缺失，`make lito_defconfig` 报 "Can't find default configuration"）
+
+Phase 6 结论：
+
+- **缺口分析**：以 5.10.100 vendor 树（REF）为基准对比 WORK 树。picasso 的 805 个
+  "仅 REF 有" 符号中 0 个为 vendor Kconfig 缺口；5 个 defconfig 的并集缺口 78 个
+  符号逐一分类（Makefile 反查 + 源码引用反查）：
+  - **RENAME 7**（上游 5.10 改名；另有 `F2FS_FS_ENCRYPTION`→`FS_ENCRYPTION`
+    仅 picasso 命中）：`THERMAL_TSENS`→`QCOM_TSENS`、
+    `USB_DWC3_MSM`→`USB_DWC3_QCOM`、`CRYPTO_DEV_QCRYPTO`→`CRYPTO_DEV_QCE`、
+    `POWER_RESET_QCOM`→`POWER_RESET_MSM`、
+    `SLIMBUS_MSM_NGD`→`SLIM_QCOM_NGD_CTRL`、
+    `SERIAL_MSM_GENI`→`SERIAL_QCOM_GENI`、
+    `SERIAL_MSM_GENI_CONSOLE`→`SERIAL_QCOM_GENI_CONSOLE`
+  - **PORT 22**（源码在 WORK、缺 Kconfig/Makefile 集成）：ARM_QCOM_CPUFREQ_HW_DEBUG、
+    ARM_SMMU_TESTBUS_DUMP、8× CORESIGHT_*（DUMMY / DYNAMIC_REPLICATOR / HWEVENT /
+    REMOTE_ETM / TGU / TPDA / TPDM / CTI_SAVE_DISABLE）、EDAC_KRYO_ARM64 +
+    PANIC_ON_CE / PANIC_ON_UE、MSM_QUSB_PHY、MSM_RDBG、
+    QTI_CX_IPEAK_COOLING_DEVICE、DEVFREQ_WAKE_BOOST_DURATION_MS、
+    FASTBOOT_CMD_CTRL_UART、QRTR_WAKEUP_MS、ZRAM_DEDUP、IOMMU_TLBSYNC_DEBUG、
+    QCOM_GPI_DMA_DEBUG——按 REF 原文回填 Kconfig stanza，其中 12 个同步补
+    Makefile 对象行
+  - **DROP 49**（WORK 源码与引用均无，纯调试 / 上游已删项）：
+    CMA_ALLOW_WRITE_DEBUGFS、DEBUG_BLK_CGROUP、VIDEO_V4L2_VIDEOBUF2_CORE、
+    IOMMU_TESTS、XLOGCHAR 等
+- **defconfig 变更**（改名 + 纯删除 + 去重）：picasso 7+23+1、lito 7+37、
+  lito-perf 6+18、monet 7+32+1、vangogh 7+32+1；CRLF/LF 混合行尾逐字节保持；
+  修复 vendor 原有重复赋值（MQ_IOSCHED_DEADLINE 注释行 / CPU_FREQ_STAT）
+- **验证**：`make X_defconfig` 5 目标全部 0 warning 0 error；缺口复扫 0 缺口
+  0 遗留；裸 CR 字节级终检 5 文件全 PASS。期间定位并修复两个关键 bug：
+  - Kconfig stanza 抽取器吞块级行（`source`/`if`/`menu`/`comment` 等），导致
+    结构破坏、source 行重复渲染与 USB gadget choice warning；
+  - defconfig 改名正则 `(.*)` 捕获 `\r` 后丢 `\n`，CRLF 行退化为裸 CR，
+    下一行赋值被 conf 静默吞掉（lito/lito-perf/monet/vangogh 各丢 6~7 个赋值）
+- **Kconfig 集成**：82 个文件变更（43 Kconfig + 34 Makefile + 5 defconfig），
+  216 处 `[VENDOR-PORT Phase6]` 标记；结构审计唯一"漂移"为
+  `drivers/net/wireless/Kconfig` 的 +3 cnss source（CLD_LL_CORE 必需，预期内）
+
+## 待执行阶段
 
 ### Phase 7: 核心 API 修复
 
@@ -132,7 +172,7 @@ Phase 5 结论：
 1. 以 `android12-5.10-stable` 为基准，建立新分支 `kernel-5.10`
 2. 将本仓库 vendor 代码 (techpack, dts/vendor, soc/qcom, platform/msm) 移植到 5.10 基准
 3. 按 Phase 顺序逐一修复 API 不兼容
-4. `make vendor/bengal_defconfig && make -j$(nproc)` 迭代编译
+4. `make vendor/picasso_user_defconfig && make -j$(nproc)` 迭代编译
 
 ## 构建命令
 
@@ -140,7 +180,7 @@ Phase 5 结论：
 make ARCH=arm64 LLVM=1 LLVM_IAS=1 \
   CROSS_COMPILE=aarch64-linux-gnu- \
   CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-  vendor/bengal_defconfig
+  vendor/picasso_user_defconfig
 
 make ARCH=arm64 LLVM=1 LLVM_IAS=1 -j$(nproc)
 ```

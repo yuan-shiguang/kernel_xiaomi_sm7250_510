@@ -933,4 +933,38 @@ config LEDS_ACER_A500
 comment "LED Triggers"
 source "drivers/leds/trigger/Kconfig"
 
+
+# [VENDOR-PORT Phase6] LEDS_QPNP_FLASH_V2
+config LEDS_QPNP_FLASH_V2
+        tristate "Support for QPNP V2 Flash LEDs"
+        depends on LEDS_CLASS && MFD_SPMI_PMIC
+	select LEDS_TRIGGERS
+        help
+          This driver supports the flash V2 LED functionality of Qualcomm
+          Technologies, Inc. QPNP PMICs.  This driver supports PMICs starting
+          from PMI8998, PM8150L and their derivatives.  It can configure the
+          flash LED target current for several independent channels.  It also
+          supports various over current and over temperature mitigation features.
+
+
+# [VENDOR-PORT Phase6] LEDS_QPNP_VIBRATOR_LDO
+config LEDS_QPNP_VIBRATOR_LDO
+	tristate "Vibrator-LDO support for QPNP PMIC"
+	depends on LEDS_CLASS && MFD_SPMI_PMIC
+	help
+	  This option enables device driver support for the vibrator-ldo
+	  peripheral found on Qualcomm Technologies, Inc. QPNP PMICs.
+	  The vibrator-ldo peripheral is capable of driving ERM vibrators.
+
+
+# [VENDOR-PORT Phase6] LEDS_QTI_TRI_LED
+config LEDS_QTI_TRI_LED
+	tristate "LED support for Qualcomm Technologies, Inc. TRI_LED"
+	depends on LEDS_CLASS && MFD_SPMI_PMIC && PWM && OF
+	help
+	  This driver supports the TRI_LED module found in Qualcomm
+	  Technologies, Inc. PMIC chips. TRI_LED supports 3 LED drivers
+	  at max and each is controlled by a PWM channel used for dimming
+	  or blinking.
+
 endif # NEW_LEDS

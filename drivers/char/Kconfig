@@ -508,4 +508,36 @@ config RANDOM_TRUST_BOOTLOADER
 	  believe its RNG facilities may be faulty. This may also be configured
 	  at boot time with "random.trust_bootloader=on/off".
 
+
+# [VENDOR-PORT Phase6] MSM_ADSPRPC
+config MSM_ADSPRPC
+	tristate "QTI FastRPC driver"
+	depends on QCOM_GLINK
+	help
+		Provides a communication mechanism that allows clients to
+		make remote method invocations across processor boundary to
+		applications/compute DSP processor.
+		Say M if you want to enable this module.
+
+
+# [VENDOR-PORT Phase6] MSM_FASTCVPD
+config MSM_FASTCVPD
+	bool "QTI FASTCVP driver"
+	depends on QCOM_GLINK
+	help
+	  This driver exposes APIs (Application Program Interface) to video driver
+	  to share HFI command queue address to CDSP (Compute Digital Signal
+	  Processor) and handle errors to exit gracefully in case video and cdsp
+	  subsystems crash.
+
+
+# [VENDOR-PORT Phase6] MSM_RDBG
+config MSM_RDBG
+	tristate "QTI Remote debug driver"
+	help
+	Implements a shared memory based transport mechanism that allows
+	for a debugger running on a host PC to communicate with a remote
+	stub running on peripheral subsystems such as the ADSP, MODEM etc.
+		Say M if you want to enable this module.
+
 endmenu

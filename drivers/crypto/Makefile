@@ -51,3 +51,5 @@ obj-$(CONFIG_CRYPTO_DEV_ARTPEC6) += axis/
 obj-$(CONFIG_CRYPTO_DEV_ZYNQMP_AES) += xilinx/
 obj-y += hisilicon/
 obj-$(CONFIG_CRYPTO_DEV_AMLOGIC_GXL) += amlogic/
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_CRYPTO_DEV_QCOM_MSM_QCE) += msm/

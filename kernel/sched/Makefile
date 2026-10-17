@@ -36,3 +36,9 @@ obj-$(CONFIG_CPU_FREQ_GOV_SCHEDUTIL) += cpufreq_schedutil.o
 obj-$(CONFIG_MEMBARRIER) += membarrier.o
 obj-$(CONFIG_CPU_ISOLATION) += isolation.o
 obj-$(CONFIG_PSI) += psi.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_SCHED_CORE_CTL) += core_ctl.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_SCHED_TUNE) += tune.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_SCHED_WALT) += walt.o boost.o sched_avg.o

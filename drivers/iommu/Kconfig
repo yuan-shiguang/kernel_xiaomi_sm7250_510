@@ -433,4 +433,56 @@ config VIRTIO_IOMMU
 
 	  Say Y here if you intend to run this kernel as a guest.
 
+
+# [VENDOR-PORT Phase6] IOMMU_IO_PGTABLE_FAST
+config IOMMU_IO_PGTABLE_FAST
+	bool "Fast ARMv7/v8 Long Descriptor Format"
+	depends on IOMMU_DMA
+	help
+          Enable support for a subset of the ARM long descriptor pagetable
+	  format.  This allocator achieves fast performance by
+	  pre-allocating and pre-populating page table memory up front.
+	  only supports a 32 bit virtual address space.
+
+          This implementation is mainly optimized for use cases where the
+          buffers are small (<= 64K) since it only supports 4K page sizes.
+
+
+# [VENDOR-PORT Phase6] QCOM_LAZY_MAPPING
+config QCOM_LAZY_MAPPING
+	bool "Reference counted iommu-mapping support"
+	depends on ION
+	depends on IOMMU_API
+	help
+	  ION buffers may be shared between several software clients.
+	  Reference counting the mapping may simplify coordination between
+	  these clients, and decrease latency by preventing multiple
+	  map/unmaps of the same region.
+
+	  If unsure, say N here.
+
+
+# [VENDOR-PORT Phase6] ARM_SMMU_TESTBUS_DUMP
+config ARM_SMMU_TESTBUS_DUMP
+	bool "ARM SMMU testbus dump"
+	depends on ARM_SMMU
+	help
+	  Enables testbus dump collection on arm smmu right after TLB
+	  sync timeout failure.
+	  Note to use this only on debug builds.
+
+	  If unsure, say N here.
+
+
+# [VENDOR-PORT Phase6] IOMMU_TLBSYNC_DEBUG
+config IOMMU_TLBSYNC_DEBUG
+	bool "TLB sync timeout debug"
+	depends on ARM_SMMU
+	help
+	  Enables to collect the SMMU system state information right
+	  after the first TLB sync timeout failure by calling BUG().
+	  Note to use this only on debug builds.
+
+	  If unsure, say N here.
+
 endif # IOMMU_SUPPORT

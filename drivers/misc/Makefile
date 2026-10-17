@@ -58,3 +58,9 @@ obj-$(CONFIG_UACCE)		+= uacce/
 obj-$(CONFIG_XILINX_SDFEC)	+= xilinx_sdfec.o
 obj-$(CONFIG_HISI_HIKEY_USB)	+= hisi_hikey_usb.o
 obj-$(CONFIG_UID_SYS_STATS)	+= uid_sys_stats.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_HDCP_QSEECOM)	+= hdcp_qseecom.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_QSEECOM)		+= qseecom.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_SIMTRAY_STATUS)	+= simtray.o

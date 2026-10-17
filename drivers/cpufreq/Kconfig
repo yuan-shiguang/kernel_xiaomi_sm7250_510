@@ -349,4 +349,17 @@ config QORIQ_CPUFREQ
 	  which are capable of changing the CPU's frequency dynamically.
 
 endif
+
+# [VENDOR-PORT Phase6] CPU_BOOST
+config CPU_BOOST
+	tristate "Event base short term CPU freq boost"
+	depends on CPU_FREQ
+	help
+	  This driver boosts the frequency of one or more CPUs based on
+	  various events that might occur in the system. As of now, the
+	  events it reacts to are:
+	  - Migration of important threads from one CPU to another.
+
+	  If in doubt, say N.
+
 endmenu

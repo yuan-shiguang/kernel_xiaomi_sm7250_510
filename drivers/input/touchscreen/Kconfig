@@ -1335,4 +1335,17 @@ config TOUCHSCREEN_ZINITIX
 	  To compile this driver as a module, choose M here: the
 	  module will be called zinitix.
 
+
+# [VENDOR-PORT Phase6] SECURE_TOUCH_SYNAPTICS_DSX
+config SECURE_TOUCH_SYNAPTICS_DSX
+	bool "Secure Touch"
+	depends on TOUCHSCREEN_SYNAPTICS_DSX_I2C
+	help
+	  Say Y here to enable Secure Touch in supported driver.
+
+	  If unsure, say N.
+
+	  To compile the supported driver with Secure Touch enabled,
+	  choose M here.
+
 endif

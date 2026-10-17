@@ -105,3 +105,9 @@ obj-$(CONFIG_LEDS_USER)			+= uleds.o
 
 # LED Triggers
 obj-$(CONFIG_LEDS_TRIGGERS)		+= trigger/
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_LEDS_QPNP_FLASH_V2)        += leds-qpnp-flash-v2.o leds-qpnp-flash-common.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_LEDS_QPNP_VIBRATOR_LDO)	+= leds-qpnp-vibrator-ldo.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_LEDS_QTI_TRI_LED)		+= leds-qti-tri-led.o

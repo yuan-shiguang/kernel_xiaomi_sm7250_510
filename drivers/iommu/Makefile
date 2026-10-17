@@ -27,3 +27,7 @@ obj-$(CONFIG_FSL_PAMU) += fsl_pamu.o fsl_pamu_domain.o
 obj-$(CONFIG_S390_IOMMU) += s390-iommu.o
 obj-$(CONFIG_HYPERV_IOMMU) += hyperv-iommu.o
 obj-$(CONFIG_VIRTIO_IOMMU) += virtio-iommu.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_IOMMU_IO_PGTABLE_FAST) += io-pgtable-fast.o dma-mapping-fast.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_QCOM_LAZY_MAPPING) += msm_dma_iommu_mapping.o

@@ -160,3 +160,15 @@ obj-$(CONFIG_REGULATOR_WM8400) += wm8400-regulator.o
 obj-$(CONFIG_REGULATOR_WM8994) += wm8994-regulator.o
 
 ccflags-$(CONFIG_REGULATOR_DEBUG) += -DDEBUG
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_REGULATOR_PM8008) += qcom_pm8008-regulator.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_REGULATOR_PROXY_CONSUMER) += proxy-consumer.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_REGULATOR_QPNP_AMOLED) += qpnp-amoled-regulator.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_REGULATOR_QPNP_LCDB) += qpnp-lcdb-regulator.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_REGULATOR_REFGEN) += refgen.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_REGULATOR_STUB) += stub-regulator.o

@@ -489,4 +489,33 @@ source "drivers/misc/ocxl/Kconfig"
 source "drivers/misc/cardreader/Kconfig"
 source "drivers/misc/habanalabs/Kconfig"
 source "drivers/misc/uacce/Kconfig"
+
+# [VENDOR-PORT Phase6] HDCP_QSEECOM
+config HDCP_QSEECOM
+	tristate "QTI High-Bandwidth Digital Content Protection Module"
+	help
+	This module implements HDCP 2.2 features over external interfaces
+	such as the DisplayPort interface. It exposes APIs for the interface
+	driver to communicate with QTI Secure Execution Environment (QSEE)
+	via the QSEECOM Driver and also communicates with the Receiver via
+	APIs exposed by the interface driver.
+
+
+# [VENDOR-PORT Phase6] QSEECOM
+config QSEECOM
+	tristate "QTI Secure Execution Communicator driver"
+	help
+	  Provides a communication interface between userspace and
+	  QTI Secure Execution Environment (QSEE) using Secure Channel
+	  Manager (SCM) interface. It exposes APIs for both userspace and
+	  kernel clients.
+
+
+# [VENDOR-PORT Phase6] SIMTRAY_STATUS
+config SIMTRAY_STATUS
+	tristate "Xiaomi SIM tray status"
+	default n
+	help
+	  Say 'y' here to support SIM tray GPIO detection
+
 endmenu

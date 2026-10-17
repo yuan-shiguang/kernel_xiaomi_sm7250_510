@@ -510,4 +510,16 @@ config KHADAS_MCU_FAN_THERMAL
 	  If you say yes here you get support for the FAN controlled
 	  by the Microcontroller found on the Khadas VIM boards.
 
+
+# [VENDOR-PORT Phase6] THERMAL_GOV_LOW_LIMITS
+config THERMAL_GOV_LOW_LIMITS
+	bool "Low limits mitigation governor"
+	help
+	  Enable this to manage platform limits using low limits
+	  governor.
+
+	  Enable this governor to monitor and trigger floor mitigation.
+	  This governor will monitor the limits going below a
+	  trip threshold to trigger a floor mitigation.
+
 endif

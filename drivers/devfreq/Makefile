@@ -17,3 +17,21 @@ obj-$(CONFIG_ARM_TEGRA20_DEVFREQ)	+= tegra20-devfreq.o
 
 # DEVFREQ Event Drivers
 obj-$(CONFIG_PM_DEVFREQ_EVENT)		+= event/
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_ARM_MEMLAT_MON)		+= arm-memlat-mon.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_ARM_QCOM_DEVFREQ_FW)	+= devfreq_qcom_fw.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_DEVFREQ_BOOST)		+= devfreq_boost.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_DEVFREQ_GOV_CDSPL3)	+= governor_cdsp_l3.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_DEVFREQ_GOV_MEMLAT)       += governor_memlat.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_DEVFREQ_GOV_QCOM_BW_HWMON)	+= governor_bw_hwmon.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_DEVFREQ_SIMPLE_DEV)	+= devfreq_simple_dev.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_QCOM_BIMC_BWMON)		+= bimc-bwmon.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_QCOM_DEVFREQ_DEVBW)		+= devfreq_devbw.o

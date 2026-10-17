@@ -340,3 +340,15 @@ config ARM_PXA2xx_CPUFREQ
 	  This add the CPUFreq driver support for Intel PXA2xx SOCs.
 
 	  If in doubt, say N.
+
+
+# [VENDOR-PORT Phase6] ARM_QCOM_CPUFREQ_HW_DEBUG
+config ARM_QCOM_CPUFREQ_HW_DEBUG
+	bool "QCOM CPUFreq HW debug"
+	depends on ARM_QCOM_CPUFREQ_HW
+	help
+	 Support for the CPUFreq HW debug.
+	 CPUFreq HW debug provide the support to capture trace packets for
+	 various clock domain and trace type could be set to periodic and
+	 xor if applicable.
+	 Say Y if you want to support CPUFreq HW Trace.

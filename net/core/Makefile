@@ -37,3 +37,5 @@ obj-$(CONFIG_NET_SOCK_MSG) += skmsg.o
 obj-$(CONFIG_BPF_SYSCALL) += sock_map.o
 endif
 obj-$(CONFIG_BPF_SYSCALL) += bpf_sk_storage.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_SOCKEV_NLMCAST) += sockev_nlmcast.o

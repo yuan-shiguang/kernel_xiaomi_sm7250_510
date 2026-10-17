@@ -12,3 +12,15 @@ menuconfig ION
 	  say N here.
 
 source "drivers/staging/android/ion/heaps/Kconfig"
+
+
+# [VENDOR-PORT Phase6] ION_POOL_AUTO_REFILL
+config ION_POOL_AUTO_REFILL
+	bool "Refill the ION heap pools automatically"
+	depends on ION
+	help
+	  Choose this option to refill the ION system heap pools (non-secure)
+	  automatically when the pool pages count becomes lower than a set low mark.
+	  This refilling is done by worker thread which is invoked asynchronously
+	  when the pool count reaches below low mark.
+	  if you're not sure say Y here.

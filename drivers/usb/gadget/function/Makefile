@@ -54,3 +54,31 @@ usb_f_accessory-y		:= f_accessory.o
 obj-$(CONFIG_USB_F_ACC)		+= usb_f_accessory.o
 usb_f_audio_source-y		:= f_audio_source.o
 obj-$(CONFIG_USB_F_AUDIO_SRC)	+= usb_f_audio_source.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_diag-y			:= f_diag.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_DIAG)	+= usb_f_diag.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_cdev-y			:= f_cdev.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_CDEV)	+= usb_f_cdev.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_ccid-y			:= f_ccid.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_CCID)	+= usb_f_ccid.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_qdss-y			:= f_qdss.o u_qdss.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_QDSS)	+= usb_f_qdss.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_gsi-y			:= f_gsi.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_GSI)		+= usb_f_gsi.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_mtp-y			:= f_mtp.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_MTP)		+= usb_f_mtp.o
+# [VENDOR-PORT Phase6] makefile
+usb_f_ptp-y			:= f_ptp.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_USB_F_PTP)		+= usb_f_ptp.o

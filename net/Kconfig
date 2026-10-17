@@ -466,3 +466,14 @@ config HAVE_CBPF_JIT
 # Extended BPF JIT (eBPF)
 config HAVE_EBPF_JIT
 	bool
+
+
+# [VENDOR-PORT Phase6] SOCKEV_NLMCAST
+config SOCKEV_NLMCAST
+	bool "Enable SOCKEV Netlink Multicast"
+	default n
+	help
+	  Default client for SOCKEV notifier events. Sends multicast netlink
+	  messages whenever the socket event notifier is invoked. Enable if
+	  user space entities need to be notified of socket events without
+	  having to poll /proc

@@ -64,4 +64,19 @@ config RPMSG_VIRTIO
 	select RPMSG
 	select VIRTIO
 
+
+# [VENDOR-PORT Phase6] RPMSG_QCOM_GLINK_SPSS
+config RPMSG_QCOM_GLINK_SPSS
+	tristate "QTI SPSS Glink driver"
+	select RPMSG_QCOM_GLINK
+	depends on MAILBOX
+	depends on QCOM_SMEM
+	select QSEE_IPC_IRQ
+	help
+	  Say y here to enable support for the GLINK SPSS communication driver,
+	  which provides support for using the GLINK communication protocol
+	  over SMEM. This protocol maps the smem and then shares the mapped
+	  region with the remote proc by writing the smem descriptor location
+	  and size into shared registers.
+
 endmenu

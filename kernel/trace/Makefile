@@ -98,3 +98,7 @@ obj-$(CONFIG_TRACEPOINT_BENCHMARK) += trace_benchmark.o
 obj-$(CONFIG_TRACE_MMIO_ACCESS) += trace_readwrite.o
 
 libftrace-y := ftrace.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_IPC_LOGGING) += ipc_logging.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_QCOM_RTB) += msm_rtb.o

@@ -908,4 +908,28 @@ config CRYPTO_DEV_SA2UL
 	  used for crypto offload.  Select this if you want to use hardware
 	  acceleration for cryptographic algorithms on these devices.
 
+
+# [VENDOR-PORT Phase6] CRYPTO_DEV_QCEDEV
+config CRYPTO_DEV_QCEDEV
+	tristate "QCEDEV Interface to CE module"
+	depends on ARCH_QCOM
+	help
+	  This driver supports QTI QCEDEV Crypto Engine 5.0.
+	  This exposes the interface to the QCE hardware accelerator
+	  via IOCTLs.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called qcedev.
+
+
+# [VENDOR-PORT Phase6] CRYPTO_DEV_QCOM_MSM_QCE
+config CRYPTO_DEV_QCOM_MSM_QCE
+	tristate "QTI Crypto Engine (QCE) module"
+	depends on ARCH_QCOM
+	help
+	  This driver supports QTI Crypto Engine accelerator hardware, which
+	  is present on SDM845, etc. This is the core crypto driver which adds
+	  CE5.0 functionalities. To compile this driver as a module, choose
+	  M here. The module will be called QCE50.
+
 endif # CRYPTO_HW

@@ -215,3 +215,5 @@ obj-$(CONFIG_IP_SET) += ipset/
 
 # IPVS
 obj-$(CONFIG_IP_VS) += ipvs/
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_NETFILTER_XT_TARGET_HARDIDLETIMER) += xt_HARDIDLETIMER.o

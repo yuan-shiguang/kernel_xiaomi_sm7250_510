@@ -114,3 +114,7 @@ endif
 
 obj-$(CONFIG_MMC_SDHCI_XENON)	+= sdhci-xenon-driver.o
 sdhci-xenon-driver-y		+= sdhci-xenon.o sdhci-xenon-phy.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_MMC_CQHCI_CRYPTO)		+= cqhci-crypto.o
+# [VENDOR-PORT Phase6] makefile
+obj-$(CONFIG_MMC_CQHCI_CRYPTO_QTI)	+= cqhci-crypto-qti.o

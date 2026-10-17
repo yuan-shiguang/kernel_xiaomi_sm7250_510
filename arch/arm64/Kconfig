@@ -2186,3 +2186,22 @@ source "arch/arm64/crypto/Kconfig"
 endif
 
 source "techpack/Kconfig"
+
+
+# [VENDOR-PORT Phase6] BUILD_ARM64_DT_OVERLAY
+config BUILD_ARM64_DT_OVERLAY
+	bool "enable DT overlay compilation support"
+	depends on OF
+	help
+	  This option enables support for DT overlay compilation.
+	  Enabling this option sets required flags to add DT
+	  overlay in the compilation.
+
+
+# [VENDOR-PORT Phase6] FACTORY_BUILD
+config FACTORY_BUILD
+	bool "distiguish factory versionion from dev version"
+	default n
+	help
+	  This macro will be defined Whenen build factory version. It is used to
+	  distinguish factory and dev codes in kernel.

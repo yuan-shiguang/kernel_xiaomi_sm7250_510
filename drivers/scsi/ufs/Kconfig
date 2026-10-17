@@ -192,3 +192,13 @@ config SCSI_UFS_HPB
 	  L2P (logical to physical) map of UFS to host DRAM. The driver uses HPB
 	  read command by piggybacking physical page number for bypassing FTL (flash
 	  translation layer)'s L2P address translation.
+
+
+# [VENDOR-PORT Phase6] SCSI_UFS_CRYPTO_QTI
+config SCSI_UFS_CRYPTO_QTI
+	tristate "Vendor specific UFS Crypto Engine Support"
+	depends on SCSI_UFS_CRYPTO
+	help
+	 Enable Vendor Crypto Engine Support in UFS
+	 Enabling this allows kernel to use UFS crypto operations defined
+	 and implemented by QTI.

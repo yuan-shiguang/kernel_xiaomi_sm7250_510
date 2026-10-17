@@ -2441,3 +2441,74 @@ config ARCH_HAS_SYSCALL_WRAPPER
 	def_bool n
 
 source "init/Kconfig.gki"
+
+
+# [VENDOR-PORT Phase6] DYNAMIC_STUNE_BOOST
+config DYNAMIC_STUNE_BOOST
+	bool "Dynamic SchedTune boosting support"
+	depends on SCHED_TUNE
+	help
+	  This option extends the SchedTune framework and provides APIs to
+	  activate and reset SchedTune boosting from anywhere in the kernel.
+
+	  If unsure, say N.
+
+
+# [VENDOR-PORT Phase6] SCHED_CORE_CTL
+config SCHED_CORE_CTL
+	bool "QTI Core Control"
+	depends on SMP && SCHED_WALT
+	help
+	  This options enables the core control functionality in
+	  the scheduler. Core control automatically offline and
+	  online cores based on cpu load and utilization.
+
+	  If unsure, say N here.
+
+
+# [VENDOR-PORT Phase6] SCHED_TUNE
+config SCHED_TUNE
+	bool "Boosting for CFS tasks (EXPERIMENTAL)"
+	depends on !UCLAMP_TASK
+	depends on SMP
+	help
+	  This option enables support for task classification using a new
+	  cgroup controller, schedtune. Schedtune allows tasks to be given
+	  a boost value and marked as latency-sensitive or not. This option
+	  provides the "schedtune" controller.
+
+	  This new controller:
+	  1. allows only a two layers hierarchy, where the root defines the
+	     system-wide boost value and its direct childrens define each one a
+	     different "class of tasks" to be boosted with a different value
+	  2. supports up to 16 different task classes, each one which could be
+	     configured with a different boost value
+
+	  Latency-sensitive tasks are not subject to energy-aware wakeup
+	  task placement. The boost value assigned to tasks is used to
+	  influence task placement and CPU frequency selection (if
+	  utilization-driven frequency selection is in use).
+
+	  If unsure, say N.
+
+
+# [VENDOR-PORT Phase6] SCHED_WALT
+config SCHED_WALT
+	bool "Support window based load tracking"
+	depends on SMP
+	help
+	This feature will allow the scheduler to maintain a tunable window
+	based set of metrics for tasks and runqueues. These metrics can be
+	used to guide task placement as well as task frequency requirements
+	for cpufreq governors.
+
+
+# [VENDOR-PORT Phase6] STUNE_ASSIST
+config STUNE_ASSIST
+	bool "SchedTune configuration helper"
+	depends on SCHED_TUNE
+	depends on ANDROID
+	help
+	  This option enables in-kernel overrides for SchedTune values.
+
+	  If unsure, say N.
