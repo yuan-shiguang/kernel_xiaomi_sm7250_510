@@ -28,3 +28,13 @@ obj-$(CONFIG_PINCTRL_SDM660)   += pinctrl-sdm660.o
 obj-$(CONFIG_PINCTRL_SDM845) += pinctrl-sdm845.o
 obj-$(CONFIG_PINCTRL_SM8150) += pinctrl-sm8150.o
 obj-$(CONFIG_PINCTRL_SM8250) += pinctrl-sm8250.o
+
+# Phase 3: 4.19 vendor 模块（phase3_merge.py 自动追加）
+obj-$(CONFIG_PINCTRL_BENGAL) += pinctrl-bengal.o
+obj-$(CONFIG_PINCTRL_KHAJE) += pinctrl-khaje.o
+obj-$(CONFIG_PINCTRL_KONA) += pinctrl-kona.o
+obj-$(CONFIG_PINCTRL_LAGOON) += pinctrl-lagoon.o
+obj-$(CONFIG_PINCTRL_LITO) += pinctrl-lito.o
+obj-$(CONFIG_PINCTRL_MSM8917)   += pinctrl-msm8917.o
+obj-$(CONFIG_PINCTRL_MSM8937)   += pinctrl-msm8937.o
+obj-$(CONFIG_PINCTRL_SCUBA) += pinctrl-scuba.o

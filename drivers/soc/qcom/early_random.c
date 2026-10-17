@@ -33,7 +33,7 @@ void __init init_random_pool(void)
 	desc.args[1] = data.out_buf_sz = SZ_512;
 	desc.arginfo = SCM_ARGS(2, SCM_RW, SCM_VAL);
 
-	dmac_flush_range(random_buffer, random_buffer + RANDOM_BUFFER_SIZE);
+	__flush_dcache_area(random_buffer, RANDOM_BUFFER_SIZE);
 
 	ret = scm_call2(SCM_SIP_FNID(TZ_SVC_CRYPTO, PRNG_CMD_ID), &desc);
 
@@ -44,8 +44,7 @@ void __init init_random_pool(void)
 			pr_warn("Did not receive the expected number of bytes from PRNG: %llu\n",
 				bytes_received);
 
-		dmac_inv_range(random_buffer, random_buffer +
-						RANDOM_BUFFER_SIZE);
+		__inval_dcache_area(random_buffer, RANDOM_BUFFER_SIZE);
 		bytes_received = (bytes_received <= RANDOM_BUFFER_SIZE) ?
 					bytes_received : RANDOM_BUFFER_SIZE;
 		add_hwgenerator_randomness(random_buffer, bytes_received,

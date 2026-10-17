@@ -122,7 +122,6 @@ struct msm_watchdog_data {
 	unsigned long long ping_end[NR_CPUS];
 	struct work_struct irq_counts_work;
 	struct irq_info irq_counts[NR_TOP_HITTERS];
-	struct irq_info ipi_counts[NR_IPI];
 	unsigned int tot_irq_count[NR_CPUS];
 	atomic_t irq_counts_running;
 };
@@ -441,7 +440,7 @@ static void ping_other_cpus(struct msm_watchdog_data *wdog_dd)
 	/* Make sure alive mask is cleared and set in order */
 	smp_mb();
 	for_each_cpu(cpu, cpu_online_mask) {
-		if (!cpu_idle_pc_state[cpu] && !cpu_isolated(cpu)) {
+		if (!cpu_idle_pc_state[cpu]) {
 			wdog_dd->ping_start[cpu] = sched_clock();
 			smp_call_function_single(cpu, keep_alive_response,
 						 wdog_dd, 1);
@@ -526,13 +525,6 @@ static void print_irq_stat(struct msm_watchdog_data *wdog_dd)
 	pr_debug("(cpu:irq_count)-\n");
 	for_each_possible_cpu(cpu)
 		pr_debug("%u:%u\n", cpu, wdog_dd->tot_irq_count[cpu]);
-	pr_debug("\n");
-
-	pr_debug("(ipi:irq_count)-\n");
-	for (index = 0; index < NR_IPI; index++) {
-		info = &wdog_dd->ipi_counts[index];
-		pr_debug("%u:%u\n", info->irq, info->total_count);
-	}
 	pr_debug("\n");
 }
 
@@ -619,17 +611,6 @@ static void compute_irq_stat(struct work_struct *work)
 	for_each_possible_cpu(cpu)
 		wdog_dd->tot_irq_count[cpu] = kstat_cpu_irqs_sum(cpu);
 
-	/* per IPI counts */
-	for (index = 0; index < NR_IPI; index++) {
-		wdog_dd->ipi_counts[index].total_count = 0;
-		wdog_dd->ipi_counts[index].irq = index;
-		for_each_possible_cpu(cpu) {
-			wdog_dd->ipi_counts[index].irq_counter[cpu] =
-				__IRQ_STAT(cpu, ipi_irqs[index]);
-			wdog_dd->ipi_counts[index].total_count +=
-				wdog_dd->ipi_counts[index].irq_counter[cpu];
-		}
-	}
 
 	print_irq_stat(wdog_dd);
 	atomic_xchg(&wdog_dd->irq_counts_running, 0);
@@ -1078,7 +1059,7 @@ static int msm_watchdog_probe(struct platform_device *pdev)
 
 	return 0;
 err:
-	kzfree(wdog_dd);
+	kfree(wdog_dd);
 	return ret;
 }
 

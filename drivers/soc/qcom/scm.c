@@ -49,6 +49,10 @@ DEFINE_MUTEX(scm_lmh_lock);
 #define SMC_ATOMIC_MASK 0x80000000
 #define IS_CALL_AVAIL_CMD 1
 
+#ifndef __asmeq
+#define __asmeq(x, y)
+#endif
+
 #ifdef CONFIG_ARM64
 
 #define R0_STR "x0"
@@ -159,13 +163,13 @@ static int __scm_call_armv8_64(u64 x0, u64 x1, u64 x2, u64 x3, u64 x4, u64 x5,
 static int ___scm_call_armv8_32(u32 w0, u32 w1, u32 w2, u32 w3, u32 w4, u32 w5,
 				u64 *ret1, u64 *ret2, u64 *ret3)
 {
-	register u32 r0 asm("w0") = w0;
-	register u32 r1 asm("w1") = w1;
-	register u32 r2 asm("w2") = w2;
-	register u32 r3 asm("w3") = w3;
-	register u32 r4 asm("w4") = w4;
-	register u32 r5 asm("w5") = w5;
-	register u32 r6 asm("w6") = 0;
+	register u64 r0 asm("x0") = w0;
+	register u64 r1 asm("x1") = w1;
+	register u64 r2 asm("x2") = w2;
+	register u64 r3 asm("x3") = w3;
+	register u64 r4 asm("x4") = w4;
+	register u64 r5 asm("x5") = w5;
+	register u64 r6 asm("x6") = 0;
 
 	do {
 		asm volatile(
@@ -539,8 +543,8 @@ u32 scm_get_version(void)
 	int context_id;
 	static u32 version = -1;
 
-	register u32 r0 asm(R0_STR);
-	register u32 r1 asm(R1_STR);
+	register u64 r0 asm(R0_STR);
+	register u64 r1 asm(R1_STR);
 
 	if (version != -1)
 		return version;
@@ -564,7 +568,7 @@ u32 scm_get_version(void)
 			: R2_STR, R3_STR);
 	} while (r0 == SCM_INTERRUPTED);
 
-	version = r1;
+	version = (u32)r1;
 	mutex_unlock(&scm_lock);
 
 	return version;

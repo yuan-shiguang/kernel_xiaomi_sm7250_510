@@ -129,6 +129,24 @@ static const struct qcom_llcc_config sdm845_cfg = {
 	.size		= ARRAY_SIZE(sdm845_data),
 };
 
+static const struct llcc_slice_config lito_data[] = {
+	{ LLCC_CPUSS,    1,  1536, 1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 1 },
+	{ LLCC_AUDIO,    6,  1024, 1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_MDM,      8,  512,  2, 0, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_GPUHTW,   11, 256,  1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_GPU,      12, 1024, 1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_DISP,     16, 1536, 1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_MDMPNG,   21, 1024, 1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_AUDHW,    22, 1024, 1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_NPU,      23, 512,  2, 0, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+	{ LLCC_MODEMVPE, 29, 128,  1, 1, 0xFFF, 0x0, 0, 0, 0, 1, 0 },
+};
+
+static const struct qcom_llcc_config lito_cfg = {
+	.sct_data	= lito_data,
+	.size		= ARRAY_SIZE(lito_data),
+};
+
 static struct llcc_drv_data *drv_data = (void *) -EPROBE_DEFER;
 
 /**
@@ -497,6 +515,7 @@ err:
 static const struct of_device_id qcom_llcc_of_match[] = {
 	{ .compatible = "qcom,sc7180-llcc", .data = &sc7180_cfg },
 	{ .compatible = "qcom,sdm845-llcc", .data = &sdm845_cfg },
+	{ .compatible = "qcom,llcc-v1", .data = &lito_cfg },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, qcom_llcc_of_match);

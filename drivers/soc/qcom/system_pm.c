@@ -18,6 +18,37 @@
 
 static struct device *dev;
 
+/*
+ * 5.10 removed the RPMH PDC-write / controller-idle / flush helpers and
+ * the memory-mapped arch-timer cval accessor this driver relied on.
+ * Provide local equivalents so the driver builds: the timer cval is read
+ * from the system counter; the RPMH PDC/idle/flush hooks are deferred
+ * (permissive) until the PDC/timer integration is ported.
+ */
+static void arch_timer_mem_get_cval(uint32_t *lo, uint32_t *hi)
+{
+	u64 cval = arch_timer_read_counter ? arch_timer_read_counter() : 0;
+
+	*lo = (u32)cval;
+	*hi = (u32)(cval >> 32);
+}
+
+static int rpmh_write_pdc_data(struct device *dev,
+			       const struct tcs_cmd *cmd, u32 n)
+{
+	return 0;
+}
+
+static bool rpmh_ctrlr_idle(struct device *dev)
+{
+	return true;
+}
+
+static int rpmh_flush(struct device *dev)
+{
+	return 0;
+}
+
 static int setup_wakeup(uint32_t lo, uint32_t hi)
 {
 	struct tcs_cmd cmd[2] = { { 0 } };

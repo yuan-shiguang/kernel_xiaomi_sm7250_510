@@ -61,7 +61,6 @@ static int secure_buffer_change_chunk(u32 chunks,
 				SCM_VAL);
 
 	kmap_flush_unused();
-	kmap_atomic_flush_unused();
 
 	ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
 			MEM_PROTECT_LOCK_ID2_FLAT), &desc);
@@ -119,8 +118,7 @@ static int secure_buffer_change_table(struct sg_table *table, int lock)
 		 * secure environment to ensure the data is actually present
 		 * in RAM
 		 */
-		dmac_flush_range(chunk_list,
-			(void *)chunk_list + chunk_list_len);
+		__flush_dcache_area((void *)chunk_list, chunk_list_len);
 
 		ret = secure_buffer_change_chunk(chunk_list_phys,
 				nchunks, V2_CHUNK_SIZE, lock);
@@ -240,8 +238,7 @@ static int batched_hyp_assign(struct sg_table *table, struct scm_desc *desc)
 							 curr_sgl, &next_sgl);
 		curr_sgl = next_sgl;
 		entries_size = batches_processed * sizeof(*sg_table_copy);
-		dmac_flush_range(sg_table_copy,
-				 (void *)sg_table_copy + entries_size);
+		__flush_dcache_area((void *)sg_table_copy, entries_size);
 		desc->args[0] = virt_to_phys(sg_table_copy);
 		desc->args[1] = entries_size;
 
@@ -331,10 +328,8 @@ static int __hyp_assign_table(struct sg_table *table,
 	desc.arginfo = SCM_ARGS(7, SCM_RO, SCM_VAL, SCM_RO, SCM_VAL, SCM_RO,
 				SCM_VAL, SCM_VAL);
 
-	dmac_flush_range(source_vm_copy,
-			 (void *)source_vm_copy + source_vm_copy_size);
-	dmac_flush_range(dest_vm_copy,
-			 (void *)dest_vm_copy + dest_vm_copy_size);
+	__flush_dcache_area((void *)source_vm_copy, source_vm_copy_size);
+	__flush_dcache_area((void *)dest_vm_copy, dest_vm_copy_size);
 
 	trace_hyp_assign_info(source_vm_list, source_nelems, dest_vmids,
 			      dest_perms, dest_nelems);

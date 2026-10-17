@@ -114,3 +114,15 @@ config PHY_QCOM_IPQ806X_USB
 	  This option enables support for the Synopsis PHYs present inside the
 	  Qualcomm USB3.0 DWC3 controller on ipq806x SoC. This driver supports
 	  both HS and SS PHY controllers.
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: 4.19 vendor QCOM 平台驱动（phase3_merge.py 自动追加）
+# ---------------------------------------------------------------------------
+
+config PHY_QCOM_UFS
+	tristate "Qualcomm UFS PHY driver"
+	depends on OF && ARCH_QCOM
+	select GENERIC_PHY
+	help
+	  Support for UFS PHY on QCOM chipsets.

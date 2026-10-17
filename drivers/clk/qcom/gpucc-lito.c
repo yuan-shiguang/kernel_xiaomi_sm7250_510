@@ -26,10 +26,7 @@
 #include "clk-regmap.h"
 #include "common.h"
 #include "reset.h"
-#include "vdd-level-lito.h"
 
-static DEFINE_VDD_REGULATORS(vdd_cx, VDD_NUM, 1, vdd_corner);
-static DEFINE_VDD_REGULATORS(vdd_mx, VDD_NUM, 1, vdd_corner);
 
 #define CX_GMU_CBCR_SLEEP_MASK		0xF
 #define CX_GMU_CBCR_SLEEP_SHIFT		4
@@ -69,7 +66,6 @@ static struct pll_vco lucid_vco[] = {
 
 static const struct alpha_pll_config gpu_cc_pll1_config = {
 	.l = 0x1A,
-	.cal_l = 0x44,
 	.alpha = 0xAAA,
 	.config_ctl_val = 0x20485699,
 	.config_ctl_hi_val = 0x00002261,
@@ -91,13 +87,6 @@ static struct clk_alpha_pll gpu_cc_pll1 = {
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_lucid_ops,
-			.vdd_class = &vdd_mx,
-			.num_rate_max = VDD_NUM,
-			.rate_max = (unsigned long[VDD_NUM]) {
-				[VDD_MIN] = 615000000,
-				[VDD_LOW] = 1066000000,
-				[VDD_LOW_L1] = 1600000000,
-				[VDD_NOMINAL] = 2000000000},
 		},
 	},
 };
@@ -115,18 +104,12 @@ static struct clk_rcg2 gpu_cc_gmu_clk_src = {
 	.hid_width = 5,
 	.parent_map = gpu_cc_parent_map_0,
 	.freq_tbl = ftbl_gpu_cc_gmu_clk_src,
-	.enable_safe_config = true,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "gpu_cc_gmu_clk_src",
 		.parent_names = gpu_cc_parent_names_0,
 		.num_parents = 6,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_LOWER] = 200000000,
-			[VDD_LOW] = 500000000},
 	},
 };
 
@@ -338,22 +321,6 @@ static int gpu_cc_lito_probe(struct platform_device *pdev)
 	regmap = qcom_cc_map(pdev, &gpu_cc_lito_desc);
 	if (IS_ERR(regmap))
 		return PTR_ERR(regmap);
-
-	vdd_cx.regulator[0] = devm_regulator_get(&pdev->dev, "vdd_cx");
-	if (IS_ERR(vdd_cx.regulator[0])) {
-		if (PTR_ERR(vdd_cx.regulator[0]) != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"Unable to get vdd_cx regulator\n");
-		return PTR_ERR(vdd_cx.regulator[0]);
-	}
-
-	vdd_mx.regulator[0] = devm_regulator_get(&pdev->dev, "vdd_mx");
-	if (IS_ERR(vdd_mx.regulator[0])) {
-		if (PTR_ERR(vdd_mx.regulator[0]) != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"Unable to get vdd_mx regulator\n");
-		return PTR_ERR(vdd_mx.regulator[0]);
-	}
 
 	clk_lucid_pll_configure(&gpu_cc_pll1, regmap, &gpu_cc_pll1_config);
 

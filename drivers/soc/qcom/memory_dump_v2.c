@@ -587,7 +587,7 @@ static int msm_dump_table_register(struct msm_dump_entry *entry)
 	e->addr = entry->addr;
 	table->num_entries++;
 
-	dmac_flush_range(table, (void *)table + sizeof(struct msm_dump_table));
+	__flush_dcache_area(table, sizeof(struct msm_dump_table));
 	return 0;
 }
 
@@ -663,7 +663,7 @@ static int register_dump_table_entry(enum msm_dump_table_ids id,
 	e->addr = entry->addr;
 	table->num_entries++;
 
-	dmac_flush_range(table, (void *)table + sizeof(struct msm_dump_table));
+	__flush_dcache_area(table, sizeof(struct msm_dump_table));
 	return 0;
 }
 

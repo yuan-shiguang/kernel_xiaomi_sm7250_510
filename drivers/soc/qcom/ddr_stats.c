@@ -136,7 +136,7 @@ static ssize_t ddr_stats_show(struct kobject *kobj,
 
 	pdata = GET_PDATA_OF_ATTR(attr);
 
-	reg = ioremap_nocache(pdata->phys_addr_base, pdata->phys_size);
+	reg = ioremap(pdata->phys_addr_base, pdata->phys_size);
 	if (!reg) {
 		pr_err("ERROR could not ioremap start=%pa, len=%u\n",
 		       &pdata->phys_addr_base, pdata->phys_size);
@@ -215,7 +215,7 @@ static int ddr_stats_probe(struct platform_device *pdev)
 					      "offset_addr");
 	if (offset) {
 		/* Remap the ddr stats pointer */
-		phys_ptr = ioremap_nocache(offset->start, SZ_4);
+		phys_ptr = ioremap(offset->start, SZ_4);
 		if (!phys_ptr) {
 			pr_err("Failed to ioremap offset address\n");
 			return -ENODEV;

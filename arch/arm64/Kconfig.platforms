@@ -201,6 +201,22 @@ config ARCH_QCOM
 	help
 	  This enables support for the ARMv8 based Qualcomm chipsets.
 
+config ARCH_LITO
+	bool "Enable Support for Qualcomm Technologies, Inc. LITO"
+	depends on ARCH_QCOM
+	select COMMON_CLK_QCOM
+	help
+	  This enables support for the LITO chipset (SM7150). Selected by
+	  picasso_user_defconfig; ported from 4.19 Kconfig.platforms.
+
+config ARCH_LAGOON
+	bool "Enable Support for Qualcomm Technologies, Inc. LAGOON"
+	depends on ARCH_QCOM
+	select COMMON_CLK_QCOM
+	help
+	  This enables support for the LAGOON chipset (LITO variant). Ported
+	  from 4.19 Kconfig.platforms.
+
 config ARCH_REALTEK
 	bool "Realtek Platforms"
 	select RESET_CONTROLLER

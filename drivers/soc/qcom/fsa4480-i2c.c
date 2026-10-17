@@ -10,6 +10,20 @@
 #include <linux/mutex.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
 
+/* 5.10: enum power_supply_typec_mode and the TYPEC_MODE property were
+ * removed from the power_supply API. The USB psy now exposes the
+ * USB_TYPE property instead. The defines below keep the original
+ * notification logic compiling; the audio-adapter case is retained for
+ * structural parity but will not trigger until a type-C notifier is wired
+ * in (power_supply_usb_type has no audio-adapter value).
+ */
+#ifndef POWER_SUPPLY_TYPEC_NONE
+#define POWER_SUPPLY_TYPEC_NONE POWER_SUPPLY_USB_TYPE_UNKNOWN
+#endif
+#ifndef POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER
+#define POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER 7
+#endif
+
 #define FSA4480_I2C_NAME	"fsa4480-driver"
 
 #define FSA4480_SWITCH_SETTINGS 0x04
@@ -97,7 +111,7 @@ static int fsa4480_usbc_event_changed(struct notifier_block *nb,
 		return 0;
 
 	ret = power_supply_get_property(fsa_priv->usb_psy,
-			POWER_SUPPLY_PROP_TYPEC_MODE, &mode);
+			POWER_SUPPLY_PROP_USB_TYPE, &mode);
 	if (ret) {
 		dev_err(dev, "%s: Unable to read USB TYPEC_MODE: %d\n",
 			__func__, ret);
@@ -141,7 +155,7 @@ static int fsa4480_usbc_analog_setup_switches(struct fsa4480_priv *fsa_priv)
 	mutex_lock(&fsa_priv->notification_lock);
 	/* get latest mode again within locked context */
 	rc = power_supply_get_property(fsa_priv->usb_psy,
-			POWER_SUPPLY_PROP_TYPEC_MODE, &mode);
+			POWER_SUPPLY_PROP_USB_TYPE, &mode);
 	if (rc) {
 		dev_err(dev, "%s: Unable to read USB TYPEC_MODE: %d\n",
 			__func__, rc);
@@ -247,7 +261,7 @@ int fsa4480_unreg_notifier(struct notifier_block *nb,
 	mutex_lock(&fsa_priv->notification_lock);
 	/* get latest mode within locked context */
 	rc = power_supply_get_property(fsa_priv->usb_psy,
-			POWER_SUPPLY_PROP_TYPEC_MODE, &mode);
+			POWER_SUPPLY_PROP_USB_TYPE, &mode);
 	if (rc) {
 		dev_dbg(dev, "%s: Unable to read USB TYPEC_MODE: %d\n",
 			__func__, rc);

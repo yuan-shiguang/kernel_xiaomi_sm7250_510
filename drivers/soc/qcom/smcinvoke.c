@@ -20,6 +20,7 @@
 #include <linux/uaccess.h>
 #include <linux/dma-buf.h>
 #include <linux/kref.h>
+#include <linux/overflow.h>
 #include <linux/signal.h>
 
 #include <soc/qcom/scm.h>
@@ -556,15 +557,6 @@ static struct smcinvoke_cb_txn *find_cbtxn_locked(
 		}
 	}
 	return NULL;
-}
-
-/*
- * size_add saturates at SIZE_MAX. If integer overflow is detected,
- * this function would return SIZE_MAX otherwise normal a+b is returned.
- */
-static inline size_t size_add(size_t a, size_t b)
-{
-	return (b > (SIZE_MAX - a)) ? SIZE_MAX : a + b;
 }
 
 /*
@@ -1112,8 +1104,8 @@ static int prepare_send_scm_msg(const uint8_t *in_buf, phys_addr_t in_paddr,
 	desc.args[2] = (uint64_t)out_paddr;
 	desc.args[3] = out_buf_len;
 	cmd = SMCINVOKE_INVOKE_CMD;
-	dmac_flush_range(in_buf, in_buf + in_buf_len);
-	dmac_flush_range(out_buf, out_buf + out_buf_len);
+	__flush_dcache_area((void *)in_buf, in_buf_len);
+	__flush_dcache_area((void *)out_buf, out_buf_len);
 	/*
 	 * purpose of lock here is to ensure that any CB obj that may be going
 	 * to user as OO is not released by piggyback message on another invoke
@@ -1131,7 +1123,7 @@ static int prepare_send_scm_msg(const uint8_t *in_buf, phys_addr_t in_paddr,
 
 			/* dont marshal if Obj returns an error */
 			if (!req->result) {
-				dmac_inv_range(in_buf, in_buf + in_buf_len);
+				__inval_dcache_area((void *)in_buf, in_buf_len);
 				if (args_buf != NULL)
 					ret = marshal_out_invoke_req(in_buf,
 						in_buf_len, req, args_buf);
@@ -1153,7 +1145,7 @@ static int prepare_send_scm_msg(const uint8_t *in_buf, phys_addr_t in_paddr,
 			req->result = (int32_t)desc.ret[1];
 			if (!req->result &&
 			  desc.ret[0] != SMCINVOKE_RESULT_INBOUND_REQ_NEEDED) {
-				dmac_inv_range(in_buf, in_buf + in_buf_len);
+				__inval_dcache_area((void *)in_buf, in_buf_len);
 				ret = marshal_out_invoke_req(in_buf,
 						in_buf_len, req, args_buf);
 			}
@@ -1180,7 +1172,7 @@ static int prepare_send_scm_msg(const uint8_t *in_buf, phys_addr_t in_paddr,
 			break;
 		}
 
-		dmac_inv_range(out_buf, out_buf + out_buf_len);
+		__inval_dcache_area((void *)out_buf, out_buf_len);
 
 		if (desc.ret[0] == SMCINVOKE_RESULT_INBOUND_REQ_NEEDED) {
 			process_tzcb_req(out_buf, out_buf_len, arr_filp);
@@ -1188,7 +1180,7 @@ static int prepare_send_scm_msg(const uint8_t *in_buf, phys_addr_t in_paddr,
 			desc.args[0] = (uint64_t)virt_to_phys(out_buf);
 			desc.args[1] = out_buf_len;
 			cmd = SMCINVOKE_CB_RSP_CMD;
-			dmac_flush_range(out_buf, out_buf + out_buf_len);
+			__flush_dcache_area((void *)out_buf, out_buf_len);
 		}
 	}
 	return ret;
@@ -1451,9 +1443,9 @@ static void process_piggyback_data(void *buf, size_t buf_size)
 	struct smcinvoke_piggyback_msg *msg = buf;
 	int32_t *objs = msg->objs;
 
-	dmac_flush_range(buf, buf + buf_size);
+	__flush_dcache_area(buf, buf_size);
 	if (msg->counts)
-		dmac_inv_range(buf, buf + buf_size);
+		__inval_dcache_area(buf, buf_size);
 
 	for (i = 0; i < msg->counts; i++) {
 		req.hdr.op = msg->op;

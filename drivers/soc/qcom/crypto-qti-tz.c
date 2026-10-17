@@ -52,7 +52,7 @@ int crypto_qti_program_key(struct crypto_vops_qti_entry *ice_entry,
 	}
 
 	memcpy(tzbuf, key_new.bytes, key->size);
-	dmac_flush_range(tzbuf, tzbuf + key->size);
+	__flush_dcache_area(tzbuf, key->size);
 
 	smc_id = TZ_ES_CONFIG_SET_ICE_KEY_CE_TYPE_ID;
 	desc.arginfo = TZ_ES_CONFIG_SET_ICE_KEY_CE_TYPE_PARAM_ID;
@@ -114,7 +114,7 @@ int crypto_qti_tz_raw_secret(const u8 *wrapped_key,
 
 	tzbuf_key = shm_key.vaddr;
 	memcpy(tzbuf_key, wrapped_key, wrapped_key_size);
-	dmac_flush_range(tzbuf_key, tzbuf_key + wrapped_key_size);
+	__flush_dcache_area(tzbuf_key, wrapped_key_size);
 
 	smc_id = TZ_ES_RETRIEVE_RAW_SECRET_CE_TYPE_ID;
 	desc.arginfo = TZ_ES_RETRIEVE_RAW_SECRET_CE_TYPE_PARAM_ID;
@@ -124,7 +124,7 @@ int crypto_qti_tz_raw_secret(const u8 *wrapped_key,
 	desc.args[3] = secret_size;
 
 	memset(shm_secret.vaddr, 0, secret_size);
-	dmac_flush_range(shm_secret.vaddr, shm_secret.vaddr + secret_size);
+	__flush_dcache_area(shm_secret.vaddr, secret_size);
 
 	err = scm_call2(smc_id, &desc);
 	if (err) {
@@ -132,7 +132,7 @@ int crypto_qti_tz_raw_secret(const u8 *wrapped_key,
 		return err;
 	}
 
-	dmac_inv_range(shm_secret.vaddr, shm_secret.vaddr + secret_size);
+	__inval_dcache_area(shm_secret.vaddr, secret_size);
 	memcpy(secret, shm_secret.vaddr, secret_size);
 
 	qtee_shmbridge_free_shm(&shm_key);

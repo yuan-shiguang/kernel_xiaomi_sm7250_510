@@ -728,3 +728,10 @@ CONFIG_RUNTIME_TESTING_MENU=y
 CONFIG_DEBUG_ALIGN_RODATA=y
 CONFIG_ARM64_STRICT_BREAK_BEFORE_MAKE=y
 CONFIG_TEST_BPF=m
+
+# ---------------------------------------------------------------------------
+# Phase 3/6: 启用 QCOM 时钟框架父开关
+# COMMON_CLK_QCOM 是所有 qcom 时钟驱动 (SM_GCC_*/SM_DISPCC_*/SM_GPUCC_* 等)
+# 的 depends on 父符号；4.19 的 defconfig 未引用它，导致全部 qcom 时钟被门控。
+# ---------------------------------------------------------------------------
+CONFIG_COMMON_CLK_QCOM=y

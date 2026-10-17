@@ -8,9 +8,12 @@
 
 #include <linux/adc-tm-clients.h>
 #include <linux/iio/consumer.h>
-#include <asm/dma-iommu.h>
 #include <linux/kobject.h>
 #include <linux/power_supply.h>
+
+#ifndef DEVICE
+#define DEVICE "icnss "
+#endif
 
 #define icnss_ipc_log_string(_x...) do {				\
 	if (icnss_ipc_log_context)					\

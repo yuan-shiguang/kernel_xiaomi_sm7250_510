@@ -28,9 +28,7 @@
 #include "common.h"
 #include "gdsc.h"
 #include "reset.h"
-#include "vdd-level-lito.h"
 
-static DEFINE_VDD_REGULATORS(vdd_cx, VDD_NUM, 1, vdd_corner);
 
 #define IRIS_DISABLE_MULTIPIPE	21
 #define IRIS_DISABLE_VP_FMAX	27
@@ -86,7 +84,6 @@ static struct pll_vco lucid_vco[] = {
 
 static struct alpha_pll_config video_pll0_config = {
 	.l = 0x19,
-	.cal_l = 0x44,
 	.alpha = 0x0,
 	.config_ctl_val = 0x20485699,
 	.config_ctl_hi_val = 0x00002261,
@@ -108,13 +105,6 @@ static struct clk_alpha_pll video_pll0 = {
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_lucid_ops,
-			.vdd_class = &vdd_cx,
-			.num_rate_max = VDD_NUM,
-			.rate_max = (unsigned long[VDD_NUM]) {
-				[VDD_MIN] = 615000000,
-				[VDD_LOW] = 1066000000,
-				[VDD_LOW_L1] = 1600000000,
-				[VDD_NOMINAL] = 2000000000},
 		},
 	},
 };
@@ -144,21 +134,12 @@ static struct clk_rcg2 video_cc_iris_clk_src = {
 	.hid_width = 5,
 	.parent_map = video_cc_parent_map_0,
 	.freq_tbl = ftbl_video_cc_iris_clk_src,
-	.enable_safe_config = true,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "video_cc_iris_clk_src",
 		.parent_names = video_cc_parent_names_0,
 		.num_parents = 5,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_LOWER] = 240000000,
-			[VDD_LOW] = 338000000,
-			[VDD_LOW_L1] = 365000000,
-			[VDD_NOMINAL] = 444000000,
-			[VDD_HIGH] = 533000000},
 	},
 };
 
@@ -178,10 +159,6 @@ static struct clk_rcg2 video_cc_sleep_clk_src = {
 		.parent_names = video_cc_parent_names_1,
 		.num_parents = 2,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_LOWER] = 32000},
 	},
 };
 
@@ -422,16 +399,6 @@ static int video_multipipe_fixup(struct platform_device *pdev,
 		video_pll0_config.l = 0x14;
 		video_cc_iris_clk_src.freq_tbl =
 				ftbl_video_cc_iris_multipipe_clk_src;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_LOWER] =
-				200000000;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_LOW] =
-				200000000;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] =
-				200000000;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] =
-				200000000;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_HIGH] =
-				200000000;
 		return 0;
 	}
 
@@ -439,10 +406,6 @@ static int video_multipipe_fixup(struct platform_device *pdev,
 		video_pll0_config.l = 0x14;
 		video_cc_iris_clk_src.freq_tbl =
 				ftbl_video_cc_iris_fmax_clk_src;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] =
-				365000000;
-		video_cc_iris_clk_src.clkr.hw.init->rate_max[VDD_HIGH] =
-				365000000;
 	}
 
 	return 0;
@@ -467,13 +430,6 @@ static int video_cc_lito_probe(struct platform_device *pdev)
 		return PTR_ERR(clk);
 	}
 	devm_clk_put(&pdev->dev, clk);
-
-	vdd_cx.regulator[0] = devm_regulator_get(&pdev->dev, "vdd_cx");
-	if (IS_ERR(vdd_cx.regulator[0])) {
-		if (PTR_ERR(vdd_cx.regulator[0]) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Unable to get vdd_cx regulator\n");
-		return PTR_ERR(vdd_cx.regulator[0]);
-	}
 
 	ret = video_multipipe_fixup(pdev, regmap);
 	if (ret)

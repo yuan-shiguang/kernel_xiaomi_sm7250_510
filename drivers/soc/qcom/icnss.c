@@ -952,7 +952,7 @@ static int icnss_setup_vph_monitor(struct icnss_priv *priv)
 	priv->vph_monitor_params.low_thr = ICNSS_THRESHOLD_LOW;
 	priv->vph_monitor_params.high_thr = ICNSS_THRESHOLD_HIGH;
 	priv->vph_monitor_params.state_request = ADC_TM_HIGH_LOW_THR_ENABLE;
-	priv->vph_monitor_params.channel = ADC_VBAT_SNS;
+	priv->vph_monitor_params.channel = VADC_VBAT_SNS;
 	priv->vph_monitor_params.btm_ctx = priv;
 	priv->vph_monitor_params.threshold_notification = &icnss_vph_notify;
 	icnss_pr_dbg("Set low threshold to %d, high threshold to %d\n",

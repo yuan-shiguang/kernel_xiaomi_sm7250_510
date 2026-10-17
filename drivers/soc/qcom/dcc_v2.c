@@ -199,7 +199,7 @@ static void dcc_sram_memset(const struct device *dev, void __iomem *dst,
 	}
 
 	while (count >= 4) {
-		__raw_writel_no_log(qc, dst);
+		__raw_writel(qc, dst);
 		dst += 4;
 		count -= 4;
 	}
@@ -215,7 +215,7 @@ static int dcc_sram_memcpy(void *to, const void __iomem *from,
 	}
 
 	while (count >= 4) {
-		*(unsigned int *)to = __raw_readl_no_log(from);
+		*(unsigned int *)to = __raw_readl(from);
 		to += 4;
 		from += 4;
 		count -= 4;
@@ -343,19 +343,19 @@ static int __dcc_ll_cfg(struct dcc_drvdata *drvdata, int curr_list)
 			ret = dcc_sram_writel(drvdata, addr, sram_offset);
 			if (ret)
 				goto overstep;
-				sram_offset += 4;
+			sram_offset += 4;
 
 			ret = dcc_sram_writel(drvdata,
 					entry->mask, sram_offset);
 			if (ret)
 				goto overstep;
-				sram_offset += 4;
+			sram_offset += 4;
 
 			ret = dcc_sram_writel(drvdata,
 					entry->write_val, sram_offset);
 			if (ret)
 				goto overstep;
-				sram_offset += 4;
+			sram_offset += 4;
 			addr = 0;
 			break;
 		}
@@ -438,18 +438,18 @@ static int __dcc_ll_cfg(struct dcc_drvdata *drvdata, int curr_list)
 			ret = dcc_sram_writel(drvdata, addr, sram_offset);
 			if (ret)
 				goto overstep;
-				sram_offset += 4;
+			sram_offset += 4;
 
 			ret = dcc_sram_writel(drvdata, link, sram_offset);
 			if (ret)
 				goto overstep;
-				sram_offset += 4;
+			sram_offset += 4;
 
 			ret = dcc_sram_writel(drvdata,
 				entry->write_val, sram_offset);
 			if (ret)
 				goto overstep;
-				sram_offset += 4;
+			sram_offset += 4;
 			addr = 0x00;
 			link = 0;
 			break;

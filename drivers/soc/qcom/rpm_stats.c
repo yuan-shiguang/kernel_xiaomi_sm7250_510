@@ -90,7 +90,7 @@ static inline int msm_rpmstats_append_data_to_buf(char *buf,
 
 	time_in_last_mode = data->last_exited_at - data->last_entered_at;
 	time_in_last_mode = get_time_in_msec(time_in_last_mode);
-	time_since_last_mode = arch_counter_get_cntvct() - data->last_exited_at;
+	time_since_last_mode = __arch_counter_get_cntvct() - data->last_exited_at;
 	time_since_last_mode = get_time_in_sec(time_since_last_mode);
 	actual_last_sleep = get_time_in_msec(data->accumulated);
 
@@ -176,7 +176,7 @@ static ssize_t rpmstats_show(struct kobject *kobj,
 
 	pdata = GET_PDATA_OF_ATTR(attr);
 
-	prvdata.reg_base = ioremap_nocache(pdata->phys_addr_base,
+	prvdata.reg_base = ioremap(pdata->phys_addr_base,
 					pdata->phys_size);
 	if (!prvdata.reg_base) {
 		pr_err("ERROR could not ioremap start=%pa, len=%u\n",
@@ -254,7 +254,7 @@ static int msm_rpmstats_probe(struct platform_device *pdev)
 	offset = platform_get_resource_byname(pdev, IORESOURCE_MEM, key);
 	if (offset) {
 		/* Remap the rpm-stats pointer */
-		phys_ptr = ioremap_nocache(offset->start, SZ_4);
+		phys_ptr = ioremap(offset->start, SZ_4);
 		if (!phys_ptr) {
 			pr_err("Failed to ioremap offset address\n");
 			return -ENODEV;

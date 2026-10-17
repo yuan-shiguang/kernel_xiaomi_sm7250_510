@@ -206,7 +206,8 @@ static int glink_pkt_rpdev_cb(struct rpmsg_device *rpdev, void *buf, int len,
 	return 0;
 }
 
-static int glink_pkt_rpdev_sigs(struct rpmsg_device *rpdev, u32 old, u32 new)
+static int glink_pkt_rpdev_sigs(struct rpmsg_device *rpdev,
+				    void *priv, u32 old, u32 new)
 {
 	struct device_driver *drv = rpdev->dev.driver;
 	struct rpmsg_driver *rpdrv = drv_to_rpdrv(drv);
@@ -506,7 +507,7 @@ static unsigned int glink_pkt_poll(struct file *file, poll_table *wait)
 static int glink_pkt_tiocmset(struct glink_pkt_device *gpdev, unsigned int cmd,
 			      unsigned long arg)
 {
-	u32 lsigs, rsigs, val;
+	u32 lsigs, val;
 	int ret;
 
 	ret = get_user(val, (u32 *)arg);
@@ -514,11 +515,12 @@ static int glink_pkt_tiocmset(struct glink_pkt_device *gpdev, unsigned int cmd,
 		return ret;
 
 	to_smd_signal(val);
-	ret = rpmsg_get_sigs(gpdev->rpdev->ept, &lsigs, &rsigs);
+	ret = rpmsg_get_signals(gpdev->rpdev->ept);
 	if (ret < 0) {
 		GLINK_PKT_ERR("%s: Get signals failed[%d]\n", __func__, ret);
 		return ret;
 	}
+	lsigs = (u32)ret;
 	switch (cmd) {
 	case TIOCMBIS:
 		lsigs |= val;
@@ -530,7 +532,7 @@ static int glink_pkt_tiocmset(struct glink_pkt_device *gpdev, unsigned int cmd,
 		lsigs = val;
 		break;
 	}
-	ret = rpmsg_set_sigs(gpdev->rpdev->ept, lsigs);
+	ret = rpmsg_set_signals(gpdev->rpdev->ept, lsigs, ~lsigs);
 	GLINK_PKT_INFO("sigs[0x%x] ret[%d]\n", lsigs, ret);
 	return ret;
 }
@@ -573,10 +575,13 @@ static long glink_pkt_ioctl(struct file *file, unsigned int cmd,
 		gpdev->sig_change = false;
 		spin_unlock_irqrestore(&gpdev->queue_lock, flags);
 
-		ret = rpmsg_get_sigs(gpdev->rpdev->ept, &lsigs, &rsigs);
+		ret = rpmsg_get_signals(gpdev->rpdev->ept);
+		if (ret < 0)
+			break;
+		lsigs = (u32)ret;
+		rsigs = lsigs;
 		from_smd_signal(rsigs);
-		if (!ret)
-			ret = put_user(rsigs, (uint32_t *)arg);
+		ret = put_user(rsigs, (uint32_t *)arg);
 		break;
 	case TIOCMSET:
 	case TIOCMBIS:

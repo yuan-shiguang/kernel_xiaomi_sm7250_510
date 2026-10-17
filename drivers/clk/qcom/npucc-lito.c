@@ -27,9 +27,7 @@
 #include "clk-regmap.h"
 #include "common.h"
 #include "reset.h"
-#include "vdd-level-lito.h"
 
-static DEFINE_VDD_REGULATORS(vdd_cx, VDD_NUM, 1, vdd_corner);
 
 #define HM0_CRC_SID_FSM_CTRL		0x11A0
 #define CRC_SID_FSM_CTRL_SETTING	0x800000
@@ -117,13 +115,9 @@ static const u32 crc_reg_val[] = {
 	CRC_MND_CFG_SETTING, CRC_SID_FSM_CTRL_SETTING,
 };
 
-static const u32 no_crc_reg_val[] = {
-	0x0, 0x0,
-};
 
 static struct alpha_pll_config npu_cc_pll0_config = {
 	.l = 0x14,
-	.cal_l = 0x49,
 	.alpha = 0xD555,
 	.config_ctl_val = 0x20485699,
 	.config_ctl_hi_val = 0x00002261,
@@ -132,9 +126,6 @@ static struct alpha_pll_config npu_cc_pll0_config = {
 	.user_ctl_hi_val = 0x00000805,
 	.user_ctl_hi1_val = 0x00000000,
 	.test_ctl_hi1_val = 0x01800000,
-	.custom_reg_offset = crc_reg_offset,
-	.custom_reg_val = crc_reg_val,
-	.num_custom_reg = ARRAY_SIZE(crc_reg_offset),
 };
 
 static struct clk_alpha_pll npu_cc_pll0 = {
@@ -142,20 +133,12 @@ static struct clk_alpha_pll npu_cc_pll0 = {
 	.vco_table = lucid_vco,
 	.num_vco = ARRAY_SIZE(lucid_vco),
 	.regs = clk_alpha_pll_regs[CLK_ALPHA_PLL_TYPE_LUCID],
-	.config = &npu_cc_pll0_config,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "npu_cc_pll0",
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_lucid_ops,
-			.vdd_class = &vdd_cx,
-			.num_rate_max = VDD_NUM,
-			.rate_max = (unsigned long[VDD_NUM]) {
-				[VDD_MIN] = 615000000,
-				[VDD_LOW] = 1066000000,
-				[VDD_LOW_L1] = 1600000000,
-				[VDD_NOMINAL] = 2000000000},
 		},
 	},
 };
@@ -183,7 +166,6 @@ static struct clk_alpha_pll_postdiv npu_cc_pll0_out_even = {
 
 static struct alpha_pll_config npu_cc_pll1_config = {
 	.l = 0x4E,
-	.cal_l = 0x44,
 	.alpha = 0x2000,
 	.config_ctl_val = 0x20485699,
 	.config_ctl_hi_val = 0x00002261,
@@ -199,20 +181,12 @@ static struct clk_alpha_pll npu_cc_pll1 = {
 	.vco_table = lucid_vco,
 	.num_vco = ARRAY_SIZE(lucid_vco),
 	.regs = clk_alpha_pll_regs[CLK_ALPHA_PLL_TYPE_LUCID],
-	.config = &npu_cc_pll1_config,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "npu_cc_pll1",
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_lucid_ops,
-			.vdd_class = &vdd_cx,
-			.num_rate_max = VDD_NUM,
-			.rate_max = (unsigned long[VDD_NUM]) {
-				[VDD_MIN] = 615000000,
-				[VDD_LOW] = 1066000000,
-				[VDD_LOW_L1] = 1600000000,
-				[VDD_NOMINAL] = 2000000000},
 		},
 	},
 };
@@ -239,7 +213,6 @@ static struct clk_alpha_pll_postdiv npu_cc_pll1_out_even = {
 
 static struct alpha_pll_config npu_q6ss_pll_config = {
 	.l = 0xD,
-	.cal_l = 0x44,
 	.alpha = 0x555,
 	.config_ctl_val = 0x20485699,
 	.config_ctl_hi_val = 0x00002261,
@@ -255,20 +228,12 @@ static struct clk_alpha_pll npu_q6ss_pll = {
 	.vco_table = lucid_vco,
 	.num_vco = ARRAY_SIZE(lucid_vco),
 	.regs = clk_alpha_pll_regs[CLK_ALPHA_PLL_TYPE_LUCID],
-	.config = &npu_q6ss_pll_config,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "npu_q6ss_pll",
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_lucid_ops,
-			.vdd_class = &vdd_cx,
-			.num_rate_max = VDD_NUM,
-			.rate_max = (unsigned long[VDD_NUM]) {
-				[VDD_MIN] = 615000000,
-				[VDD_LOW] = 1066000000,
-				[VDD_LOW_L1] = 1600000000,
-				[VDD_NOMINAL] = 2000000000},
 		},
 	},
 };
@@ -313,23 +278,12 @@ static struct clk_rcg2 npu_cc_cal_hm0_clk_src = {
 	.hid_width = 5,
 	.parent_map = npu_cc_parent_map_0_crc,
 	.freq_tbl = ftbl_npu_cc_cal_hm0_clk_src,
-	.enable_safe_config = true,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "npu_cc_cal_hm0_clk_src",
 		.parent_names = npu_cc_parent_names_0_crc,
 		.num_parents = 6,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_MIN] = 200000000,
-			[VDD_LOWER] = 230000000,
-			[VDD_LOW] = 422000000,
-			[VDD_LOW_L1] = 557000000,
-			[VDD_NOMINAL] = 729000000,
-			[VDD_HIGH] = 844000000,
-			[VDD_HIGH_L1] = 1000000000},
 	},
 };
 
@@ -359,21 +313,11 @@ static struct clk_rcg2 npu_cc_core_clk_src = {
 	.hid_width = 5,
 	.parent_map = npu_cc_parent_map_0,
 	.freq_tbl = ftbl_npu_cc_core_clk_src,
-	.enable_safe_config = true,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "npu_cc_core_clk_src",
 		.parent_names = npu_cc_parent_names_0,
 		.num_parents = 6,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_MIN] = 60000000,
-			[VDD_LOWER] = 100000000,
-			[VDD_LOW] = 200000000,
-			[VDD_LOW_L1] = 333333333,
-			[VDD_NOMINAL] = 428571429,
-			[VDD_HIGH] = 500000000},
 	},
 };
 
@@ -400,20 +344,11 @@ static struct clk_rcg2 npu_cc_lmh_clk_src = {
 	.hid_width = 5,
 	.parent_map = npu_cc_parent_map_0,
 	.freq_tbl = ftbl_npu_cc_lmh_clk_src,
-	.enable_safe_config = true,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "npu_cc_lmh_clk_src",
 		.parent_names = npu_cc_parent_names_0,
 		.num_parents = 6,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_MIN] = 60000000,
-			[VDD_LOWER] = 100000000,
-			[VDD_LOW] = 200000000,
-			[VDD_LOW_L1] = 214285714,
-			[VDD_NOMINAL] = 300000000},
 	},
 };
 
@@ -452,22 +387,12 @@ static struct clk_rcg2 npu_dsp_core_clk_src = {
 	.hid_width = 5,
 	.parent_map = npu_cc_parent_map_2,
 	.freq_tbl = ftbl_npu_dsp_core_clk_src,
-	.enable_safe_config = true,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "npu_dsp_core_clk_src",
 		.parent_names = npu_cc_parent_names_2,
 		.num_parents = 3,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &clk_rcg2_ops,
-		.vdd_class = &vdd_cx,
-		.num_rate_max = VDD_NUM,
-		.rate_max = (unsigned long[VDD_NUM]) {
-			[VDD_MIN] = 250000000,
-			[VDD_LOWER] = 300000000,
-			[VDD_LOW] = 400000000,
-			[VDD_LOW_L1] = 500000000,
-			[VDD_NOMINAL] = 660000000,
-			[VDD_HIGH] = 800000000},
 	},
 };
 
@@ -1065,7 +990,6 @@ static int npu_cc_lito_fixup(struct platform_device *pdev)
 
 	val = val & GENMASK(17, 10);
 	if (val) {
-		npu_cc_pll0_config.custom_reg_val = no_crc_reg_val;
 		npu_cc_crc_div.div = 1;
 		npu_cc_cal_hm0_clk_src.freq_tbl =
 					ftbl_npu_cc_cal_hm0_clk_src_no_crc;
@@ -1076,14 +1000,8 @@ static int npu_cc_lito_fixup(struct platform_device *pdev)
 		npu_cc_pll1_config.alpha = 0x1555;
 
 		npu_cc_lmh_clk_src.freq_tbl = ftbl_npu_cc_lmh_clk_src_v2;
-		npu_cc_lmh_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] =
-								200000000;
-		npu_cc_lmh_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] =
-								285714286;
 
 		npu_cc_core_clk_src.freq_tbl = ftbl_npu_cc_core_clk_src_v2;
-		npu_cc_core_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] =
-								400000000;
 	}
 
 	return 0;
@@ -1131,15 +1049,6 @@ static int npu_clocks_lito_probe(struct platform_device *pdev,
 static int npu_cc_lito_probe(struct platform_device *pdev)
 {
 	int ret;
-
-	vdd_cx.regulator[0] = devm_regulator_get(&pdev->dev, "vdd_cx");
-	if (IS_ERR(vdd_cx.regulator[0])) {
-		ret = PTR_ERR(vdd_cx.regulator[0]);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Unable to get vdd_cx regulator, ret=%d\n",
-									ret);
-		return ret;
-	}
 
 	ret = npu_cc_lito_fixup(pdev);
 	if (ret)

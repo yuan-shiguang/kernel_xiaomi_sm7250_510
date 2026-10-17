@@ -12,3 +12,11 @@ obj-$(CONFIG_PHY_QCOM_USB_HS_28NM)	+= phy-qcom-usb-hs-28nm.o
 obj-$(CONFIG_PHY_QCOM_USB_SS)		+= phy-qcom-usb-ss.o
 obj-$(CONFIG_PHY_QCOM_USB_SNPS_FEMTO_V2)+= phy-qcom-snps-femto-v2.o
 obj-$(CONFIG_PHY_QCOM_IPQ806X_USB)		+= phy-qcom-ipq806x-usb.o
+
+# Phase 3: 4.19 vendor 模块（phase3_merge.py 自动追加）
+obj-$(CONFIG_PHY_QCOM_UFS)		+= phy-qcom-ufs-qmp-v3-660.o
+obj-$(CONFIG_PHY_QCOM_UFS)      	+= phy-qcom-ufs-qmp-v3.o
+obj-$(CONFIG_PHY_QCOM_UFS) 		+= phy-qcom-ufs-qmp-v4-lito.o
+obj-$(CONFIG_PHY_QCOM_UFS) 		+= phy-qcom-ufs-qmp-v4.o
+obj-$(CONFIG_PHY_QCOM_UFS)		+= phy-qcom-ufs-qrbtc-sdm845.o
+obj-$(CONFIG_PHY_QCOM_UFS)		+= phy-qcom-ufs.o

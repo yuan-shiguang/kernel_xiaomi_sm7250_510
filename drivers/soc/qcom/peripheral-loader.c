@@ -38,6 +38,18 @@
 
 #include "peripheral-loader.h"
 
+static bool pil_memblock_overlaps_memory(phys_addr_t base, phys_addr_t size)
+{
+	u64 i;
+	phys_addr_t start, end;
+
+	for_each_mem_range(i, &start, &end) {
+		if (base < end && (base + size) > start)
+			return true;
+	}
+	return false;
+}
+
 #define pil_err(desc, fmt, ...)						\
 	dev_err(desc->dev, "%s: " fmt, desc->name, ##__VA_ARGS__)
 #define pil_info(desc, fmt, ...)					\
@@ -288,7 +300,7 @@ static unsigned int prepare_minidump_segments(struct ramdump_segment *rd_segs,
 			rd_segs++;
 			val_segs++;
 		} else {
-			*ss_valid_seg_cnt--;
+			(*ss_valid_seg_cnt)--;
 		}
 
 		region_info++;
@@ -699,7 +711,7 @@ static struct pil_seg *pil_init_seg(const struct pil_desc *desc,
 	const struct pil_priv *priv = desc->priv;
 	struct pil_seg *seg;
 
-	if (!reloc && memblock_overlaps_memory(phdr->p_paddr, phdr->p_memsz)) {
+	if (!reloc && pil_memblock_overlaps_memory(phdr->p_paddr, phdr->p_memsz)) {
 		pil_err(desc, "Segment not relocatable,kernel memory would be overwritten[%#08lx, %#08lx)\n",
 		(unsigned long)phdr->p_paddr,
 		(unsigned long)(phdr->p_paddr + phdr->p_memsz));
@@ -799,7 +811,7 @@ static int pil_alloc_region(struct pil_priv *priv, phys_addr_t min_addr,
 		aligned_size = ALIGN(size, SZ_4K);
 
 	priv->desc->attrs = 0;
-	priv->desc->attrs |= DMA_ATTR_SKIP_ZEROING | DMA_ATTR_NO_KERNEL_MAPPING;
+	priv->desc->attrs |= DMA_ATTR_NO_KERNEL_MAPPING;
 
 	region = dma_alloc_attrs(priv->desc->dev, aligned_size,
 				&priv->region_start, GFP_KERNEL,
@@ -991,17 +1003,12 @@ static void pil_clear_segment(struct pil_desc *desc)
 
 static void *map_fw_mem(phys_addr_t paddr, size_t size, void *data)
 {
-	struct pil_map_fw_info *info = data;
-
-	return dma_remap(info->dev, info->region, paddr, size,
-					info->attrs);
+	return ioremap(paddr, size);
 }
 
 static void unmap_fw_mem(void *vaddr, size_t size, void *data)
 {
-	struct pil_map_fw_info *info = data;
-
-	dma_unremap(info->dev, vaddr, size);
+	iounmap(vaddr);
 }
 
 static int pil_load_seg(struct pil_desc *desc, struct pil_seg *seg)

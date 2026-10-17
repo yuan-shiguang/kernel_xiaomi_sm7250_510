@@ -111,7 +111,7 @@ static ssize_t msm_rpmh_master_stats_print_data(char *prvbuf, ssize_t length,
 	sleep_status = 0;
 	if (record->last_entered > record->last_exited) {
 		accumulated_duration +=
-				(arch_counter_get_cntvct()
+				(__arch_counter_get_cntvct()
 				- record->last_entered);
 		sleep_status = 1;
         }
