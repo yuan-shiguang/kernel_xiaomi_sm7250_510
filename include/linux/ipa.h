@@ -13,6 +13,25 @@
 #include "linux/msm_gsi.h"
 #include <linux/msm-sps.h>
 
+/*
+ * dma_zalloc_coherent() was dropped from 5.10's dma-mapping.h. IPA still
+ * relies on it for zeroed coherent DMA memory; provide a local shim that
+ * wraps dma_alloc_coherent() and zeroes the buffer to preserve the
+ * original zero-initialization semantics.
+ */
+#include <linux/dma-mapping.h>
+#ifndef dma_zalloc_coherent
+static inline void *dma_zalloc_coherent(struct device *dev, size_t size,
+		dma_addr_t *dma_handle, gfp_t flag)
+{
+	void *addr = dma_alloc_coherent(dev, size, dma_handle, flag);
+
+	if (addr)
+		memset(addr, 0, size);
+	return addr;
+}
+#endif
+
 #define IPA_APPS_MAX_BW_IN_MBPS 700
 #define IPA_BW_THRESHOLD_MAX 3
 

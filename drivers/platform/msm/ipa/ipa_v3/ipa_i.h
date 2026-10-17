@@ -20,7 +20,6 @@
 #include <linux/netdevice.h>
 #include <linux/ipa.h>
 #include <linux/ipa_usb.h>
-#include <asm/dma-iommu.h>
 #include <linux/iommu.h>
 #include <linux/platform_device.h>
 #include <linux/firmware.h>

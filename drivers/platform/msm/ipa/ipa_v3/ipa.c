@@ -349,7 +349,7 @@ static int ipa3_active_clients_log_init(void)
 			GFP_KERNEL);
 	active_clients_table_buf = kzalloc(sizeof(
 			char[IPA3_ACTIVE_CLIENTS_TABLE_BUF_SIZE]), GFP_KERNEL);
-	if (ipa3_ctx->ipa3_active_clients_logging.log_buffer == NULL) {
+	if (ipa3_ctx->ipa3_active_clients_logging.log_buffer[0] == NULL) {
 		pr_err("Active Clients Logging memory allocation failed\n");
 		goto bail;
 	}
@@ -7880,8 +7880,6 @@ static int ipa_smmu_wlan_cb_probe(struct device *dev)
 	 * checks to see if they've been set in dtsi.  If so, the logic
 	 * further below acts accordingly...
 	 */
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_S1_BYPASS, &bypass);
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_FAST, &fast);
 
 	IPADBG(
 	  "WLAN CB PROBE dev=%pK DOMAIN ATTRS bypass=%d fast=%d\n",
@@ -7937,8 +7935,8 @@ static int ipa_smmu_uc_cb_probe(struct device *dev)
 	}
 
 	if (smmu_info.use_64_bit_dma_mask) {
-		if (dma_set_mask(dev, DMA_BIT_MASK(64)) ||
-			dma_set_coherent_mask(dev, DMA_BIT_MASK(64))) {
+		if (dma_set_mask(dev, ~0ULL) ||
+			dma_set_coherent_mask(dev, ~0ULL)) {
 			IPAERR("DMA set 64bit mask failed\n");
 			return -EOPNOTSUPP;
 		}
@@ -7989,8 +7987,6 @@ static int ipa_smmu_uc_cb_probe(struct device *dev)
 	 * checks to see if they've been set in dtsi.  If so, the logic
 	 * further below acts accordingly...
 	 */
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_S1_BYPASS, &bypass);
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_FAST, &fast);
 
 	IPADBG("UC CB PROBE dev=%pK DOMAIN ATTRS bypass=%d fast=%d\n",
 		   dev, bypass, fast);
@@ -8029,8 +8025,8 @@ static int ipa_smmu_ap_cb_probe(struct device *dev)
 	}
 
 	if (smmu_info.use_64_bit_dma_mask) {
-		if (dma_set_mask(dev, DMA_BIT_MASK(64)) ||
-			dma_set_coherent_mask(dev, DMA_BIT_MASK(64))) {
+		if (dma_set_mask(dev, ~0ULL) ||
+			dma_set_coherent_mask(dev, ~0ULL)) {
 			IPAERR("DMA set 64bit mask failed\n");
 			return -EOPNOTSUPP;
 		}
@@ -8081,8 +8077,6 @@ static int ipa_smmu_ap_cb_probe(struct device *dev)
 	 * checks to see if they've been set in dtsi.  If so, the logic
 	 * further below acts accordingly...
 	 */
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_S1_BYPASS, &bypass);
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_FAST, &fast);
 
 	IPADBG("AP CB PROBE dev=%pK DOMAIN ATTRS bypass=%d fast=%d\n",
 		   dev, bypass, fast);
@@ -8205,7 +8199,6 @@ static int ipa_smmu_11ad_cb_probe(struct device *dev)
 	IPADBG("11AD CB PROBE dev=%pK va_start=0x%x va_size=0x%x\n",
 		   dev, cb->va_start, cb->va_size);
 
-	iommu_domain_get_attr(cb->iommu_domain, DOMAIN_ATTR_S1_BYPASS, &bypass);
 
 	IPADBG("11AD CB PROBE dev=%pK DOMAIN ATTRS bypass=%d\n",
 		   dev, bypass);
@@ -8401,9 +8394,9 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p,
 	} else {
 		if (of_property_read_bool(pdev_p->dev.of_node,
 			"qcom,use-64-bit-dma-mask")) {
-			if (dma_set_mask(&pdev_p->dev, DMA_BIT_MASK(64)) ||
+			if (dma_set_mask(&pdev_p->dev, ~0ULL) ||
 			    dma_set_coherent_mask(&pdev_p->dev,
-			    DMA_BIT_MASK(64))) {
+			    ~0ULL)) {
 				IPAERR("DMA set 64bit mask failed\n");
 				return -EOPNOTSUPP;
 			}

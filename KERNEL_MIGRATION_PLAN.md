@@ -38,7 +38,7 @@
 - [x] `drivers/clk/qcom/` — clk_hw 框架，编译 0 错误
 - [x] `drivers/pinctrl/qcom/` — pinctrl 框架，编译 0 错误
 - [x] `drivers/phy/qualcomm/` — phy 框架，编译 0 错误
-- [ ] `drivers/platform/msm/` (199 c) — USB/I2C/SPI/thermal/IPC 适配（未开始，属后续批次）
+- [x] `drivers/platform/msm/` — 96 个 .c 适配完成，LLVM/Clang 编译 0 错误 0 警告（53 个 .o）
 
 Phase 3 延期项（编译通过但功能待验证，记入 Phase 7/8）：
 - `system_pm.c`: 5.10 移除 rpmh_write_pdc_data/rpmh_ctrlr_idle/rpmh_flush 与

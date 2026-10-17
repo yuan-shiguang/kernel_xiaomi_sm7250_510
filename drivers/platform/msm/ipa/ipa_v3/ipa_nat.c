@@ -53,7 +53,7 @@ enum ipa_nat_ipv6ct_table_type {
 
 static bool sram_compatible;
 
-static int ipa3_nat_ipv6ct_vma_fault_remap(struct vm_fault *vmf)
+static vm_fault_t ipa3_nat_ipv6ct_vma_fault_remap(struct vm_fault *vmf)
 {
 	vmf->page = NULL;
 
@@ -177,10 +177,10 @@ static int ipa3_nat_ipv6ct_mmap(
 	/*
 	 * Check if no smmu or non dma coherent
 	 */
-	if (!cb->valid || !is_device_dma_coherent(cb->dev)) {
+	if (!cb->valid || !cb->dev->dma_coherent) {
 
 		IPADBG("Either smmu valid=%u and/or DMA coherent=%u false\n",
-			   cb->valid, is_device_dma_coherent(cb->dev));
+			   cb->valid, cb->dev->dma_coherent);
 
 		vma->vm_page_prot =
 			pgprot_noncached(vma->vm_page_prot);
