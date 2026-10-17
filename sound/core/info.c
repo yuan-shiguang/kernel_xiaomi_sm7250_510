@@ -750,6 +750,24 @@ struct snd_info_entry *snd_info_create_card_entry(struct snd_card *card,
 	return snd_info_create_entry(name, parent, card->module);
 }
 EXPORT_SYMBOL(snd_info_create_card_entry);
+struct snd_info_entry *snd_info_create_subdir(struct module *mod,
+						      const char *name,
+						      struct snd_info_entry *parent)
+{
+	struct snd_info_entry *entry;
+
+	entry = snd_info_create_module_entry(mod, name, parent);
+	if (!entry)
+		return NULL;
+	entry->mode = S_IFDIR | 0555;
+	if (snd_info_register(entry) < 0) {
+		snd_info_free_entry(entry);
+		return NULL;
+	}
+	return entry;
+}
+EXPORT_SYMBOL(snd_info_create_subdir);
+
 
 static void snd_info_clear_entries(struct snd_info_entry *entry)
 {

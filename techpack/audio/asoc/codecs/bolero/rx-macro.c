@@ -358,7 +358,8 @@ static int rx_macro_hw_params(struct snd_pcm_substream *substream,
 static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot);
-static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute);
+static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute,
+				      int stream);
 static int rx_macro_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol);
 static int rx_macro_mux_get(struct snd_kcontrol *kcontrol,
@@ -653,7 +654,7 @@ static const struct snd_kcontrol_new rx_mix_tx0_mux =
 static struct snd_soc_dai_ops rx_macro_dai_ops = {
 	.hw_params = rx_macro_hw_params,
 	.get_channel_map = rx_macro_get_channel_map,
-	.digital_mute = rx_macro_digital_mute,
+	.mute_stream = rx_macro_digital_mute,
 };
 
 static struct snd_soc_dai_driver rx_macro_dai[] = {
@@ -924,9 +925,9 @@ static int rx_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 		for (j = 0; j < INTERP_MAX; j++) {
 			int_mux_cfg1 = int_mux_cfg0 + 4;
 
-			int_mux_cfg0_val = snd_soc_component_read32(
+			int_mux_cfg0_val = snd_soc_component_read(
 						component, int_mux_cfg0);
-			int_mux_cfg1_val = snd_soc_component_read32(
+			int_mux_cfg1_val = snd_soc_component_read(
 						component, int_mux_cfg1);
 			inp0_sel = int_mux_cfg0_val & 0x0F;
 			inp1_sel = (int_mux_cfg0_val >> 4) & 0x0F;
@@ -979,7 +980,7 @@ static int rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 
 		int_mux_cfg1 = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG1;
 		for (j = 0; j < INTERP_MAX; j++) {
-			int_mux_cfg1_val = snd_soc_component_read32(
+			int_mux_cfg1_val = snd_soc_component_read(
 						component, int_mux_cfg1) &
 						0x0F;
 			if (int_mux_cfg1_val == int_2_inp +
@@ -1133,7 +1134,7 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 			__func__, dai->id, *rx_slot, *rx_num, rx_priv->active_ch_mask[dai->id]);
 		break;
 	case RX_MACRO_AIF_ECHO:
-		val = snd_soc_component_read32(component,
+		val = snd_soc_component_read(component,
 			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4);
 		if (val & RX_MACRO_EC_MIX_TX0_MASK) {
 			mask |= 0x1;
@@ -1143,7 +1144,7 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 			mask |= 0x2;
 			cnt++;
 		}
-		val = snd_soc_component_read32(component,
+		val = snd_soc_component_read(component,
 			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG5);
 		if (val & RX_MACRO_EC_MIX_TX2_MASK) {
 			mask |= 0x4;
@@ -1159,7 +1160,8 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 	return 0;
 }
 
-static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute)
+static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute,
+				      int stream)
 {
 	struct snd_soc_component *component = dai->component;
 	struct device *rx_dev = NULL;
@@ -1190,11 +1192,11 @@ static int rx_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 			dsm_reg = BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL;
 		int_mux_cfg0 = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG0 + j * 8;
 		int_mux_cfg1 = int_mux_cfg0 + 4;
-		int_mux_cfg0_val = snd_soc_component_read32(component,
+		int_mux_cfg0_val = snd_soc_component_read(component,
 							int_mux_cfg0);
-		int_mux_cfg1_val = snd_soc_component_read32(component,
+		int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1);
-		if (snd_soc_component_read32(component, dsm_reg) & 0x01) {
+		if (snd_soc_component_read(component, dsm_reg) & 0x01) {
 			if (int_mux_cfg0_val || (int_mux_cfg1_val & 0xF0))
 				snd_soc_component_update_bits(component,
 							reg, 0x20, 0x20);
@@ -1375,7 +1377,7 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
 				(rx_idx * RX_MACRO_COMP_OFFSET);
 		snd_soc_component_write(component, reg,
-				snd_soc_component_read32(component, reg));
+				snd_soc_component_read(component, reg));
 		break;
 	case BOLERO_MACRO_EVT_IMPED_TRUE:
 		rx_macro_wcd_clsh_imped_config(component, data, true);
@@ -1433,9 +1435,9 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		bolero_rsc_clk_reset(rx_dev, RX_CORE_CLK);
 		break;
 	case BOLERO_MACRO_EVT_RX_PA_GAIN_UPDATE:
-		rx_priv->rx0_gain_val = snd_soc_component_read32(component,
+		rx_priv->rx0_gain_val = snd_soc_component_read(component,
 					BOLERO_CDC_RX_RX0_RX_VOL_CTL);
-		rx_priv->rx1_gain_val = snd_soc_component_read32(component,
+		rx_priv->rx1_gain_val = snd_soc_component_read(component,
 					BOLERO_CDC_RX_RX1_RX_VOL_CTL);
 		if (data) {
 			/* Reduce gain by half only if its greater than -6DB */
@@ -1528,7 +1530,7 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_component *component,
 	if (path_type == INTERP_MIX_PATH) {
 		mux_reg = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG1 +
 						2 * interp;
-		mux_reg_val = snd_soc_component_read32(component, mux_reg) &
+		mux_reg_val = snd_soc_component_read(component, mux_reg) &
 				0x0f;
 
 		if ((mux_reg_val >= INTn_2_INP_SEL_RX0) &&
@@ -1541,7 +1543,7 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_component *component,
 	if (path_type == INTERP_MAIN_PATH) {
 		mux_reg = BOLERO_CDC_RX_INP_MUX_RX_INT1_CFG0 +
 			  2 * (interp - 1);
-		mux_reg_val = snd_soc_component_read32(component, mux_reg) &
+		mux_reg_val = snd_soc_component_read(component, mux_reg) &
 				0x0f;
 		i = RX_MACRO_INTERP_MUX_NUM_INPUTS;
 
@@ -1553,7 +1555,7 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_component *component,
 				num_ports++;
 			}
 			mux_reg_val =
-				(snd_soc_component_read32(component, mux_reg) &
+				(snd_soc_component_read(component, mux_reg) &
 					0xf0) >> 4;
 			mux_reg += 1;
 			i--;
@@ -1639,7 +1641,7 @@ static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_component_write(component, gain_reg,
-			snd_soc_component_read32(component, gain_reg));
+			snd_soc_component_read(component, gain_reg));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Clk Disable */
@@ -1663,8 +1665,8 @@ static bool rx_macro_adie_lb(struct snd_soc_component *component,
 
 	int_mux_cfg0 = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG0 + interp_idx * 8;
 	int_mux_cfg1 = int_mux_cfg0 + 4;
-	int_mux_cfg0_val = snd_soc_component_read32(component, int_mux_cfg0);
-	int_mux_cfg1_val = snd_soc_component_read32(component, int_mux_cfg1);
+	int_mux_cfg0_val = snd_soc_component_read(component, int_mux_cfg0);
+	int_mux_cfg1_val = snd_soc_component_read(component, int_mux_cfg1);
 
 	int_n_inp0 = int_mux_cfg0_val & 0x0F;
 	if (int_n_inp0 == INTn_1_INP_SEL_DEC0 ||
@@ -1728,7 +1730,7 @@ static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_component_write(component, gain_reg,
-			snd_soc_component_read32(component, gain_reg));
+			snd_soc_component_read(component, gain_reg));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		rx_macro_enable_interp_clk(component, event, w->shift);
@@ -1759,7 +1761,7 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 					(comp * RX_MACRO_RX_PATH_OFFSET);
 	rx0_path_ctl_reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL +
 					(comp * RX_MACRO_RX_PATH_OFFSET);
-	pcm_rate = (snd_soc_component_read32(component, rx0_path_ctl_reg)
+	pcm_rate = (snd_soc_component_read(component, rx0_path_ctl_reg)
 						& 0x0F);
 	if (pcm_rate < 0x06)
 		val = 0x03;
@@ -2290,7 +2292,7 @@ static int rx_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
 			snd_soc_kcontrol_component(kcontrol);
 
 	ucontrol->value.integer.value[0] =
-		((snd_soc_component_read32(
+		((snd_soc_component_read(
 			component, BOLERO_CDC_RX_BCL_VBAT_CFG) & 0x04) ?
 		  1 : 0);
 
@@ -2784,7 +2786,7 @@ static int rx_macro_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 	u16 iir_reg = BOLERO_CDC_RX_SIDETONE_IIR0_IIR_CTL + 0x80 * iir_idx;
 
 	ucontrol->value.integer.value[0] = (
-				snd_soc_component_read32(component, iir_reg) &
+				snd_soc_component_read(component, iir_reg) &
 				(1 << band_idx)) != 0;
 
 	dev_dbg(component->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
@@ -2817,7 +2819,7 @@ static int rx_macro_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	snd_soc_component_update_bits(component, iir_reg, (1 << band_idx),
 			    (value << band_idx));
 
-	iir_band_en_status = ((snd_soc_component_read32(component, iir_reg) &
+	iir_band_en_status = ((snd_soc_component_read(component, iir_reg) &
 			      (1 << band_idx)) != 0);
 	dev_dbg(component->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
 		iir_idx, band_idx, iir_band_en_status);
@@ -2836,7 +2838,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t)) & 0x7F);
 
-	value |= snd_soc_component_read32(component,
+	value |= snd_soc_component_read(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL + 0x80 * iir_idx));
 
 	snd_soc_component_write(component,
@@ -2844,7 +2846,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 1) & 0x7F);
 
-	value |= (snd_soc_component_read32(component,
+	value |= (snd_soc_component_read(component,
 			       (BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
 				0x80 * iir_idx)) << 8);
 
@@ -2853,7 +2855,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 2) & 0x7F);
 
-	value |= (snd_soc_component_read32(component,
+	value |= (snd_soc_component_read(component,
 			       (BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
 				0x80 * iir_idx)) << 16);
 
@@ -2863,7 +2865,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		* sizeof(uint32_t) + 3) & 0x7F);
 
 	/* Mask bits top 2 bits since they are reserved */
-	value |= ((snd_soc_component_read32(component,
+	value |= ((snd_soc_component_read(component,
 				(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
 				 16 * iir_idx)) & 0x3F) << 24);
 
@@ -3005,36 +3007,36 @@ static int rx_macro_set_iir_gain(struct snd_soc_dapm_widget *w,
 		if (strnstr(w->name, "IIR0", sizeof("IIR0"))) {
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL));
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL));
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL));
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL));
 		} else {
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL));
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL));
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL));
 			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL,
-			snd_soc_component_read32(component,
+			snd_soc_component_read(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL));
 		}
 		break;
@@ -3190,14 +3192,14 @@ static int rx_macro_enable_echo(struct snd_soc_dapm_widget *w,
 
 	dev_dbg(rx_dev, "%s %d %s\n", __func__, event, w->name);
 
-	val = snd_soc_component_read32(component,
+	val = snd_soc_component_read(component,
 			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4);
 	if (!(strcmp(w->name, "RX MIX TX0 MUX")))
 		ec_tx = ((val & 0xf0) >> 0x4) - 1;
 	else if (!(strcmp(w->name, "RX MIX TX1 MUX")))
 		ec_tx = (val & 0x0f) - 1;
 
-	val = snd_soc_component_read32(component,
+	val = snd_soc_component_read(component,
 			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG5);
 	if (!(strcmp(w->name, "RX MIX TX2 MUX")))
 		ec_tx = (val & 0x0f) - 1;

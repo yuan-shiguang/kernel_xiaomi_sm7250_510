@@ -2940,19 +2940,18 @@ static int msm_qos_ctl_put(struct snd_kcontrol *kcontrol,
 
 	qos_vote_status = ucontrol->value.enumerated.item[0];
 	if (qos_vote_status) {
-		if (pm_qos_request_active(&substream->latency_pm_qos_req))
-			pm_qos_remove_request(&substream->latency_pm_qos_req);
+		if (cpu_latency_qos_request_active(&substream->latency_pm_qos_req))
+			cpu_latency_qos_remove_request(&substream->latency_pm_qos_req);
 		if (!substream->runtime) {
 			pr_err("%s: runtime is null\n", __func__);
 			return -EINVAL;
 		}
 		usecs = MSM_LL_QOS_VALUE;
 		if (usecs >= 0)
-			pm_qos_add_request(&substream->latency_pm_qos_req,
-					PM_QOS_CPU_DMA_LATENCY, usecs);
+			cpu_latency_qos_add_request(&substream->latency_pm_qos_req, usecs);
 	} else {
-		if (pm_qos_request_active(&substream->latency_pm_qos_req))
-			pm_qos_remove_request(&substream->latency_pm_qos_req);
+		if (cpu_latency_qos_request_active(&substream->latency_pm_qos_req))
+			cpu_latency_qos_remove_request(&substream->latency_pm_qos_req);
 	}
 
 	return 0;

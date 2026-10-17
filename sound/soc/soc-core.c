@@ -773,6 +773,54 @@ static int snd_soc_is_matching_component(
 	return 1;
 }
 
+/**
+ * snd_soc_component_is_registered - check whether a component is registered
+ * @of_node: device node of the component
+ *
+ * Returns true if a component with the given device node has already been
+ * registered with the ASoC core.
+ */
+bool snd_soc_component_is_registered(struct device_node *of_node)
+{
+	struct snd_soc_component *component;
+	bool found = false;
+
+	if (!of_node)
+		return false;
+
+	mutex_lock(&client_mutex);
+	for_each_component(component) {
+		if (component->dev && component->dev->of_node == of_node) {
+			found = true;
+			break;
+		}
+	}
+	mutex_unlock(&client_mutex);
+
+	return found;
+}
+EXPORT_SYMBOL_GPL(snd_soc_component_is_registered);
+
+/**
+ * snd_soc_card_change_online_state - mark the sound card online/offline
+ * @soc_card: SoC sound card
+ * @online: 1 to bring the card online, 0 to take it offline
+ */
+void snd_soc_card_change_online_state(struct snd_soc_card *soc_card, int online)
+{
+	struct snd_card *card;
+
+	if (!soc_card)
+		return;
+
+	card = soc_card->snd_card;
+	if (!card)
+		return;
+
+	card->shutdown = online ? 0 : 1;
+}
+EXPORT_SYMBOL_GPL(snd_soc_card_change_online_state);
+
 static struct snd_soc_component *soc_find_component(
 	const struct snd_soc_dai_link_component *dlc)
 {

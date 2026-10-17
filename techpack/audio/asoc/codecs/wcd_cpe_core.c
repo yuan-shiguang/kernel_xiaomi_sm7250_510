@@ -12,6 +12,7 @@
 #include <linux/delay.h>
 #include <linux/pm_qos.h>
 #include <linux/dma-mapping.h>
+#include <linux/dma-map-ops.h>
 #include <sound/soc.h>
 #include <sound/info.h>
 #include <sound/lsm_params.h>
@@ -1005,10 +1006,8 @@ static void wcd_cpe_ssr_work(struct work_struct *work)
 	}
 
 	/* Obtain pm request up in case of suspend mode */
-	pm_qos_add_request(&core->pm_qos_req,
-			   PM_QOS_CPU_DMA_LATENCY,
-			   PM_QOS_DEFAULT_VALUE);
-	pm_qos_update_request(&core->pm_qos_req,
+	cpu_latency_qos_add_request(&core->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+	cpu_latency_qos_update_request(&core->pm_qos_req,
 			msm_cpuidle_get_deep_idle_latency());
 
 	dev_dbg(core->dev,
@@ -1085,9 +1084,9 @@ static void wcd_cpe_ssr_work(struct work_struct *work)
 
 err_ret:
 	/* remove after default pm qos */
-	pm_qos_update_request(&core->pm_qos_req,
+	cpu_latency_qos_update_request(&core->pm_qos_req,
 			      PM_QOS_DEFAULT_VALUE);
-	pm_qos_remove_request(&core->pm_qos_req);
+	cpu_latency_qos_remove_request(&core->pm_qos_req);
 }
 
 /*

@@ -62,6 +62,9 @@ struct snd_compress_ops {
 	int (*get_codec_caps)(struct snd_soc_component *component,
 			      struct snd_compr_stream *stream,
 			      struct snd_compr_codec_caps *codec);
+	int (*set_next_track_param)(struct snd_soc_component *component,
+				struct snd_compr_stream *stream,
+				union snd_codec_options *codec_options);
 };
 
 struct snd_soc_component_driver {
@@ -91,6 +94,10 @@ struct snd_soc_component_driver {
 	void (*pcm_destruct)(struct snd_soc_component *component,
 			     struct snd_pcm *pcm);
 
+	/* platform-caused delay reporting, blocks until delay is known */
+	snd_pcm_sframes_t (*delay_blk)(struct snd_pcm_substream *substream,
+			struct snd_soc_dai *dai);
+
 	/* component wide operations */
 	int (*set_sysclk)(struct snd_soc_component *component,
 			  int clk_id, int source, unsigned int freq, int dir);
@@ -116,6 +123,9 @@ struct snd_soc_component_driver {
 	int (*close)(struct snd_soc_component *component,
 		     struct snd_pcm_substream *substream);
 	int (*ioctl)(struct snd_soc_component *component,
+		     struct snd_pcm_substream *substream,
+		     unsigned int cmd, void *arg);
+	int (*compat_ioctl)(struct snd_soc_component *component,
 		     struct snd_pcm_substream *substream,
 		     unsigned int cmd, void *arg);
 	int (*hw_params)(struct snd_soc_component *component,
@@ -449,6 +459,8 @@ int snd_soc_component_of_xlate_dai_name(struct snd_soc_component *component,
 int snd_soc_pcm_component_pointer(struct snd_pcm_substream *substream);
 int snd_soc_pcm_component_ioctl(struct snd_pcm_substream *substream,
 				unsigned int cmd, void *arg);
+int snd_soc_pcm_component_compat_ioctl(struct snd_pcm_substream *substream,
+				 unsigned int cmd, void *arg);
 int snd_soc_pcm_component_sync_stop(struct snd_pcm_substream *substream);
 int snd_soc_pcm_component_copy_user(struct snd_pcm_substream *substream,
 				    int channel, unsigned long pos,

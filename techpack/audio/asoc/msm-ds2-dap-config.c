@@ -4,6 +4,7 @@
  */
 
 #include <linux/err.h>
+#include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
 #include <sound/control.h>

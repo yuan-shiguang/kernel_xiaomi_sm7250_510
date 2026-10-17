@@ -1180,9 +1180,9 @@ static int bolero_soc_codec_probe(struct snd_soc_component *component)
 	}
 
 	/* Assign bolero version 2.1 for bolero 2.1 */
-	if ((snd_soc_component_read32(component,
+	if ((snd_soc_component_read(component,
 		BOLERO_CDC_VA_TOP_CSR_CORE_ID_0) == 0x2) &&
-		(snd_soc_component_read32(component,
+		(snd_soc_component_read(component,
 			BOLERO_CDC_VA_TOP_CSR_CORE_ID_1) == 0xE))
 		priv->version = BOLERO_VERSION_2_1;
 

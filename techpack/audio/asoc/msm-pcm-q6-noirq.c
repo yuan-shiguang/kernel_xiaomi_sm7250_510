@@ -4,6 +4,7 @@
  */
 
 #include <linux/init.h>
+#include <linux/compat.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -34,7 +35,6 @@
 
 #include "msm-pcm-q6-v2.h"
 #include "msm-pcm-routing-v2.h"
-
 
 #define DRV_NAME "msm-pcm-q6-noirq"
 
@@ -178,7 +178,8 @@ static void event_handler(uint32_t opcode,
 	}
 }
 
-static int msm_pcm_open(struct snd_pcm_substream *substream)
+static int msm_pcm_open(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd;
@@ -261,14 +262,12 @@ fail_cmd:
 	return ret;
 }
 
-static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params)
+static int msm_pcm_hw_params(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
 
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
-	struct snd_soc_component *component =
-				snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_audio *prtd = runtime->private_data;
 	struct msm_plat_data *pdata;
 	struct snd_dma_buffer *dma_buf = &substream->dma_buffer;
@@ -308,7 +307,6 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 	else
 		/* use the default from the device tree */
 		perf_mode = pdata->perf_mode;
-
 
 	/* need to set LOW_LATENCY_PCM_MODE for capture since
 	 * push mode does not support ULL
@@ -400,7 +398,8 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+static int msm_pcm_trigger(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int cmd)
 {
 	int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -444,7 +443,6 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	}
 	return ret;
 }
-
 
 static int msm_pcm_mmap_fd(struct snd_pcm_substream *substream,
 			   struct snd_pcm_mmap_fd *mmap_fd)
@@ -502,8 +500,8 @@ buf_fd_fail:
         return rc;
 }
 
-static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void *arg)
+static int msm_pcm_ioctl(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, unsigned int cmd, void *arg)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = runtime->private_data;
@@ -527,15 +525,16 @@ static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
 }
 
 #ifdef CONFIG_COMPAT
-static int msm_pcm_compat_ioctl(struct snd_pcm_substream *substream,
-				unsigned int cmd, void *arg)
+static int msm_pcm_compat_ioctl(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, unsigned int cmd, void *arg)
 {
 	/* we only handle RESET which is common for both modes */
-	return msm_pcm_ioctl(substream, cmd, arg);
+	return msm_pcm_ioctl(component, substream, cmd, arg);
 }
 #endif
 
-static snd_pcm_uframes_t msm_pcm_pointer(struct snd_pcm_substream *substream)
+static snd_pcm_uframes_t msm_pcm_pointer(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	uint32_t read_index, wall_clk_msw, wall_clk_lsw;
@@ -571,14 +570,15 @@ static snd_pcm_uframes_t msm_pcm_pointer(struct snd_pcm_substream *substream)
 	return (hw_ptr/period_size) * period_size;
 }
 
-static int msm_pcm_copy(struct snd_pcm_substream *substream, int a,
-	 unsigned long hwoff, void __user *buf, unsigned long fbytes)
+static int msm_pcm_copy(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int a, unsigned long hwoff,
+		void __user *buf, unsigned long fbytes)
 {
 	return -EINVAL;
 }
 
-static int msm_pcm_mmap(struct snd_pcm_substream *substream,
-				struct vm_area_struct *vma)
+static int msm_pcm_mmap(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, struct vm_area_struct *vma)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = runtime->private_data;
@@ -606,7 +606,8 @@ static int msm_pcm_mmap(struct snd_pcm_substream *substream,
 	return ret;
 }
 
-static int msm_pcm_prepare(struct snd_pcm_substream *substream)
+static int msm_pcm_prepare(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	int rc = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -630,10 +631,10 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 	return rc;
 }
 
-static int msm_pcm_close(struct snd_pcm_substream *substream)
+static int msm_pcm_close(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct msm_plat_data *pdata = NULL;
-	struct snd_soc_component *component = NULL;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
 	struct msm_audio *prtd = runtime->private_data;
@@ -943,7 +944,7 @@ static int msm_pcm_add_channel_map_control(struct snd_soc_pcm_runtime *rtd)
 
 	pr_debug("%s: added new pcm FE with name %s, id %d, cpu dai %s, device no %d\n",
 		 __func__, rtd->dai_link->name, rtd->dai_link->id,
-		 rtd->dai_link->cpu_dai_name, rtd->pcm->device);
+		 rtd->dai_link->cpus[0].dai_name, rtd->pcm->device);
 
 	ctl_len = strlen(mixer_ctl_name) + strlen(deviceNo) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
@@ -1320,7 +1321,8 @@ static int msm_pcm_add_hwdep_dev(struct snd_soc_pcm_runtime *runtime)
 	return 0;
 }
 
-static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
+static int msm_asoc_pcm_new(struct snd_soc_component *component,
+		struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_card *card = rtd->card->snd_card;
 	struct snd_pcm *pcm = rtd->pcm;
@@ -1364,26 +1366,19 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-
-static const struct snd_pcm_ops msm_pcm_ops = {
-	.open           = msm_pcm_open,
-	.prepare        = msm_pcm_prepare,
-	.copy_user      = msm_pcm_copy,
-	.hw_params	= msm_pcm_hw_params,
-	.ioctl          = msm_pcm_ioctl,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl   = msm_pcm_compat_ioctl,
-#endif
-	.trigger        = msm_pcm_trigger,
-	.pointer        = msm_pcm_pointer,
-	.mmap           = msm_pcm_mmap,
-	.close          = msm_pcm_close,
-};
-
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
-	.ops		= &msm_pcm_ops,
-	.pcm_new	= msm_asoc_pcm_new,
+	.pcm_construct	= msm_asoc_pcm_new,
+	.open        = msm_pcm_open,
+	.prepare     = msm_pcm_prepare,
+	.copy_user   = msm_pcm_copy,
+	.hw_params   = msm_pcm_hw_params,
+	.ioctl       = msm_pcm_ioctl,
+	.compat_ioctl= msm_pcm_compat_ioctl,
+	.trigger     = msm_pcm_trigger,
+	.pointer     = msm_pcm_pointer,
+	.mmap        = msm_pcm_mmap,
+	.close       = msm_pcm_close,
 };
 
 static int msm_pcm_probe(struct platform_device *pdev)

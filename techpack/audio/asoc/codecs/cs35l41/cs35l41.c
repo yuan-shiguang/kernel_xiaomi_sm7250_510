@@ -1315,8 +1315,8 @@ static int cs35l41_is_speaker_in_handset(struct snd_pcm_substream *substream,
 		return 0;
 
 	for (i = 0; i < rtd->num_codecs; i++) {
-		if(!strcmp(RCV_DAI_NAME, rtd->codec_dais[i]->name))
-			rcv_dai = rtd->codec_dais[i];
+		if(!strcmp(RCV_DAI_NAME, asoc_rtd_to_codec(rtd, i)->name))
+			rcv_dai = asoc_rtd_to_codec(rtd, i);
 	}
 
 	/* Check the tuning on RCV amp */
@@ -1554,7 +1554,8 @@ static int cs35l41_dai_set_sysclk(struct snd_soc_dai *dai,
 	return 0;
 }
 
-static int  cs35l41_digital_mute(struct snd_soc_dai *dai, int mute)
+static int  cs35l41_digital_mute(struct snd_soc_dai *dai, int mute,
+				     int stream)
 {
 
 	struct cs35l41_private *cs35l41 =
@@ -1935,7 +1936,7 @@ static const struct snd_soc_dai_ops cs35l41_ops = {
 	.set_fmt = cs35l41_set_dai_fmt,
 	.hw_params = cs35l41_pcm_hw_params,
 	.set_sysclk = cs35l41_dai_set_sysclk,
-	.digital_mute = cs35l41_digital_mute,
+	.mute_stream = cs35l41_digital_mute,
 };
 
 static struct snd_soc_dai_driver cs35l41_dai[] = {

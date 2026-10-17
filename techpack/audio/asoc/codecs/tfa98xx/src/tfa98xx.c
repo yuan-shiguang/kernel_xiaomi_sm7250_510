@@ -20,6 +20,7 @@
 #define pr_fmt(fmt) "%s(): " fmt, __func__
 
 #include <linux/module.h>
+#include <linux/compat.h>
 #include <linux/i2c.h>
 #include <sound/core.h>
 #include <sound/pcm.h>

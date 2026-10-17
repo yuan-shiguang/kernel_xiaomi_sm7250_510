@@ -1272,9 +1272,6 @@ static int msm_routing_get_adm_topology(int fedai_id, int session_type,
 	pr_debug("%s: fedai_id %d, session_type %d, be_id %d\n",
 	       __func__, fedai_id, session_type, be_id);
 
-	if (cal_data == NULL)
-		goto done;
-
 	app_type = fe_dai_app_type_cfg[fedai_id][session_type][be_id].app_type;
 	acdb_dev_id =
 		fe_dai_app_type_cfg[fedai_id][session_type][be_id].acdb_dev_id;
@@ -1295,7 +1292,6 @@ static int msm_routing_get_adm_topology(int fedai_id, int session_type,
 		if (topology < 0)
 			topology = NULL_COPP_TOPOLOGY;
 	}
-done:
 	pr_debug("%s: Using topology %d\n", __func__, topology);
 	return topology;
 }
@@ -3763,7 +3759,6 @@ static int msm_pcm_channel_input_be_get(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
-
 static int msm_pcm_channel_weight_info(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_info *uinfo)
 {
@@ -5880,7 +5875,6 @@ static const struct soc_enum msm_route_ext_ec_ref_rx_enum[] = {
 static const struct snd_kcontrol_new voc_ext_ec_mux =
 	SOC_DAPM_ENUM_EXT("VOC_EXT_EC MUX Mux", msm_route_ext_ec_ref_rx_enum[0],
 			  msm_routing_ext_ec_get, msm_routing_ext_ec_put);
-
 
 static const struct snd_kcontrol_new pri_i2s_rx_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MultiMedia1", SND_SOC_NOPM,
@@ -18561,7 +18555,6 @@ static const struct snd_kcontrol_new afe_pcm_rx_port_mixer_controls[] = {
 	msm_routing_put_port_mixer),
 };
 
-
 static const struct snd_kcontrol_new hdmi_rx_port_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MI2S_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_HDMI_RX,
@@ -23763,7 +23756,6 @@ static const int wsa_rx_0_vi_fb_tx_rch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0
 };
 
-
 static const int mi2s_rx_vi_fb_tx_value[] = {
 #ifdef TFA_ADSP_SUPPORTED
 	MSM_BACKEND_DAI_MAX, PLATFORM_RX_VI_FB_TX_VALUE
@@ -28455,7 +28447,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"LSM2 Mixer", "TERT_TDM_TX_0", "TERT_TDM_TX_0"},
 	{"LSM2_UL_HL", NULL, "LSM2 Mixer"},
 
-
 	{"LSM3 Mixer", "SLIMBUS_0_TX", "SLIMBUS_0_TX"},
 	{"LSM3 Mixer", "SLIMBUS_1_TX", "SLIMBUS_1_TX"},
 	{"LSM3 Mixer", "SLIMBUS_3_TX", "SLIMBUS_3_TX"},
@@ -28471,7 +28462,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"LSM3 Mixer", "QUIN_TDM_TX_0", "QUIN_TDM_TX_0"},
 	{"LSM3 Mixer", "TERT_TDM_TX_0", "TERT_TDM_TX_0"},
 	{"LSM3_UL_HL", NULL, "LSM3 Mixer"},
-
 
 	{"LSM4 Mixer", "SLIMBUS_0_TX", "SLIMBUS_0_TX"},
 	{"LSM4 Mixer", "SLIMBUS_1_TX", "SLIMBUS_1_TX"},
@@ -28546,7 +28536,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"LSM8 Mixer", "QUIN_TDM_TX_0", "QUIN_TDM_TX_0"},
 	{"LSM8 Mixer", "TERT_TDM_TX_0", "TERT_TDM_TX_0"},
 	{"LSM8_UL_HL", NULL, "LSM8 Mixer"},
-
 
 	{"CPE_LSM_UL_HL", NULL, "BE_IN"},
 	{"QCHAT_Tx Mixer", "PRI_TX_QCHAT", "PRI_I2S_TX"},
@@ -29369,7 +29358,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"USB_AUDIO_RX", NULL, "USB_DL_HL"},
 	{"USBAUDIO_UL_HL", NULL, "USB_AUDIO_TX"},
 
-
 	{"AUX_PCM_RX Port Mixer", "AUX_PCM_UL_TX", "AUX_PCM_TX"},
 	{"AUX_PCM_RX Port Mixer", "SLIM_0_TX", "SLIMBUS_0_TX"},
 	{"AUX_PCM_RX Port Mixer", "SLIM_1_TX", "SLIMBUS_1_TX"},
@@ -29786,8 +29774,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"PROXY_TX", NULL, "BE_IN"},
 };
 
-static int msm_pcm_routing_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params)
+static int msm_pcm_routing_hw_params(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	unsigned int be_id = rtd->dai_link->id;
@@ -29808,7 +29796,8 @@ static int msm_pcm_routing_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static int msm_pcm_routing_close(struct snd_pcm_substream *substream)
+static int msm_pcm_routing_close(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	unsigned int be_id = rtd->dai_link->id;
@@ -29877,7 +29866,8 @@ static int msm_pcm_routing_close(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static int msm_pcm_routing_prepare(struct snd_pcm_substream *substream)
+static int msm_pcm_routing_prepare(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	unsigned int be_id = rtd->dai_link->id;
@@ -30592,15 +30582,9 @@ static const struct snd_kcontrol_new
 		},
 };
 
-static const struct snd_pcm_ops msm_routing_pcm_ops = {
-	.hw_params	= msm_pcm_routing_hw_params,
-	.close          = msm_pcm_routing_close,
-	.prepare        = msm_pcm_routing_prepare,
-};
 #ifdef CONFIG_MSM_CSPL
 	extern void msm_crus_pb_add_controls(struct snd_soc_component *platform);
 #endif
-
 
 #ifdef CONFIG_DOA_PARAMS_ENABLED
 void msm_routing_add_doa_control(struct snd_soc_component *component)
@@ -30720,22 +30704,26 @@ static int msm_routing_probe(struct snd_soc_component *component)
 	return 0;
 }
 
-int msm_routing_pcm_new(struct snd_soc_pcm_runtime *runtime)
+int msm_routing_pcm_new(struct snd_soc_component *component,
+			struct snd_soc_pcm_runtime *runtime)
 {
 	return msm_pcm_routing_hwdep_new(runtime, msm_bedais);
 }
 
-void msm_routing_pcm_free(struct snd_pcm *pcm)
+void msm_routing_pcm_free(struct snd_soc_component *component,
+			  struct snd_pcm *pcm)
 {
 	msm_pcm_routing_hwdep_free(pcm);
 }
 
 static struct snd_soc_component_driver msm_soc_routing_component = {
 	.name		= DRV_NAME,
-	.ops		= &msm_routing_pcm_ops,
 	.probe		= msm_routing_probe,
-	.pcm_new	= msm_routing_pcm_new,
-	.pcm_free	= msm_routing_pcm_free,
+	.pcm_construct	= msm_routing_pcm_new,
+	.pcm_destruct	= msm_routing_pcm_free,
+	.hw_params   = msm_pcm_routing_hw_params,
+	.close       = msm_pcm_routing_close,
+	.prepare     = msm_pcm_routing_prepare,
 };
 
 static int msm_routing_pcm_probe(struct platform_device *pdev)

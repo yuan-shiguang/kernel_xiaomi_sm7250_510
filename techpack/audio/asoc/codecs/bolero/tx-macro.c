@@ -454,12 +454,12 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 
 	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 		if (tx_priv->version == BOLERO_VERSION_2_1)
 			return true;
 		adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 		if (adc_n < BOLERO_ADC_MAX)
 			return true;
@@ -495,7 +495,7 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	if (is_amic_enabled(component, hpf_work->decimator)) {
 		adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
@@ -576,7 +576,7 @@ static void tx_macro_hs_unmute_dwork(struct work_struct *work)
 	component = tx_priv->component;
 	snd_soc_component_update_bits(component, BOLERO_CDC_TX0_TX_VOL_CTL,
 			0xff, tx_priv->reg_before_mute);
-	reg_val = snd_soc_component_read32(component, BOLERO_CDC_TX0_TX_VOL_CTL);
+	reg_val = snd_soc_component_read(component, BOLERO_CDC_TX0_TX_VOL_CTL);
 	dev_info(tx_priv->dev, "%s: the reg value after unmute is: %#x \n", __func__, reg_val);
 }
 
@@ -860,10 +860,10 @@ static int tx_macro_get_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	if (tx_priv->version == BOLERO_VERSION_2_1)
-		value = (snd_soc_component_read32(component,
+		value = (snd_soc_component_read(component,
 			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL)) & 0x0F;
 	else if (tx_priv->version == BOLERO_VERSION_2_0)
-		value = (snd_soc_component_read32(component,
+		value = (snd_soc_component_read(component,
 			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL)) & 0x0F;
 
 	ucontrol->value.integer.value[0] = value;
@@ -943,11 +943,11 @@ void bolero_tx_macro_mute_hs(void)
 		return;
 
 	component = g_tx_priv->component;
-	g_tx_priv->reg_before_mute = snd_soc_component_read32(component, BOLERO_CDC_TX0_TX_VOL_CTL);
+	g_tx_priv->reg_before_mute = snd_soc_component_read(component, BOLERO_CDC_TX0_TX_VOL_CTL);
 	dev_info(component->dev, "%s: the reg value before mute is: %#x \n",
 			__func__, g_tx_priv->reg_before_mute);
 	snd_soc_component_update_bits(component, BOLERO_CDC_TX0_TX_VOL_CTL, 0xff, 0xac);
-	reg_val = snd_soc_component_read32(component, BOLERO_CDC_TX0_TX_VOL_CTL);
+	reg_val = snd_soc_component_read(component, BOLERO_CDC_TX0_TX_VOL_CTL);
 	dev_info(component->dev, "%s: the reg value after mute is: %#x \n",
 			__func__, reg_val);
 	schedule_delayed_work(&g_tx_priv->tx_hs_unmute_dwork,
@@ -993,17 +993,17 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	tx_fs_reg = BOLERO_CDC_TX0_TX_PATH_CTL +
 				TX_MACRO_TX_PATH_OFFSET * decimator;
 
-	tx_priv->amic_sample_rate = (snd_soc_component_read32(component,
+	tx_priv->amic_sample_rate = (snd_soc_component_read(component,
 				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
 				TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+		if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 			adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 					TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-			adc_n = snd_soc_component_read32(component, adc_reg) &
+			adc_n = snd_soc_component_read(component, adc_reg) &
 					TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 			if (adc_n >= BOLERO_ADC_MAX) {
 				dmic_clk_reg =
@@ -1033,7 +1033,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			usleep_range(1000, 1010);
 		}
 		hpf_cut_off_freq = (
-			snd_soc_component_read32(component, dec_cfg_reg) &
+			snd_soc_component_read(component, dec_cfg_reg) &
 				TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 
 		tx_priv->tx_hpf_work[decimator].hpf_cut_off_freq =
@@ -1073,7 +1073,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
-			      snd_soc_component_read32(component,
+			      snd_soc_component_read(component,
 					tx_gain_ctl_reg));
 		if (tx_priv->bcs_enable && decimator == 0) {
 			snd_soc_component_update_bits(component, dec_cfg_reg,
@@ -1552,7 +1552,7 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_common[] = {
 	TX_MACRO_DAPM_MUX("TX SMIC MUX2", 0, tx_smic2_v2),
 	TX_MACRO_DAPM_MUX("TX SMIC MUX3", 0, tx_smic3_v2),
 
-	SND_SOC_DAPM_MICBIAS_E("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
 			       tx_macro_enable_micbias,
 			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_ADC_E("TX DMIC0", NULL, SND_SOC_NOPM, 0, 0,
@@ -1736,7 +1736,7 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 	TX_MACRO_DAPM_MUX("TX SMIC MUX6", 0, tx_smic6),
 	TX_MACRO_DAPM_MUX("TX SMIC MUX7", 0, tx_smic7),
 
-	SND_SOC_DAPM_MICBIAS_E("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
 			       tx_macro_enable_micbias,
 			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_ADC_E("TX DMIC0", NULL, SND_SOC_NOPM, 0, 0,

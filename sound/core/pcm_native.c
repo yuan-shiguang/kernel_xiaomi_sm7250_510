@@ -1414,6 +1414,7 @@ static int snd_pcm_pre_start(struct snd_pcm_substream *substream,
 	if (atomic_read(&runtime->buffer_accessing) < 0)
 		return -EBADFD; /* during hw_params, hw_free or prepare */
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    !substream->hw_no_buffer &&
 	    !snd_pcm_playback_data(substream))
 		return -EPIPE;
 	runtime->trigger_tstamp_latched = false;
@@ -3403,6 +3404,10 @@ static int snd_pcm_common_ioctl(struct file *file,
 		return snd_pcm_rewind_ioctl(substream, arg);
 	case SNDRV_PCM_IOCTL_FORWARD:
 		return snd_pcm_forward_ioctl(substream, arg);
+	default:
+		/* Vendor ioctls ('U' magic), e.g. SNDRV_LSM_* */
+		if (((cmd >> 8) & 0xff) == 'U' && substream->ops->ioctl)
+			return substream->ops->ioctl(substream, cmd, arg);
 	}
 	pcm_dbg(substream->pcm, "unknown ioctl = 0x%x\n", cmd);
 	return -ENOTTY;

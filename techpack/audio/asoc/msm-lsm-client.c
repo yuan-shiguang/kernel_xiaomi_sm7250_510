@@ -4,6 +4,7 @@
  * Copyright (C) 2021 XiaoMi, Inc.
  */
 #include <linux/init.h>
+#include <linux/compat.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/time.h>
@@ -1706,7 +1707,8 @@ enum {
 		_IOWR('U', 0x14, struct lsm_params_get_info_32),
 };
 
-static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
+static int msm_lsm_ioctl_compat(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream,
 			  unsigned int cmd, void __user *arg)
 {
 	struct snd_pcm_runtime *runtime;
@@ -1783,7 +1785,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 
 		/* Update size with actual payload size */
 		size = sizeof(userarg32) + user->payload_size;
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(arg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -1858,7 +1860,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 
 		/* Update size with actual payload size */
 		size = sizeof(userarg32) + user->payload_size;
-		if (!err && !access_ok(VERIFY_WRITE, arg, size)) {
+		if (!err && !access_ok(arg, size)) {
 			dev_err(rtd->dev,
 				"%s: write verify failed size %d\n",
 				__func__, size);
@@ -2149,7 +2151,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			goto done;
 		}
 
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(arg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -2198,7 +2200,8 @@ done:
 #define msm_lsm_ioctl_compat NULL
 #endif
 
-static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
+static int msm_lsm_ioctl(struct snd_soc_component *component,
+			 struct snd_pcm_substream *substream,
 			 unsigned int cmd, void __user *arg)
 {
 	int err = 0;
@@ -2432,7 +2435,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			goto free;
 		}
 
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(arg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -2509,7 +2512,7 @@ free:
 
 		/* Update size with actual payload size */
 		size = sizeof(*user) + user->payload_size;
-		if (!access_ok(VERIFY_WRITE, arg, size)) {
+		if (!access_ok(arg, size)) {
 			dev_err(rtd->dev,
 				"%s: Failed to verify write, size = %d\n",
 				__func__, size);
@@ -2581,7 +2584,7 @@ free:
 
 		/* Update size with actual payload size */
 		size = sizeof(*user) + user->payload_size;
-		if (!err && !access_ok(VERIFY_WRITE, arg, size)) {
+		if (!err && !access_ok(arg, size)) {
 			dev_err(rtd->dev,
 				"%s: write verify failed size %d\n",
 				__func__, size);
@@ -2609,7 +2612,8 @@ done:
 	return err;
 }
 
-static int msm_lsm_open(struct snd_pcm_substream *substream)
+static int msm_lsm_open(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd;
@@ -2755,7 +2759,8 @@ static int msm_lsm_send_ch_mix_config(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static int msm_lsm_prepare(struct snd_pcm_substream *substream)
+static int msm_lsm_prepare(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -2806,7 +2811,8 @@ static int msm_lsm_prepare(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static int msm_lsm_close(struct snd_pcm_substream *substream)
+static int msm_lsm_close(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream)
 {
 	unsigned long flags;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -2938,8 +2944,9 @@ static int msm_lsm_close(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static int msm_lsm_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params)
+static int msm_lsm_hw_params(struct snd_soc_component *component,
+			    struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -3005,6 +3012,7 @@ static int msm_lsm_hw_params(struct snd_pcm_substream *substream,
 }
 
 static snd_pcm_uframes_t msm_lsm_pcm_pointer(
+	struct snd_soc_component *component,
 	struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -3030,8 +3038,9 @@ static snd_pcm_uframes_t msm_lsm_pcm_pointer(
 	return bytes_to_frames(runtime, prtd->dma_write);
 }
 
-static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
-	unsigned long hwoff, void __user *buf, unsigned long fbytes)
+static int msm_lsm_pcm_copy(struct snd_soc_component *component,
+		      struct snd_pcm_substream *substream, int ch,
+		      unsigned long hwoff, void __user *buf, unsigned long fbytes)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -3273,18 +3282,8 @@ static int msm_lsm_add_controls(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-static const struct snd_pcm_ops msm_lsm_ops = {
-	.open           = msm_lsm_open,
-	.close          = msm_lsm_close,
-	.ioctl          = msm_lsm_ioctl,
-	.prepare	= msm_lsm_prepare,
-	.compat_ioctl   = msm_lsm_ioctl_compat,
-	.hw_params      = msm_lsm_hw_params,
-	.copy_user      = msm_lsm_pcm_copy,
-	.pointer        = msm_lsm_pcm_pointer,
-};
-
-static int msm_asoc_lsm_new(struct snd_soc_pcm_runtime *rtd)
+static int msm_asoc_lsm_new(struct snd_soc_component *component,
+			struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_card *card = rtd->card->snd_card;
 	int ret = 0;
@@ -3308,8 +3307,15 @@ static int msm_asoc_lsm_probe(struct snd_soc_component *component)
 
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
-	.ops		= &msm_lsm_ops,
-	.pcm_new	= msm_asoc_lsm_new,
+	.open           = msm_lsm_open,
+	.close          = msm_lsm_close,
+	.ioctl          = msm_lsm_ioctl,
+	.prepare	= msm_lsm_prepare,
+	.compat_ioctl   = msm_lsm_ioctl_compat,
+	.hw_params      = msm_lsm_hw_params,
+	.copy_user      = msm_lsm_pcm_copy,
+	.pointer        = msm_lsm_pcm_pointer,
+	.pcm_construct	= msm_asoc_lsm_new,
 	.probe		= msm_asoc_lsm_probe,
 };
 

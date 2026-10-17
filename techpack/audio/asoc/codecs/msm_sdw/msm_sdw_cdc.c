@@ -733,7 +733,7 @@ static int msm_sdw_codec_enable_interpolator(struct snd_soc_dapm_widget *w,
 						0x01, 0x01);
 			offset_val = -2;
 		}
-		val = snd_soc_component_read32(component, gain_reg);
+		val = snd_soc_component_read(component, gain_reg);
 		val += offset_val;
 		snd_soc_component_write(component, gain_reg, val);
 		msm_sdw_config_ear_spkr_gain(component, event, gain_reg);
@@ -764,7 +764,7 @@ static int msm_sdw_codec_enable_interpolator(struct snd_soc_dapm_widget *w,
 						MSM_SDW_RX8_RX_PATH_MIX_SEC0,
 						0x01, 0x00);
 			offset_val = 2;
-			val = snd_soc_component_read32(component, gain_reg);
+			val = snd_soc_component_read(component, gain_reg);
 			val += offset_val;
 			snd_soc_component_write(component, gain_reg, val);
 		}
@@ -987,7 +987,7 @@ static int msm_sdw_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
 	struct snd_soc_component *component =
 					snd_soc_kcontrol_component(kcontrol);
 
-	bst_state_max = snd_soc_component_read32(component,
+	bst_state_max = snd_soc_component_read(component,
 						MSM_SDW_BOOST0_BOOST_CTL);
 	bst_state_max = (bst_state_max & 0x0c) >> 2;
 	ucontrol->value.integer.value[0] = bst_state_max;
@@ -1020,7 +1020,7 @@ static int msm_sdw_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
 	struct snd_soc_component *component =
 					snd_soc_kcontrol_component(kcontrol);
 
-	bst_state_max = snd_soc_component_read32(component,
+	bst_state_max = snd_soc_component_read(component,
 						MSM_SDW_BOOST1_BOOST_CTL);
 	bst_state_max = (bst_state_max & 0x0c) >> 2;
 	ucontrol->value.integer.value[0] = bst_state_max;

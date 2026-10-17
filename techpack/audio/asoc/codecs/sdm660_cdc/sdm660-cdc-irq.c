@@ -194,7 +194,7 @@ static irqreturn_t wcd9xxx_spmi_irq_handler(int linux_irq, void *data)
 
 	status[BIT_BYTE(irq)] |= BYTE_BIT_MASK(irq);
 	for (i = 0; i < NUM_IRQ_REGS; i++) {
-		status[i] |= snd_soc_component_read32(map.component,
+		status[i] |= snd_soc_component_read(map.component,
 				BIT_BYTE(irq) * 0x100 +
 			MSM89XX_PMIC_DIGITAL_INT_LATCHED_STS);
 		status[i] &= ~map.mask[i];
@@ -237,7 +237,7 @@ int wcd9xxx_spmi_suspend(pm_message_t pmesg)
 
 	pr_debug("%s: enter\n", __func__);
 	/*
-	 * pm_qos_update_request() can be called after this suspend chain call
+	 * cpu_latency_qos_update_request() can be called after this suspend chain call
 	 * started. thus suspend can be called while lock is being held
 	 */
 	mutex_lock(&map.pm_lock);
@@ -318,7 +318,7 @@ bool wcd9xxx_spmi_lock_sleep(void)
 	mutex_lock(&map.pm_lock);
 	if (map.wlock_holders++ == 0) {
 		pr_debug("%s: holding wake lock\n", __func__);
-		pm_qos_update_request(&map.pm_qos_req,
+		cpu_latency_qos_update_request(&map.pm_qos_req,
 				      msm_cpuidle_get_deep_idle_latency());
 		pm_stay_awake(&map.spmi[0]->dev);
 	}
@@ -363,7 +363,7 @@ void wcd9xxx_spmi_unlock_sleep(void)
 		 */
 		if (likely(map.pm_state == WCD9XXX_PM_AWAKE))
 			map.pm_state = WCD9XXX_PM_SLEEPABLE;
-		pm_qos_update_request(&map.pm_qos_req,
+		cpu_latency_qos_update_request(&map.pm_qos_req,
 				PM_QOS_DEFAULT_VALUE);
 		pm_relax(&map.spmi[0]->dev);
 	}
@@ -396,16 +396,14 @@ int wcd9xxx_spmi_irq_init(void)
 	map.wlock_holders = 0;
 	map.pm_state = WCD9XXX_PM_SLEEPABLE;
 	init_waitqueue_head(&map.pm_wq);
-	pm_qos_add_request(&map.pm_qos_req,
-				PM_QOS_CPU_DMA_LATENCY,
-				PM_QOS_DEFAULT_VALUE);
+	cpu_latency_qos_add_request(&map.pm_qos_req, PM_QOS_DEFAULT_VALUE);
 
 	return 0;
 }
 
 void wcd9xxx_spmi_irq_exit(void)
 {
-	pm_qos_remove_request(&map.pm_qos_req);
+	cpu_latency_qos_remove_request(&map.pm_qos_req);
 	mutex_destroy(&map.pm_lock);
 }
 MODULE_DESCRIPTION("MSM8x16 SPMI IRQ driver");

@@ -3,6 +3,7 @@
  * Copyright (c) 2015, 2017 - 2018, The Linux Foundation. All rights reserved.
  */
 #include <linux/kernel.h>
+#include <linux/compat.h>
 #include <linux/platform_device.h>
 #include <linux/ioctl.h>
 #include <sound/hwdep.h>

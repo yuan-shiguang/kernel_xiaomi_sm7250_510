@@ -4,12 +4,15 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
 #include <linux/device.h>
+#include <linux/time.h>
+#include <linux/timekeeping.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/avtimer.h>
@@ -334,7 +337,7 @@ int avcs_core_query_timer_offset(int64_t *av_offset, int32_t clock_id)
 {
 	uint32_t avtimer_msw = 0, avtimer_lsw = 0;
 	uint64_t avtimer_tick_temp, avtimer_tick, sys_time = 0;
-	struct timespec ts;
+	struct timespec64 ts;
 
 	if (!atomic_read(&avtimer.adsp_ready)) {
 		pr_debug("%s:In SSR, return\n", __func__);
@@ -346,22 +349,22 @@ int avcs_core_query_timer_offset(int64_t *av_offset, int32_t clock_id)
 		return -EINVAL;
 	}
 
-	memset(&ts, 0, sizeof(struct timespec));
+	memset(&ts, 0, sizeof(struct timespec64));
 	avtimer_lsw = ioread32(avtimer.p_avtimer_lsw);
 	avtimer_msw = ioread32(avtimer.p_avtimer_msw);
 
 	switch (clock_id) {
 	case CLOCK_MONOTONIC_RAW:
-		getrawmonotonic(&ts);
+		ktime_get_raw_ts64(&ts);
 		break;
 	case CLOCK_BOOTTIME:
-		get_monotonic_boottime(&ts);
+		ktime_get_boottime_ts64(&ts);
 		break;
 	case CLOCK_MONOTONIC:
-		ktime_get_ts(&ts);
+		ktime_get_ts64(&ts);
 		break;
 	case CLOCK_REALTIME:
-		ktime_get_real_ts(&ts);
+		ktime_get_real_ts64(&ts);
 		break;
 	default:
 		pr_debug("%s: unsupported clock id %d\n", __func__, clock_id);
@@ -488,7 +491,7 @@ static int dev_avtimer_probe(struct platform_device *pdev)
 	}
 	INIT_DELAYED_WORK(&avtimer.ssr_dwork, reset_work);
 
-	avtimer.p_avtimer_lsw = devm_ioremap_nocache(&pdev->dev,
+	avtimer.p_avtimer_lsw = devm_ioremap(&pdev->dev,
 				reg_lsb->start, resource_size(reg_lsb));
 	if (!avtimer.p_avtimer_lsw) {
 		dev_err(&pdev->dev, "%s: ioremap failed for lsb avtimer register",
@@ -496,7 +499,7 @@ static int dev_avtimer_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	avtimer.p_avtimer_msw = devm_ioremap_nocache(&pdev->dev,
+	avtimer.p_avtimer_msw = devm_ioremap(&pdev->dev,
 				reg_msb->start, resource_size(reg_msb));
 	if (!avtimer.p_avtimer_msw) {
 		dev_err(&pdev->dev, "%s: ioremap failed for msb avtimer register",

@@ -3,6 +3,7 @@
  * Copyright (c) 2014, 2016-2017, 2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
+#include <linux/compat.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/miscdevice.h>

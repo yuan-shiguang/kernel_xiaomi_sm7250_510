@@ -5,6 +5,7 @@
  */
 
 #include <linux/init.h>
+#include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/slab.h>
@@ -62,7 +63,6 @@ static struct snd_pcm_hw_constraint_list constraints_sample_rates = {
 	.list = supported_sample_rates,
 	.mask = 0,
 };
-
 
 static struct snd_pcm_hardware msm_pcm_hardware_listen = {
 	.info =	(SNDRV_PCM_INFO_BLOCK_TRANSFER |
@@ -354,8 +354,8 @@ static int msm_cpe_lsm_lab_stop(struct snd_pcm_substream *substream)
 	lsm_ops = &cpe->lsm_ops;
 	afe_ops = &cpe->afe_ops;
 	session = lsm_d->lsm_session;
-	if (rtd->cpu_dai)
-		dma_data = snd_soc_dai_get_dma_data(rtd->cpu_dai,
+	if (asoc_rtd_to_cpu(rtd, 0))
+		dma_data = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0),
 					substream);
 	if (!dma_data || !dma_data->dai_channel_ctl) {
 		dev_err(rtd->dev,
@@ -399,7 +399,7 @@ static int msm_cpe_lsm_lab_stop(struct snd_pcm_substream *substream)
 			"%s: PRE ch teardown failed, err = %d\n",
 			__func__, rc);
 	/* continue with teardown even if any intermediate step fails */
-	rc = dma_data->dai_channel_ctl(dma_data, rtd->cpu_dai, false);
+	rc = dma_data->dai_channel_ctl(dma_data, asoc_rtd_to_cpu(rtd, 0), false);
 	if (rc)
 		dev_err(rtd->dev,
 			"%s: open data failed %d\n", __func__, rc);
@@ -596,8 +596,8 @@ static int msm_cpe_lab_thread(void *data)
 	}
 
 	rtd = substream->private_data;
-	if (rtd->cpu_dai)
-		dma_data = snd_soc_dai_get_dma_data(rtd->cpu_dai,
+	if (asoc_rtd_to_cpu(rtd, 0))
+		dma_data = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0),
 					substream);
 	if (!dma_data || !dma_data->dai_channel_ctl) {
 		pr_err("%s: dma_data is not set\n", __func__);
@@ -618,7 +618,7 @@ static int msm_cpe_lab_thread(void *data)
 		goto done;
 	}
 
-	rc = dma_data->dai_channel_ctl(dma_data, rtd->cpu_dai, true);
+	rc = dma_data->dai_channel_ctl(dma_data, asoc_rtd_to_cpu(rtd, 0), true);
 	if (rc) {
 		dev_err(rtd->dev,
 			"%s: open data failed %d\n", __func__, rc);
@@ -748,7 +748,8 @@ done:
  * Create session data for lsm session and open the lsm session
  * on CPE.
  */
-static int msm_cpe_lsm_open(struct snd_pcm_substream *substream)
+static int msm_cpe_lsm_open(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct cpe_lsm_data *lsm_d;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -832,7 +833,6 @@ static int msm_cpe_lsm_open(struct snd_pcm_substream *substream)
 	dev_dbg(rtd->dev, "%s: allocated session with id = %d\n",
 		__func__, lsm_d->lsm_session->id);
 
-
 	rc = lsm_ops->lsm_open_tx(cpe->core_handle, lsm_d->lsm_session,
 				   LSM_VOICE_WAKEUP_APP_V2, 16000);
 	if (rc  < 0) {
@@ -867,7 +867,8 @@ fail_return:
  * required to deregister the sound model as long as we close
  * the lsm session on CPE.
  */
-static int msm_cpe_lsm_close(struct snd_pcm_substream *substream)
+static int msm_cpe_lsm_close(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -1105,8 +1106,8 @@ static int msm_cpe_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			"%s: %s, lab_enable = %d\n",
 			__func__, "SNDRV_LSM_LAB_CONTROL",
 			session->lab_enable);
-		if (rtd->cpu_dai)
-			dma_data = snd_soc_dai_get_dma_data(rtd->cpu_dai,
+		if (asoc_rtd_to_cpu(rtd, 0))
+			dma_data = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0),
 						substream);
 		if (!dma_data || !dma_data->dai_channel_ctl) {
 			dev_err(rtd->dev,
@@ -1268,7 +1269,7 @@ static int msm_cpe_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 					"%s: Lab Disable Failed rc %d\n",
 				       __func__, rc);
 
-			dma_data = snd_soc_dai_get_dma_data(rtd->cpu_dai,
+			dma_data = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0),
 							substream);
 			if (!dma_data || !dma_data->dai_channel_ctl)
 				dev_err(rtd->dev,
@@ -2099,8 +2100,8 @@ static int msm_cpe_lsm_process_params(struct snd_pcm_substream *substream,
 	return rc;
 }
 
-static int msm_cpe_lsm_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void *arg)
+static int msm_cpe_lsm_ioctl(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, unsigned int cmd, void *arg)
 {
 	int err = 0;
 	struct snd_soc_pcm_runtime *rtd;
@@ -2423,8 +2424,8 @@ enum {
 		_IOW('U', 0x0B, struct snd_lsm_module_params_32),
 };
 
-static int msm_cpe_lsm_ioctl_compat(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void *arg)
+static int msm_cpe_lsm_ioctl_compat(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, unsigned int cmd, void *arg)
 {
 	int err = 0;
 	struct snd_soc_pcm_runtime *rtd;
@@ -2860,7 +2861,8 @@ done:
  *
  * start the AFE port on CPE associated for this listen session
  */
-static int msm_cpe_lsm_prepare(struct snd_pcm_substream *substream)
+static int msm_cpe_lsm_prepare(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	int rc = 0;
 	struct cpe_priv *cpe = cpe_get_private_data(substream);
@@ -2994,8 +2996,8 @@ static int msm_cpe_lsm_prepare(struct snd_pcm_substream *substream)
  *
  * suspend/resume the AFE port on CPE associated with listen session
  */
-static int msm_cpe_lsm_trigger(struct snd_pcm_substream *substream,
-			       int cmd)
+static int msm_cpe_lsm_trigger(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int cmd)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct cpe_priv *cpe = cpe_get_private_data(substream);
@@ -3050,8 +3052,8 @@ static int msm_cpe_lsm_trigger(struct snd_pcm_substream *substream,
 	return rc;
 }
 
-static int msm_cpe_lsm_hwparams(struct snd_pcm_substream *substream,
-					struct snd_pcm_hw_params *params)
+static int msm_cpe_lsm_hwparams(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
 {
 
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -3110,8 +3112,8 @@ static int msm_cpe_lsm_hwparams(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static snd_pcm_uframes_t msm_cpe_lsm_pointer(
-				struct snd_pcm_substream *substream)
+static snd_pcm_uframes_t msm_cpe_lsm_pointer(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 
 	struct cpe_lsm_data *lsm_d = cpe_get_lsm_data(substream);
@@ -3130,8 +3132,9 @@ static snd_pcm_uframes_t msm_cpe_lsm_pointer(
 	return bytes_to_frames(runtime, (lab_d->dma_write));
 }
 
-static int msm_cpe_lsm_copy(struct snd_pcm_substream *substream, int a,
-	 unsigned long hwoff, void __user *buf, unsigned long fbytes)
+static int msm_cpe_lsm_copy(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int a, unsigned long hwoff,
+		void __user *buf, unsigned long fbytes)
 {
 	struct cpe_lsm_data *lsm_d = cpe_get_lsm_data(substream);
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -3278,22 +3281,18 @@ static int msm_asoc_cpe_lsm_probe(struct snd_soc_component *component)
 	return 0;
 }
 
-static const struct snd_pcm_ops msm_cpe_lsm_ops = {
-	.open = msm_cpe_lsm_open,
-	.close = msm_cpe_lsm_close,
-	.ioctl = msm_cpe_lsm_ioctl,
-	.prepare = msm_cpe_lsm_prepare,
-	.trigger = msm_cpe_lsm_trigger,
-	.pointer = msm_cpe_lsm_pointer,
-	.copy_user = msm_cpe_lsm_copy,
-	.hw_params = msm_cpe_lsm_hwparams,
-	.compat_ioctl = msm_cpe_lsm_ioctl_compat,
-};
-
 static struct snd_soc_component_driver msm_soc_cpe_component = {
 	.name = DRV_NAME,
-	.ops = &msm_cpe_lsm_ops,
 	.probe = msm_asoc_cpe_lsm_probe,
+	.open        = msm_cpe_lsm_open,
+	.close       = msm_cpe_lsm_close,
+	.ioctl       = msm_cpe_lsm_ioctl,
+	.prepare     = msm_cpe_lsm_prepare,
+	.trigger     = msm_cpe_lsm_trigger,
+	.pointer     = msm_cpe_lsm_pointer,
+	.copy_user   = msm_cpe_lsm_copy,
+	.hw_params   = msm_cpe_lsm_hwparams,
+	.compat_ioctl= msm_cpe_lsm_ioctl_compat,
 };
 
 /*

@@ -89,6 +89,27 @@ enum snd_compr_direction {
 };
 
 /**
+ * struct snd_compr_audio_info: compressed input audio information
+ * @frame_size: legth of the encoded frame with valid data
+ * @reserved: reserved for furture use
+ */
+struct snd_compr_audio_info {
+	__u32 frame_size;
+	__u32 reserved[15];
+} __attribute__((packed, aligned(4)));
+
+#define SND_COMPR_AUDIO_INFO
+
+#define SNDRV_COMPRESS_RENDER_MODE_AUDIO_MASTER 0
+#define SNDRV_COMPRESS_RENDER_MODE_STC_MASTER 1
+#define SNDRV_COMPRESS_RENDER_MODE_TTP 2
+#define SNDRV_COMPRESS_RENDER_MODE_TTP_PASS_THROUGH 3
+#define SNDRV_COMPRESS_RENDER_MODE_ABSOLUTETIME 4
+
+#define SNDRV_COMPRESS_CLK_REC_MODE_NONE 0
+#define SNDRV_COMPRESS_CLK_REC_MODE_AUTO 1
+
+/**
  * struct snd_compr_caps - caps descriptor
  * @codecs: pointer to array of codecs
  * @direction: direction supported. Of type snd_compr_direction
@@ -132,7 +153,25 @@ struct snd_compr_codec_caps {
 enum sndrv_compress_encoder {
 	SNDRV_COMPRESS_ENCODER_PADDING = 1,
 	SNDRV_COMPRESS_ENCODER_DELAY = 2,
+	SNDRV_COMPRESS_MIN_BLK_SIZE = 3,
+	SNDRV_COMPRESS_MAX_BLK_SIZE = 4,
+	SNDRV_COMPRESS_PATH_DELAY = 5,
+	SNDRV_COMPRESS_RENDER_MODE = 6,
+	SNDRV_COMPRESS_CLK_REC_MODE = 7,
+	SNDRV_COMPRESS_RENDER_WINDOW = 8,
+	SNDRV_COMPRESS_START_DELAY = 9,
+	SNDRV_COMPRESS_ENABLE_ADJUST_SESSION_CLOCK = 10,
+	SNDRV_COMPRESS_ADJUST_SESSION_CLOCK = 11,
+	SNDRV_COMPRESS_LATENCY_MODE = 12,
+	SNDRV_COMPRESS_IN_TTP_OFFSET = 13,
+	SNDRV_COMPRESS_OUT_EXTERNAL_SINK_LATENCY = 14,
 };
+
+/*
+ * Values for the SNDRV_COMPRESS_LATENCY_MODE metadata key
+ */
+#define SNDRV_COMPRESS_LEGACY_LATENCY_MODE	0
+#define SNDRV_COMPRESS_LOW_LATENCY_MODE		1
 
 /**
  * struct snd_compr_metadata - compressed stream metadata
@@ -189,4 +228,5 @@ struct snd_compr_metadata {
 #define SND_COMPR_TRIGGER_DRAIN 7 /*FIXME move this to pcm.h */
 #define SND_COMPR_TRIGGER_NEXT_TRACK 8
 #define SND_COMPR_TRIGGER_PARTIAL_DRAIN 9
+#define SNDRV_COMPRESS_DSP_POSITION 10
 #endif

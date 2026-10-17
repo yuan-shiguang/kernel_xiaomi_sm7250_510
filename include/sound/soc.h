@@ -711,6 +711,7 @@ struct snd_soc_jack {
 /* SoC PCM stream information */
 struct snd_soc_pcm_stream {
 	const char *stream_name;
+	const char *aif_name;	/* Only for non 1:1 dai_link */
 	u64 formats;			/* SNDRV_PCM_FMTBIT_* */
 	unsigned int rates;		/* SNDRV_PCM_RATE_* */
 	unsigned int rate_min;		/* min rate */
@@ -745,6 +746,17 @@ struct snd_soc_dai_link_component {
 	const char *name;
 	struct device_node *of_node;
 	const char *dai_name;
+};
+
+/* Do not create a host substream for this DAI link */
+#define SND_SOC_DAI_LINK_NO_HOST		0x1
+
+enum snd_soc_async_ops {
+	ASYNC_DPCM_SND_SOC_OPEN = 1 << 0,
+	ASYNC_DPCM_SND_SOC_CLOSE = 1 << 1,
+	ASYNC_DPCM_SND_SOC_PREPARE = 1 << 2,
+	ASYNC_DPCM_SND_SOC_HW_PARAMS = 1 << 3,
+	ASYNC_DPCM_SND_SOC_FREE = 1 << 4,
 };
 
 struct snd_soc_dai_link {
@@ -827,6 +839,9 @@ struct snd_soc_dai_link {
 	/* This DAI link can route to other DAI links at runtime (Frontend)*/
 	unsigned int dynamic:1;
 
+	/* This DAI link is a dynamic backend (vendor) */
+	unsigned int dynamic_be:1;
+
 	/* DPCM capture and Playback support */
 	unsigned int dpcm_capture:1;
 	unsigned int dpcm_playback:1;
@@ -843,6 +858,12 @@ struct snd_soc_dai_link {
 
 	/* Do not create a PCM for this DAI link (Backend link) */
 	unsigned int ignore:1;
+
+	/* no host IO mode for this DAI link */
+	unsigned int no_host_mode:2;
+
+	/* async DPCM operations */
+	unsigned int async_ops;
 
 #ifdef CONFIG_SND_SOC_TOPOLOGY
 	struct snd_soc_dobj dobj; /* For topology */
@@ -1394,6 +1415,10 @@ struct snd_soc_dai *devm_snd_soc_register_dai(struct device *dev,
 					      struct snd_soc_dai_driver *dai_drv,
 					      bool legacy_dai_naming);
 void snd_soc_unregister_dai(struct snd_soc_dai *dai);
+
+bool snd_soc_component_is_registered(struct device_node *of_node);
+void snd_soc_card_change_online_state(struct snd_soc_card *soc_card,
+				      int online);
 
 struct snd_soc_dai *snd_soc_find_dai(
 	const struct snd_soc_dai_link_component *dlc);

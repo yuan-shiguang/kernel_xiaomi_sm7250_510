@@ -4,6 +4,7 @@
  *
  */
 #include <linux/kernel.h>
+#include <linux/compat.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/ioctl.h>

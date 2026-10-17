@@ -28,7 +28,6 @@ static DEFINE_MUTEX(swr_lock);
 
 static struct device_type swr_dev_type;
 
-#define SOUNDWIRE_NAME_SIZE	32
 
 static void swr_master_put(struct swr_master *master)
 {

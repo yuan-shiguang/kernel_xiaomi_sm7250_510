@@ -244,7 +244,7 @@ static int msm_dig_cdc_codec_config_compander(
 			dig_cdc->set_compander_mode(dig_cdc->handle, 0x00);
 			return 0;
 		};
-		comp_ch_value = snd_soc_component_read32(component,
+		comp_ch_value = snd_soc_component_read(component,
 					     MSM89XX_CDC_CORE_COMP0_B1_CTL);
 		if (interp_n == 0) {
 			if (comp_ch_value & 0x02) {
@@ -300,7 +300,7 @@ static int msm_dig_cdc_codec_config_compander(
 		snd_soc_component_update_bits(component,
 			MSM89XX_CDC_CORE_COMP0_B1_CTL,
 			1 << interp_n, 0);
-		comp_ch_bits_set = snd_soc_component_read32(component,
+		comp_ch_bits_set = snd_soc_component_read(component,
 					 MSM89XX_CDC_CORE_COMP0_B1_CTL);
 		if ((comp_ch_bits_set & 0x03) == 0x00) {
 			snd_soc_component_update_bits(component,
@@ -355,7 +355,7 @@ static int msm_dig_cdc_codec_enable_interpolator(struct snd_soc_dapm_widget *w,
 		if ((w->shift) < ARRAY_SIZE(rx_digital_gain_reg))
 			snd_soc_component_write(component,
 				  rx_digital_gain_reg[w->shift],
-				  snd_soc_component_read32(component,
+				  snd_soc_component_read(component,
 				  rx_digital_gain_reg[w->shift])
 				  );
 		break;
@@ -405,7 +405,7 @@ static int msm_dig_cdc_get_iir_enable_audio_mixer(
 					kcontrol->private_value)->shift;
 
 	ucontrol->value.integer.value[0] =
-		(snd_soc_component_read32(component,
+		(snd_soc_component_read(component,
 			    (MSM89XX_CDC_CORE_IIR1_CTL + 64 * iir_idx)) &
 		(1 << band_idx)) != 0;
 
@@ -434,7 +434,7 @@ static int msm_dig_cdc_put_iir_enable_audio_mixer(
 
 	dev_dbg(component->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
 	  iir_idx, band_idx,
-		((snd_soc_component_read32(component,
+		((snd_soc_component_read(component,
 		(MSM89XX_CDC_CORE_IIR1_CTL + 64 * iir_idx)) &
 	  (1 << band_idx)) != 0));
 
@@ -453,7 +453,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t)) & 0x7F);
 
-	value |= snd_soc_component_read32(component,
+	value |= snd_soc_component_read(component,
 		(MSM89XX_CDC_CORE_IIR1_COEF_B2_CTL + 64 * iir_idx));
 
 	snd_soc_component_write(component,
@@ -461,7 +461,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 1) & 0x7F);
 
-	value |= (snd_soc_component_read32(component,
+	value |= (snd_soc_component_read(component,
 		(MSM89XX_CDC_CORE_IIR1_COEF_B2_CTL + 64 * iir_idx)) << 8);
 
 	snd_soc_component_write(component,
@@ -469,7 +469,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 2) & 0x7F);
 
-	value |= (snd_soc_component_read32(component,
+	value |= (snd_soc_component_read(component,
 		(MSM89XX_CDC_CORE_IIR1_COEF_B2_CTL + 64 * iir_idx)) << 16);
 
 	snd_soc_component_write(component,
@@ -478,7 +478,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 		* sizeof(uint32_t) + 3) & 0x7F);
 
 	/* Mask bits top 2 bits since they are reserved */
-	value |= ((snd_soc_component_read32(component,
+	value |= ((snd_soc_component_read(component,
 					(MSM89XX_CDC_CORE_IIR1_COEF_B2_CTL
 					+ 64 * iir_idx)) & 0x3f) << 24);
 	return value;
@@ -638,7 +638,7 @@ static int msm_dig_cdc_codec_set_iir_gain(struct snd_soc_dapm_widget *w,
 			reg = MSM89XX_CDC_CORE_IIR2_GAIN_B1_CTL;
 		else
 			goto ret;
-		value = snd_soc_component_read32(component, reg);
+		value = snd_soc_component_read(component, reg);
 		snd_soc_component_write(component, reg, value);
 		break;
 	default:
@@ -970,7 +970,7 @@ static int msm_dig_cdc_codec_enable_dec(struct snd_soc_dapm_widget *w,
 				msm_dig_cdc->dec_active[i] = true;
 		}
 
-		dec_hpf_cut_of_freq = snd_soc_component_read32(component,
+		dec_hpf_cut_of_freq = snd_soc_component_read(component,
 							tx_mux_ctl_reg);
 
 		dec_hpf_cut_of_freq = (dec_hpf_cut_of_freq & 0x30) >> 4;
@@ -1005,7 +1005,7 @@ static int msm_dig_cdc_codec_enable_dec(struct snd_soc_dapm_widget *w,
 		if ((w->shift) < ARRAY_SIZE(tx_digital_gain_reg))
 			snd_soc_component_write(component,
 				  tx_digital_gain_reg[w->shift + offset],
-				  snd_soc_component_read32(component,
+				  snd_soc_component_read(component,
 				  tx_digital_gain_reg[w->shift + offset])
 				  );
 		break;

@@ -68,7 +68,6 @@ enum format {
 	FORMAT_SPECIAL = 31,
 };
 
-
 enum amr_rate_type {
 	AMR_RATE_4750, /* AMR 4.75 kbps */
 	AMR_RATE_5150, /* AMR 5.15 kbps */
@@ -206,7 +205,6 @@ static struct snd_pcm_hardware msm_pcm_hardware = {
 	.periods_max =		VOIP_MAX_Q_LEN,
 	.fifo_size =            0,
 };
-
 
 static int msm_voip_mute_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
@@ -705,7 +703,8 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+static int msm_pcm_trigger(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int cmd)
 {
 	int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -735,7 +734,8 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	return ret;
 }
 
-static int msm_pcm_open(struct snd_pcm_substream *substream)
+static int msm_pcm_open(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct voip_drv_info *prtd = &voip_info;
@@ -908,7 +908,6 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 			ret = -ENOMEM;
 		}
 
-
 	} else if (ret == 0) {
 		pr_err_ratelimited("%s: No UL data available\n", __func__);
 		ret = -ETIMEDOUT;
@@ -918,8 +917,9 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	}
 	return ret;
 }
-static int msm_pcm_copy(struct snd_pcm_substream *substream, int a,
-	 unsigned long hwoff, void __user *buf, unsigned long fbytes)
+static int msm_pcm_copy(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, int a, unsigned long hwoff,
+		void __user *buf, unsigned long fbytes)
 {
 	int ret = 0;
 
@@ -931,7 +931,8 @@ static int msm_pcm_copy(struct snd_pcm_substream *substream, int a,
 	return ret;
 }
 
-static int msm_pcm_close(struct snd_pcm_substream *substream)
+static int msm_pcm_close(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct list_head *ptr = NULL;
@@ -1164,7 +1165,8 @@ done:
 	return ret;
 }
 
-static int msm_pcm_prepare(struct snd_pcm_substream *substream)
+static int msm_pcm_prepare(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -1232,7 +1234,8 @@ msm_pcm_capture_pointer(struct snd_pcm_substream *substream)
 	return bytes_to_frames(runtime, (prtd->pcm_capture_irq_pos));
 }
 
-static snd_pcm_uframes_t msm_pcm_pointer(struct snd_pcm_substream *substream)
+static snd_pcm_uframes_t msm_pcm_pointer(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream)
 {
 	snd_pcm_uframes_t ret = 0;
 
@@ -1244,8 +1247,8 @@ static snd_pcm_uframes_t msm_pcm_pointer(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static int msm_pcm_mmap(struct snd_pcm_substream *substream,
-			struct vm_area_struct *vma)
+static int msm_pcm_mmap(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, struct vm_area_struct *vma)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
@@ -1257,8 +1260,8 @@ static int msm_pcm_mmap(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params)
+static int msm_pcm_hw_params(struct snd_soc_component *component,
+		struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_dma_buffer *dma_buf = &substream->dma_buffer;
@@ -1584,19 +1587,8 @@ static int voip_get_media_type(uint32_t mode, uint32_t rate_type,
 	return ret;
 }
 
-
-static const struct snd_pcm_ops msm_pcm_ops = {
-	.open           = msm_pcm_open,
-	.copy_user	= msm_pcm_copy,
-	.hw_params	= msm_pcm_hw_params,
-	.close          = msm_pcm_close,
-	.prepare        = msm_pcm_prepare,
-	.trigger        = msm_pcm_trigger,
-	.pointer        = msm_pcm_pointer,
-	.mmap		= msm_pcm_mmap,
-};
-
-static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
+static int msm_asoc_pcm_new(struct snd_soc_component *component,
+		struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_card *card = rtd->card->snd_card;
 	int ret = 0;
@@ -1609,9 +1601,16 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
-	.ops		= &msm_pcm_ops,
-	.pcm_new	= msm_asoc_pcm_new,
+	.pcm_construct	= msm_asoc_pcm_new,
 	.probe		= msm_pcm_voip_probe,
+	.open        = msm_pcm_open,
+	.copy_user   = msm_pcm_copy,
+	.hw_params   = msm_pcm_hw_params,
+	.close       = msm_pcm_close,
+	.prepare     = msm_pcm_prepare,
+	.trigger     = msm_pcm_trigger,
+	.pointer     = msm_pcm_pointer,
+	.mmap        = msm_pcm_mmap,
 };
 
 static int msm_pcm_probe(struct platform_device *pdev)
@@ -1642,7 +1641,6 @@ static int msm_pcm_probe(struct platform_device *pdev)
 		pr_err("%s: error allocating shared mem err %d\n",
 		       __func__, rc);
 	}
-
 
 	pr_debug("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
 	rc = snd_soc_register_component(&pdev->dev,

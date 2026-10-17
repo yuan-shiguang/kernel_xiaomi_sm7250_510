@@ -30,6 +30,33 @@
 
 #define DPCM_MAX_BE_USERS	8
 
+/*
+ * ASoC no host IO hardware.
+ * TODO: fine tune these values for all host less transfers.
+ */
+static const struct snd_pcm_hardware no_host_hardware = {
+	.info			= SNDRV_PCM_INFO_MMAP |
+				  SNDRV_PCM_INFO_MMAP_VALID |
+				  SNDRV_PCM_INFO_INTERLEAVED |
+				  SNDRV_PCM_INFO_PAUSE |
+				  SNDRV_PCM_INFO_RESUME,
+	.formats		= SNDRV_PCM_FMTBIT_S16_LE |
+				  SNDRV_PCM_FMTBIT_S24_LE |
+				  SNDRV_PCM_FMTBIT_S24_3LE |
+				  SNDRV_PCM_FMTBIT_S32_LE,
+	.period_bytes_min	= PAGE_SIZE >> 2,
+	.period_bytes_max	= PAGE_SIZE >> 1,
+	.periods_min		= 2,
+	.periods_max		= 4,
+	/*
+	 * Increase the max buffer bytes as PAGE_SIZE bytes is
+	 * not enough to encompass all the scenarios sent by
+	 * userspace.
+	 */
+	.buffer_bytes_max	= PAGE_SIZE * 4,
+};
+
+
 #ifdef CONFIG_DEBUG_FS
 static const char *dpcm_state_string(enum snd_soc_dpcm_state state)
 {
@@ -711,6 +738,9 @@ static int soc_pcm_open(struct snd_pcm_substream *substream)
 
 	mutex_lock_nested(&rtd->card->pcm_mutex, rtd->card->pcm_subclass);
 
+	if (rtd->dai_link->no_host_mode == SND_SOC_DAI_LINK_NO_HOST)
+		snd_soc_set_runtime_hwparams(substream, &no_host_hardware);
+
 	ret = soc_pcm_components_open(substream);
 	if (ret < 0)
 		goto err;
@@ -1074,6 +1104,7 @@ static int soc_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 static snd_pcm_uframes_t soc_pcm_pointer(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_component *component;
 	struct snd_soc_dai *cpu_dai;
 	struct snd_soc_dai *codec_dai;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -1087,6 +1118,15 @@ static snd_pcm_uframes_t soc_pcm_pointer(struct snd_pcm_substream *substream)
 	runtime->delay = 0;
 
 	offset = snd_soc_pcm_component_pointer(substream);
+
+	/*
+	 * If any component reports a blocking delay, its pointer callback
+	 * already accounts for the delay, so skip the delay accumulation.
+	 */
+	for_each_rtd_components(rtd, i, component) {
+		if (component->driver->delay_blk)
+			return offset;
+	}
 
 	/* base delay if assigned in pointer callback */
 	delay = runtime->delay;
@@ -2695,6 +2735,7 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 	struct snd_soc_dai *cpu_dai;
 	struct snd_soc_component *component;
 	struct snd_pcm *pcm;
+	struct snd_pcm_str *pstr;
 	char new_name[64];
 	int ret = 0, playback = 0, capture = 0;
 	int stream;
@@ -2829,6 +2870,22 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 		goto out;
 	}
 
+	/* setup any hostless PCMs - i.e. no host IO is performed */
+	if (rtd->dai_link->no_host_mode) {
+		if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
+			pstr = &pcm->streams[SNDRV_PCM_STREAM_PLAYBACK];
+			pstr->substream->hw_no_buffer = 1;
+			snd_soc_set_runtime_hwparams(pstr->substream,
+						     &no_host_hardware);
+		}
+		if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
+			pstr = &pcm->streams[SNDRV_PCM_STREAM_CAPTURE];
+			pstr->substream->hw_no_buffer = 1;
+			snd_soc_set_runtime_hwparams(pstr->substream,
+						     &no_host_hardware);
+		}
+	}
+
 	/* ASoC PCM operations */
 	if (rtd->dai_link->dynamic) {
 		rtd->ops.open		= dpcm_fe_dai_open;
@@ -2853,6 +2910,8 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 
 		if (drv->ioctl)
 			rtd->ops.ioctl		= snd_soc_pcm_component_ioctl;
+		if (drv->compat_ioctl)
+			rtd->ops.compat_ioctl	= snd_soc_pcm_component_compat_ioctl;
 		if (drv->sync_stop)
 			rtd->ops.sync_stop	= snd_soc_pcm_component_sync_stop;
 		if (drv->copy_user)

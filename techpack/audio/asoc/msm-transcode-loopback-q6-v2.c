@@ -200,14 +200,14 @@ static void populate_codec_list(struct msm_transcode_loopback *trans,
 	}
 }
 
-static int msm_transcode_loopback_open(struct snd_compr_stream *cstream)
+static int msm_transcode_loopback_open(struct snd_soc_component *component,
+		struct snd_compr_stream *cstream)
 {
 	int ret = 0;
 	struct snd_compr_runtime *runtime;
 	struct snd_soc_pcm_runtime *rtd;
 	struct msm_transcode_loopback *trans = &transcode_info;
 	struct trans_loopback_pdata *pdata;
-	struct snd_soc_component *component;
 
 	if (cstream == NULL) {
 		pr_err("%s: Invalid substream\n", __func__);
@@ -215,7 +215,6 @@ static int msm_transcode_loopback_open(struct snd_compr_stream *cstream)
 	}
 	runtime = cstream->runtime;
 	rtd = snd_pcm_substream_chip(cstream);
-	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	if (!component) {
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
@@ -309,16 +308,15 @@ static void stop_transcoding(struct msm_transcode_loopback *trans)
 	}
 }
 
-static int msm_transcode_loopback_free(struct snd_compr_stream *cstream)
+static int msm_transcode_loopback_free(struct snd_soc_component *component,
+		struct snd_compr_stream *cstream)
 {
 	struct snd_compr_runtime *runtime = cstream->runtime;
 	struct msm_transcode_loopback *trans = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = snd_pcm_substream_chip(cstream);
-	struct snd_soc_component *component;
 	struct trans_loopback_pdata *pdata;
 	int ret = 0;
 
-	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	if (!component) {
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
@@ -351,8 +349,8 @@ static int msm_transcode_loopback_free(struct snd_compr_stream *cstream)
 	return ret;
 }
 
-static int msm_transcode_loopback_trigger(struct snd_compr_stream *cstream,
-					  int cmd)
+static int msm_transcode_loopback_trigger(struct snd_soc_component *component,
+		struct snd_compr_stream *cstream, int cmd)
 {
 	struct snd_compr_runtime *runtime = cstream->runtime;
 	struct msm_transcode_loopback *trans = runtime->private_data;
@@ -420,8 +418,8 @@ exit:
 	return ret;
 }
 
-static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
-				struct snd_compr_params *codec_param)
+static int msm_transcode_loopback_set_params(struct snd_soc_component *component,
+		struct snd_compr_stream *cstream, struct snd_compr_params *codec_param)
 {
 
 	struct snd_compr_runtime *runtime = cstream->runtime;
@@ -429,7 +427,6 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 	struct snd_soc_pcm_runtime *soc_pcm_rx;
 	struct snd_soc_pcm_runtime *soc_pcm_tx;
 	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_component *component;
 	struct trans_loopback_pdata *pdata;
 	uint32_t bit_width = 16;
 	int ret = 0;
@@ -453,7 +450,6 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 		pr_err("%s: rtd is NULL\n", __func__);
 		return -EINVAL;
 	}
-	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	if (!component) {
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
@@ -590,8 +586,8 @@ exit:
 	return ret;
 }
 
-static int msm_transcode_loopback_get_caps(struct snd_compr_stream *cstream,
-				struct snd_compr_caps *arg)
+static int msm_transcode_loopback_get_caps(struct snd_soc_component *component,
+		struct snd_compr_stream *cstream, struct snd_compr_caps *arg)
 {
 	struct snd_compr_runtime *runtime;
 	struct msm_transcode_loopback *trans;
@@ -649,13 +645,12 @@ exit:
 	return ret;
 }
 
-static int msm_transcode_loopback_set_metadata(struct snd_compr_stream *cstream,
-				struct snd_compr_metadata *metadata)
+static int msm_transcode_loopback_set_metadata(struct snd_soc_component *component,
+		struct snd_compr_stream *cstream, struct snd_compr_metadata *metadata)
 {
 	struct snd_soc_pcm_runtime *rtd;
 	struct trans_loopback_pdata *pdata;
 	struct msm_transcode_loopback *prtd = NULL;
-	struct snd_soc_component *component;
 	struct audio_client *ac = NULL;
 	int rc = 0;
 
@@ -669,7 +664,6 @@ static int msm_transcode_loopback_set_metadata(struct snd_compr_stream *cstream,
 		pr_err("%s: rtd is NULL\n", __func__);
 		return -EINVAL;
 	}
-	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	if (!component) {
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
@@ -1270,7 +1264,7 @@ static int msm_transcode_add_audio_effects_control(struct snd_soc_pcm_runtime *r
 
 	pr_debug("%s: added new compr FE with name %s, id %d, cpu dai %s, device no %d\n", __func__,
 						rtd->dai_link->name, rtd->dai_link->id,
-						rtd->dai_link->cpu_dai_name, rtd->pcm->device);
+						rtd->dai_link->cpus[0].dai_name, rtd->pcm->device);
 
 	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
@@ -1645,7 +1639,8 @@ static int msm_transcode_add_volume_control(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static int msm_transcode_loopback_new(struct snd_soc_pcm_runtime *rtd)
+static int msm_transcode_loopback_new(struct snd_soc_component *component,
+				      struct snd_soc_pcm_runtime *rtd)
 {
 	int rc;
 
@@ -1686,7 +1681,7 @@ static int msm_transcode_loopback_new(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static struct snd_compr_ops msm_transcode_loopback_ops = {
+static struct snd_compress_ops msm_transcode_loopback_ops = {
 	.open			= msm_transcode_loopback_open,
 	.free			= msm_transcode_loopback_free,
 	.trigger		= msm_transcode_loopback_trigger,
@@ -1730,8 +1725,8 @@ static void msm_transcode_loopback_remove(struct snd_soc_component *component)
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
 	.probe		= msm_transcode_loopback_probe,
-	.compr_ops	= &msm_transcode_loopback_ops,
-	.pcm_new	= msm_transcode_loopback_new,
+	.compress_ops	= &msm_transcode_loopback_ops,
+	.pcm_construct	= msm_transcode_loopback_new,
 	.remove		= msm_transcode_loopback_remove,
 };
 

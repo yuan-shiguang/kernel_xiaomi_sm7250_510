@@ -788,12 +788,12 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 
 	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
 			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 		if (va_priv->version == BOLERO_VERSION_2_1)
 			return true;
 		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		if (adc_n < BOLERO_ADC_MAX)
 			return true;
@@ -829,7 +829,7 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	if (is_amic_enabled(component, hpf_work->decimator)) {
 		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
@@ -1138,7 +1138,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		 	 */
 			usleep_range(1000, 1010);
 		}
-		hpf_cut_off_freq = (snd_soc_component_read32(
+		hpf_cut_off_freq = (snd_soc_component_read(
 					component, dec_cfg_reg) &
 				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
@@ -1181,7 +1181,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					msecs_to_jiffies(hpf_delay));
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
-			snd_soc_component_read32(component, tx_gain_ctl_reg));
+			snd_soc_component_read(component, tx_gain_ctl_reg));
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1838,7 +1838,7 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets_common[] = {
 	SND_SOC_DAPM_INPUT("VA SWR_MIC10"),
 	SND_SOC_DAPM_INPUT("VA SWR_MIC11"),
 
-	SND_SOC_DAPM_MICBIAS_E("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
 			       va_macro_enable_micbias,
 			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -1995,7 +1995,7 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 	VA_MACRO_DAPM_MUX("VA SMIC MUX6", 0, va_smic6),
 	VA_MACRO_DAPM_MUX("VA SMIC MUX7", 0, va_smic7),
 
-	SND_SOC_DAPM_MICBIAS_E("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
 			       va_macro_enable_micbias,
 			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
