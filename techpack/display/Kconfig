@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Qualcomm "techpack" out-of-tree display stack (MSM SDE / DSI / DP).
+#
+# NOTE: the real build gate for techpack/display is Makefile driven:
+#   techpack/display/Makefile            -> obj-$(CONFIG_DRM_MSM) += msm/
+#   techpack/display/config/*disp.conf   -> export CONFIG_DRM_MSM=y (make level)
+# The `export` lines above are invisible to Kconfig, so anything the display
+# stack needs that is a prompt-less Kconfig symbol (i.e. reachable only via
+# `select`) would silently stay off.  This symbol exists purely to feed that
+# dependency information back into Kconfig.
+#
+# Without it CONFIG_DRM_MIPI_DSI stays n, drivers/gpu/drm/drm_mipi_dsi.c is
+# never built, and mipi_dsi_host_register() / mipi_dsi_dcs_write() / ... from
+# techpack/display/msm/dsi/dsi_display.c resolve to the weak stubs in
+# drivers/soc/qcom/vendor_port_stubs.c, which leaves the DSI panel dead.
+
+config TECHPACK_DISPLAY
+	bool "Qualcomm techpack display support (MSM SDE/DSI/DP)"
+	depends on DRM
+	default y if ARCH_LITO
+	select DRM_MIPI_DSI
+	help
+	  The out-of-tree Qualcomm display stack under techpack/display provides
+	  the MSM SDE / DSI / DP driver used by this SoC.
+
+	  Say Y (the default on LITO) whenever techpack/display is built for this
+	  target.  This only pulls in generic DRM helpers the stack depends on;
+	  the build gate itself remains techpack/display/config/<soc>disp.conf.

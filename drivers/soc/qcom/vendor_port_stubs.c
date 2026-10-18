@@ -40,21 +40,6 @@ EXPORT_SYMBOL(ion_populate_vm_list);
 void mi_drm_notifier_call_chain(void) __attribute__((weak));
 void mi_drm_notifier_call_chain(void) {}
 EXPORT_SYMBOL(mi_drm_notifier_call_chain);
-void mipi_dsi_create_packet(void) __attribute__((weak));
-void mipi_dsi_create_packet(void) {}
-EXPORT_SYMBOL(mipi_dsi_create_packet);
-void mipi_dsi_dcs_set_display_brightness(void) __attribute__((weak));
-void mipi_dsi_dcs_set_display_brightness(void) {}
-EXPORT_SYMBOL(mipi_dsi_dcs_set_display_brightness);
-void mipi_dsi_dcs_write(void) __attribute__((weak));
-void mipi_dsi_dcs_write(void) {}
-EXPORT_SYMBOL(mipi_dsi_dcs_write);
-void mipi_dsi_host_register(void) __attribute__((weak));
-void mipi_dsi_host_register(void) {}
-EXPORT_SYMBOL(mipi_dsi_host_register);
-void mipi_dsi_host_unregister(void) __attribute__((weak));
-void mipi_dsi_host_unregister(void) {}
-EXPORT_SYMBOL(mipi_dsi_host_unregister);
 void msm_cpuidle_get_deep_idle_latency(void) __attribute__((weak));
 void msm_cpuidle_get_deep_idle_latency(void) {}
 EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);
