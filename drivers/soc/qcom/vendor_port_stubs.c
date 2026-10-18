@@ -55,33 +55,6 @@ EXPORT_SYMBOL(mipi_dsi_host_register);
 void mipi_dsi_host_unregister(void) __attribute__((weak));
 void mipi_dsi_host_unregister(void) {}
 EXPORT_SYMBOL(mipi_dsi_host_unregister);
-void msm_bus_cl_get_pdata(void) __attribute__((weak));
-void msm_bus_cl_get_pdata(void) {}
-EXPORT_SYMBOL(msm_bus_cl_get_pdata);
-void msm_bus_pdata_from_node(void) __attribute__((weak));
-void msm_bus_pdata_from_node(void) {}
-EXPORT_SYMBOL(msm_bus_pdata_from_node);
-void msm_bus_scale_client_update_context(void) __attribute__((weak));
-void msm_bus_scale_client_update_context(void) {}
-EXPORT_SYMBOL(msm_bus_scale_client_update_context);
-void msm_bus_scale_client_update_request(void) __attribute__((weak));
-void msm_bus_scale_client_update_request(void) {}
-EXPORT_SYMBOL(msm_bus_scale_client_update_request);
-void msm_bus_scale_register(void) __attribute__((weak));
-void msm_bus_scale_register(void) {}
-EXPORT_SYMBOL(msm_bus_scale_register);
-void msm_bus_scale_register_client(void) __attribute__((weak));
-void msm_bus_scale_register_client(void) {}
-EXPORT_SYMBOL(msm_bus_scale_register_client);
-void msm_bus_scale_unregister(void) __attribute__((weak));
-void msm_bus_scale_unregister(void) {}
-EXPORT_SYMBOL(msm_bus_scale_unregister);
-void msm_bus_scale_unregister_client(void) __attribute__((weak));
-void msm_bus_scale_unregister_client(void) {}
-EXPORT_SYMBOL(msm_bus_scale_unregister_client);
-void msm_bus_scale_update_bw(void) __attribute__((weak));
-void msm_bus_scale_update_bw(void) {}
-EXPORT_SYMBOL(msm_bus_scale_update_bw);
 void msm_cpuidle_get_deep_idle_latency(void) __attribute__((weak));
 void msm_cpuidle_get_deep_idle_latency(void) {}
 EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);

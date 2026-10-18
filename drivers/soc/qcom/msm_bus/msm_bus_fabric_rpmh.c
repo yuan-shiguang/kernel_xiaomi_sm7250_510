@@ -28,15 +28,12 @@
 #define BCM_TCS_CMD_VALID_SHFT		29
 #define BCM_TCS_CMD_VALID_MASK		0x20000000
 #define BCM_TCS_CMD_VOTE_X_SHFT		14
-#define BCM_TCS_CMD_VOTE_MASK		0x3FFF
 #define BCM_TCS_CMD_VOTE_Y_SHFT		0
-#define BCM_TCS_CMD_VOTE_Y_MASK		0xFFFC000
 
-#define BCM_TCS_CMD(commit, valid, vote_x, vote_y) \
-	(((commit & 0x1) << BCM_TCS_CMD_COMMIT_SHFT) |\
-	((valid & 0x1) << BCM_TCS_CMD_VALID_SHFT) |\
-	((vote_x & BCM_TCS_CMD_VOTE_MASK) << BCM_TCS_CMD_VOTE_X_SHFT) |\
-	((vote_y & BCM_TCS_CMD_VOTE_MASK) << BCM_TCS_CMD_VOTE_Y_SHFT))
+/* BCM_TCS_CMD_VOTE_MASK / BCM_TCS_CMD_VOTE_Y_MASK / BCM_TCS_CMD() now
+ * come from <soc/qcom/tcs.h> in 5.10.270 -- the local copies collided
+ * (-Wmacro-redefined) and missed the cpu_to_le32() the new one applies.
+ */
 
 static int msm_bus_dev_init_qos(struct device *dev, void *data);
 static int msm_bus_dev_sbm_config(struct device *dev, bool enable);
@@ -629,10 +626,8 @@ int msm_bus_commit_data(struct list_head *clist)
 	tcs_cmd_n_shrink(n_wake);
 	tcs_cmd_n_shrink(n_sleep);
 
-	ret = rpmh_invalidate(cur_mbox);
-	if (ret)
-		MSM_BUS_ERR("%s: Error invalidating mbox: %d\n",
-						__func__, ret);
+	/* 5.10.270: rpmh_invalidate() returns void now. */
+	rpmh_invalidate(cur_mbox);
 
 	if (cur_rsc->node_info->id == MSM_BUS_RSC_DISP) {
 		ret = rpmh_write_batch(cur_mbox, cur_rsc->rscdev->req_state,
@@ -1173,15 +1168,19 @@ static int msm_bus_bcm_init(struct device *dev,
 
 	node_dev->bcmdev = bcmdev;
 	bcmdev->name = pdata->bcmdev->name;
-	if (!cmd_db_read_aux_data_len(bcmdev->name)) {
-		MSM_BUS_ERR("%s: Error getting bcm info, bcm:%s",
-			__func__, bcmdev->name);
-		ret = -ENXIO;
-		goto exit_bcm_init;
-	}
+	{
+		size_t aux_len = 0;
+		const struct bcm_db *bcm_db;
 
-	cmd_db_read_aux_data(bcmdev->name, (u8 *)&aux_data,
-						sizeof(struct bcm_db));
+		bcm_db = cmd_db_read_aux_data(bcmdev->name, &aux_len);
+		if (IS_ERR_OR_NULL(bcm_db) || aux_len < sizeof(*bcm_db)) {
+			MSM_BUS_ERR("%s: Error getting bcm info, bcm:%s",
+				__func__, bcmdev->name);
+			ret = -ENXIO;
+			goto exit_bcm_init;
+		}
+		memcpy(&aux_data, bcm_db, sizeof(aux_data));
+	}
 	bcmdev->addr = cmd_db_read_addr(bcmdev->name);
 	bcmdev->width = (uint32_t)aux_data.width;
 	bcmdev->clk_domain = aux_data.clk_domain;
