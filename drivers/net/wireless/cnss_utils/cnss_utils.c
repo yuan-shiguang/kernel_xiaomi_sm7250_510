@@ -3,6 +3,13 @@
 
 #define pr_fmt(fmt) "cnss_utils: " fmt
 
+/* Porting fix: DEVICE was never defined in the vendor tree -- this file
+ * was never built there because CONFIG_CNSS_UTILS was off in the vendor
+ * defconfig. Define it locally so MODULE_DESCRIPTION() expands to a
+ * valid string literal.
+ */
+#define DEVICE "cnss_utils "
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

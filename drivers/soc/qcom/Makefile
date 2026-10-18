@@ -22,6 +22,7 @@ obj-$(CONFIG_QCOM_SMSM)	+= smsm.o
 obj-$(CONFIG_QCOM_SOCINFO)	+= socinfo.o
 obj-y				+= subsystem_notif.o
 obj-y				+= ramdump.o
+obj-$(CONFIG_MSM_SUBSYSTEM_RESTART) += subsystem_restart.o
 obj-y				+= vendor_port_stubs.o
 obj-$(CONFIG_QCOM_WCNSS_CTRL) += wcnss_ctrl.o
 obj-$(CONFIG_QCOM_APR) += apr.o
@@ -104,6 +105,11 @@ obj-$(CONFIG_QCOM_PM)	+=	spm.o
 obj-$(CONFIG_MSM_SPM) += msm-spm.o spm_devices.o
 obj-$(CONFIG_MSM_SPSS_UTILS) += spss_utils.o
 obj-$(CONFIG_MSM_PIL_SSR_GENERIC) += subsys-pil-tz.o
+# TODO(phase7): msm_bus/ is wired but its sources still need 5.10.270
+# adaptation (cmd_db_read_aux_data_len signature, BCM_TCS_CMD* macro
+# collisions with GKI headers, const bus callbacks, uninit vars --
+# 22 errors in build24). Re-enable CONFIG_QCOM_BUS_SCALING once ported.
+obj-$(CONFIG_QCOM_BUS_SCALING) += msm_bus/
 obj-$(CONFIG_MSM_SYSMON_GLINK_COMM) += sysmon-glink.o
 obj-$(CONFIG_MSM_SYSMON_QMI_COMM) += sysmon-qmi.o
 obj-$(CONFIG_QTI_SYSTEM_PM) += system_pm.o

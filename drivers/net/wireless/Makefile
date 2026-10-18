@@ -32,3 +32,4 @@ obj-$(CONFIG_MAC80211_HWSIM)	+= mac80211_hwsim.o
 obj-$(CONFIG_VIRT_WIFI)	+= virt_wifi.o
 # [VENDOR-PORT Phase6] makefile
 obj-$(CONFIG_WCNSS_MEM_PRE_ALLOC) += cnss_prealloc/
+obj-$(CONFIG_CNSS_UTILS)	+= cnss_utils/

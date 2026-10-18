@@ -31,9 +31,6 @@ EXPORT_SYMBOL(cpufreq_platform_cooling_register);
 void devm_thermal_of_virtual_sensor_register(void) __attribute__((weak));
 void devm_thermal_of_virtual_sensor_register(void) {}
 EXPORT_SYMBOL(devm_thermal_of_virtual_sensor_register);
-void find_subsys_device(void) __attribute__((weak));
-void find_subsys_device(void) {}
-EXPORT_SYMBOL(find_subsys_device);
 void get_hw_version_platform(void) __attribute__((weak));
 void get_hw_version_platform(void) {}
 EXPORT_SYMBOL(get_hw_version_platform);
@@ -181,39 +178,9 @@ EXPORT_SYMBOL(slim_request_val_element);
 void snd_compr_stop_error(void) __attribute__((weak));
 void snd_compr_stop_error(void) {}
 EXPORT_SYMBOL(snd_compr_stop_error);
-void subsys_get_crash_status(void) __attribute__((weak));
-void subsys_get_crash_status(void) {}
-EXPORT_SYMBOL(subsys_get_crash_status);
-void subsys_register(void) __attribute__((weak));
-void subsys_register(void) {}
-EXPORT_SYMBOL(subsys_register);
-void subsys_set_crash_status(void) __attribute__((weak));
-void subsys_set_crash_status(void) {}
-EXPORT_SYMBOL(subsys_set_crash_status);
-void subsys_unregister(void) __attribute__((weak));
-void subsys_unregister(void) {}
-EXPORT_SYMBOL(subsys_unregister);
-void subsystem_crashed(void) __attribute__((weak));
-void subsystem_crashed(void) {}
-EXPORT_SYMBOL(subsystem_crashed);
-void subsystem_get(void) __attribute__((weak));
-void subsystem_get(void) {}
-EXPORT_SYMBOL(subsystem_get);
-void subsystem_get_with_fwname(void) __attribute__((weak));
-void subsystem_get_with_fwname(void) {}
-EXPORT_SYMBOL(subsystem_get_with_fwname);
-void subsystem_put(void) __attribute__((weak));
-void subsystem_put(void) {}
-EXPORT_SYMBOL(subsystem_put);
-void subsystem_restart_dev(void) __attribute__((weak));
-void subsystem_restart_dev(void) {}
-EXPORT_SYMBOL(subsystem_restart_dev);
 void usb_gsi_ep_op(void) __attribute__((weak));
 void usb_gsi_ep_op(void) {}
 EXPORT_SYMBOL(usb_gsi_ep_op);
-void wait_for_shutdown_ack(void) __attribute__((weak));
-void wait_for_shutdown_ack(void) {}
-EXPORT_SYMBOL(wait_for_shutdown_ack);
 
 /* ---- data stubs (64-byte placeholder objects) ---- */
 char kp_active_mode[64] __attribute__((weak, aligned(8)));
@@ -224,64 +191,4 @@ char rq_lock[64] __attribute__((weak, aligned(8)));
 EXPORT_SYMBOL(rq_lock);
 char rq_wq[64] __attribute__((weak, aligned(8)));
 EXPORT_SYMBOL(rq_wq);
-char wlfw_athdiag_read_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_athdiag_read_req_msg_v01_ei);
-char wlfw_athdiag_read_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_athdiag_read_resp_msg_v01_ei);
-char wlfw_athdiag_write_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_athdiag_write_req_msg_v01_ei);
-char wlfw_athdiag_write_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_athdiag_write_resp_msg_v01_ei);
-char wlfw_cap_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_cap_req_msg_v01_ei);
-char wlfw_cap_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_cap_resp_msg_v01_ei);
-char wlfw_dynamic_feature_mask_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_dynamic_feature_mask_req_msg_v01_ei);
-char wlfw_dynamic_feature_mask_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_dynamic_feature_mask_resp_msg_v01_ei);
-char wlfw_fw_ready_ind_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_fw_ready_ind_msg_v01_ei);
-char wlfw_ind_register_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_ind_register_req_msg_v01_ei);
-char wlfw_ind_register_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_ind_register_resp_msg_v01_ei);
-char wlfw_ini_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_ini_req_msg_v01_ei);
-char wlfw_ini_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_ini_resp_msg_v01_ei);
-char wlfw_msa_info_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_msa_info_req_msg_v01_ei);
-char wlfw_msa_info_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_msa_info_resp_msg_v01_ei);
-char wlfw_msa_ready_ind_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_msa_ready_ind_msg_v01_ei);
-char wlfw_msa_ready_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_msa_ready_req_msg_v01_ei);
-char wlfw_msa_ready_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_msa_ready_resp_msg_v01_ei);
-char wlfw_pin_connect_result_ind_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_pin_connect_result_ind_msg_v01_ei);
-char wlfw_rejuvenate_ack_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_rejuvenate_ack_req_msg_v01_ei);
-char wlfw_rejuvenate_ack_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_rejuvenate_ack_resp_msg_v01_ei);
-char wlfw_rejuvenate_ind_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_rejuvenate_ind_msg_v01_ei);
-char wlfw_shutdown_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_shutdown_req_msg_v01_ei);
-char wlfw_shutdown_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_shutdown_resp_msg_v01_ei);
-char wlfw_vbatt_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_vbatt_req_msg_v01_ei);
-char wlfw_vbatt_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_vbatt_resp_msg_v01_ei);
-char wlfw_wlan_cfg_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_wlan_cfg_req_msg_v01_ei);
-char wlfw_wlan_cfg_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_wlan_cfg_resp_msg_v01_ei);
-char wlfw_wlan_mode_req_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_wlan_mode_req_msg_v01_ei);
-char wlfw_wlan_mode_resp_msg_v01_ei[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(wlfw_wlan_mode_resp_msg_v01_ei);
 

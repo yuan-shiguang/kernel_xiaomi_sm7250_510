@@ -15,6 +15,7 @@
 #include <linux/io.h>
 #include <linux/kthread.h>
 #include <linux/time.h>
+#include <linux/timekeeping.h>
 #include <linux/suspend.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
@@ -152,7 +153,7 @@ struct subsys_soc_restart_order {
 };
 
 struct restart_log {
-	struct timeval time;
+	struct timespec64 time;
 	struct subsys_device *dev;
 	struct list_head list;
 };
@@ -449,7 +450,7 @@ module_param(max_history_time, long, 0644);
 static void do_epoch_check(struct subsys_device *dev)
 {
 	int n = 0;
-	struct timeval *time_first = NULL, *curr_time;
+	struct timespec64 *time_first = NULL, *curr_time;
 	struct restart_log *r_log, *temp;
 	static int max_restarts_check;
 	static long max_history_time_check;
@@ -467,7 +468,7 @@ static void do_epoch_check(struct subsys_device *dev)
 	if (!r_log)
 		goto out;
 	r_log->dev = dev;
-	do_gettimeofday(&r_log->time);
+	ktime_get_real_ts64(&r_log->time);
 	curr_time = &r_log->time;
 	INIT_LIST_HEAD(&r_log->list);
 
@@ -478,18 +479,18 @@ static void do_epoch_check(struct subsys_device *dev)
 		if ((curr_time->tv_sec - r_log->time.tv_sec) >
 				max_history_time_check) {
 
-			pr_debug("Deleted node with restart_time = %ld\n",
-					r_log->time.tv_sec);
+			pr_debug("Deleted node with restart_time = %lld\n",
+					(long long)r_log->time.tv_sec);
 			list_del(&r_log->list);
 			kfree(r_log);
 			continue;
 		}
 		if (!n) {
 			time_first = &r_log->time;
-			pr_debug("Time_first: %ld\n", time_first->tv_sec);
+			pr_debug("Time_first: %lld\n", (long long)time_first->tv_sec);
 		}
 		n++;
-		pr_debug("Restart_time: %ld\n", r_log->time.tv_sec);
+		pr_debug("Restart_time: %lld\n", (long long)r_log->time.tv_sec);
 	}
 
 	if (time_first && n >= max_restarts_check) {
@@ -811,11 +812,11 @@ static int subsystem_powerup(struct subsys_device *dev, void *data)
 	return 0;
 }
 
-static int __find_subsys_device(struct device *dev, void *data)
+static int __find_subsys_device(struct device *dev, const void *data)
 {
 	struct subsys_device *subsys = to_subsys(dev);
 
-	return !strcmp(subsys->desc->name, data);
+	return !strcmp(subsys->desc->name, (const char *)data);
 }
 
 struct subsys_device *find_subsys_device(const char *str)
