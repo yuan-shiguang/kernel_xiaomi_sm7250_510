@@ -54,6 +54,8 @@ void msm_hdcp_register_cb(struct device *dev, void *ctx,
 	hdcp->client_ctx = ctx;
 }
 
+EXPORT_SYMBOL(msm_hdcp_register_cb);
+
 void msm_hdcp_notify_topology(struct device *dev)
 {
 	char *envp[4];
@@ -83,6 +85,8 @@ void msm_hdcp_notify_topology(struct device *dev)
 	kobject_uevent_env(&hdcp->device->kobj, KOBJ_CHANGE, envp);
 }
 
+EXPORT_SYMBOL(msm_hdcp_notify_topology);
+
 void msm_hdcp_cache_repeater_topology(struct device *dev,
 			struct HDCP_V2V1_MSG_TOPOLOGY *tp)
 {
@@ -102,6 +106,8 @@ void msm_hdcp_cache_repeater_topology(struct device *dev,
 	memcpy(&hdcp->cached_tp, tp,
 		   sizeof(struct HDCP_V2V1_MSG_TOPOLOGY));
 }
+
+EXPORT_SYMBOL(msm_hdcp_cache_repeater_topology);
 
 static ssize_t tp_show(struct device *dev, struct device_attribute *attr,
 		char *buf)

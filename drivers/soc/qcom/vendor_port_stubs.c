@@ -34,15 +34,6 @@ EXPORT_SYMBOL(mi_drm_notifier_call_chain);
 void msm_cpuidle_get_deep_idle_latency(void) __attribute__((weak));
 void msm_cpuidle_get_deep_idle_latency(void) {}
 EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);
-void msm_hdcp_cache_repeater_topology(void) __attribute__((weak));
-void msm_hdcp_cache_repeater_topology(void) {}
-EXPORT_SYMBOL(msm_hdcp_cache_repeater_topology);
-void msm_hdcp_notify_topology(void) __attribute__((weak));
-void msm_hdcp_notify_topology(void) {}
-EXPORT_SYMBOL(msm_hdcp_notify_topology);
-void msm_hdcp_register_cb(void) __attribute__((weak));
-void msm_hdcp_register_cb(void) {}
-EXPORT_SYMBOL(msm_hdcp_register_cb);
 void notify_before_auth_and_reset(void) __attribute__((weak));
 void notify_before_auth_and_reset(void) {}
 EXPORT_SYMBOL(notify_before_auth_and_reset);
