@@ -647,6 +647,50 @@ of_cpufreq_cooling_register(struct cpufreq_policy *policy)
 	return cdev;
 }
 EXPORT_SYMBOL_GPL(of_cpufreq_cooling_register);
+/**
+ * cpufreq_platform_cooling_register - create a cpufreq cooling device with
+ *	additional platform specific mitigation functions.
+ * @policy:   cpufreq policy
+ * @plat_ops: platform mitigation callbacks (ceil_limit / floor_limit)
+ *
+ * QTI's LMH DCVS driver (drivers/thermal/qcom/msm_lmh_dcvs.c) uses this
+ * instead of of_cpufreq_cooling_register().  GKI's cpufreq cooling device has
+ * no platform mitigation callbacks, so @plat_ops is not wired up yet and a
+ * plain cpufreq cooling device is registered: throttling works, it just cannot
+ * be routed through the platform's own frequency-clipping path.
+ *
+ * Return: a valid struct thermal_cooling_device pointer on success,
+ * ERR_PTR() on failure and NULL when the CPU node has no #cooling-cells.
+ */
+struct thermal_cooling_device *
+cpufreq_platform_cooling_register(struct cpufreq_policy *policy,
+				struct cpu_cooling_ops *plat_ops)
+{
+	struct device_node *cpu_node = NULL;
+	struct thermal_cooling_device *cdev = NULL;
+
+	cpu_node = of_get_cpu_node(policy->cpu, NULL);
+	if (!cpu_node) {
+		pr_err("cpufreq_cooling: no cpu node for cpu%d\n", policy->cpu);
+		return NULL;
+	}
+
+	if (of_find_property(cpu_node, "#cooling-cells", NULL)) {
+		struct em_perf_domain *em = em_cpu_get(policy->cpu);
+
+		cdev = __cpufreq_cooling_register(cpu_node, policy, em);
+		if (IS_ERR(cdev)) {
+			pr_err("cpufreq_cooling: cpu%d cooling device err: %ld\n",
+			       policy->cpu, PTR_ERR(cdev));
+			cdev = NULL;
+		}
+	}
+
+	of_node_put(cpu_node);
+	return cdev;
+}
+EXPORT_SYMBOL(cpufreq_platform_cooling_register);
+
 
 /**
  * cpufreq_cooling_unregister - function to remove cpufreq cooling device.

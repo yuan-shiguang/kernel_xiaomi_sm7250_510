@@ -25,12 +25,6 @@ EXPORT_SYMBOL(complete_err_ready);
 void complete_shutdown_ack(void) __attribute__((weak));
 void complete_shutdown_ack(void) {}
 EXPORT_SYMBOL(complete_shutdown_ack);
-void cpufreq_platform_cooling_register(void) __attribute__((weak));
-void cpufreq_platform_cooling_register(void) {}
-EXPORT_SYMBOL(cpufreq_platform_cooling_register);
-void devm_thermal_of_virtual_sensor_register(void) __attribute__((weak));
-void devm_thermal_of_virtual_sensor_register(void) {}
-EXPORT_SYMBOL(devm_thermal_of_virtual_sensor_register);
 void get_hw_version_platform(void) __attribute__((weak));
 void get_hw_version_platform(void) {}
 EXPORT_SYMBOL(get_hw_version_platform);
@@ -64,12 +58,6 @@ EXPORT_SYMBOL(notify_proxy_unvote);
 void notify_proxy_vote(void) __attribute__((weak));
 void notify_proxy_vote(void) {}
 EXPORT_SYMBOL(notify_proxy_vote);
-void of_thermal_handle_trip(void) __attribute__((weak));
-void of_thermal_handle_trip(void) {}
-EXPORT_SYMBOL(of_thermal_handle_trip);
-void of_thermal_handle_trip_temp(void) __attribute__((weak));
-void of_thermal_handle_trip_temp(void) {}
-EXPORT_SYMBOL(of_thermal_handle_trip_temp);
 void register_system_pm_ops(void) __attribute__((weak));
 void register_system_pm_ops(void) {}
 EXPORT_SYMBOL(register_system_pm_ops);

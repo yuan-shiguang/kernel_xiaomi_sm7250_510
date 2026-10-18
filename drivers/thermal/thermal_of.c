@@ -1119,3 +1119,70 @@ exit_free:
 
 	return -ENOMEM;
 }
+
+
+/* --------------------------------------------------------------------------
+ * [VENDOR-PORT Phase7] QTI thermal trip notification hooks
+ *
+ * drivers/thermal/qcom/{bcl_soc,bcl_pmic5,adc-tm5,adc-tm7,qmi_sensors}.c call
+ * these when a hardware threshold fires.  The 5.10.100 vendor implementation
+ * walked the QTI "sensor points" sibling-zone list (data->senps,
+ * struct __sensor_param, of_thermal_is_trips_triggered()) and could inject a
+ * measured temperature straight into the zone
+ * (thermal_zone_device_update_temp()).  None of that exists in the 5.10.270
+ * GKI thermal core, so we do the portable thing instead: re-evaluate the zone,
+ * which makes it re-read the temperature through its own ->get_temp() op and
+ * run the normal trip/cooling logic.  The callers are the zone's own sensor
+ * driver, so the result is equivalent for them.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * of_thermal_handle_trip_temp - handle a thermal trip at a given temperature
+ * @tz:	       thermal zone to re-evaluate
+ * @trip_temp: temperature reported by the sensor (unused, see above)
+ */
+void of_thermal_handle_trip_temp(struct thermal_zone_device *tz, int trip_temp)
+{
+	if (!tz)
+		return;
+
+	thermal_zone_device_update(tz, THERMAL_EVENT_UNSPECIFIED);
+}
+EXPORT_SYMBOL(of_thermal_handle_trip_temp);
+
+/**
+ * of_thermal_handle_trip - handle a thermal trip
+ * @tz: thermal zone to re-evaluate
+ */
+void of_thermal_handle_trip(struct thermal_zone_device *tz)
+{
+	if (!tz)
+		return;
+
+	thermal_zone_device_update(tz, THERMAL_EVENT_UNSPECIFIED);
+}
+EXPORT_SYMBOL(of_thermal_handle_trip);
+
+/**
+ * devm_thermal_of_virtual_sensor_register - register a virtual thermal zone
+ * @dev:	 virtual sensor device
+ * @sensor_data: aggregation description (weighted avg / max / min)
+ *
+ * QTI virtual sensors aggregate several physical sensors into one zone.  The
+ * infrastructure behind them (struct virtual_sensor, struct __sensor_param,
+ * of_virt_ops, thermal_zone_device_update_temp()) is part of the vendor
+ * thermal core and was dropped during GKI-ization; restoring it means
+ * reworking drivers/thermal/thermal_core.c as well.
+ *
+ * Until that happens, fail with -ENODEV so callers (qti_virtual_sensor) bail
+ * out of their probe cleanly instead of walking a garbage pointer.
+ */
+struct thermal_zone_device *devm_thermal_of_virtual_sensor_register(
+		struct device *dev,
+		const struct virtual_sensor_data *sensor_data)
+{
+	pr_debug("thermal: virtual sensor \"%s\" unavailable (vendor thermal core not ported)\n",
+		 sensor_data ? sensor_data->virt_zone_name : "?");
+	return ERR_PTR(-ENODEV);
+}
+EXPORT_SYMBOL(devm_thermal_of_virtual_sensor_register);
