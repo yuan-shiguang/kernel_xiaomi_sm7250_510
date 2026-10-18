@@ -34,9 +34,6 @@ EXPORT_SYMBOL(mi_drm_notifier_call_chain);
 void msm_cpuidle_get_deep_idle_latency(void) __attribute__((weak));
 void msm_cpuidle_get_deep_idle_latency(void) {}
 EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);
-void msm_gpio_mpm_wake_set(void) __attribute__((weak));
-void msm_gpio_mpm_wake_set(void) {}
-EXPORT_SYMBOL(msm_gpio_mpm_wake_set);
 void msm_hdcp_cache_repeater_topology(void) __attribute__((weak));
 void msm_hdcp_cache_repeater_topology(void) {}
 EXPORT_SYMBOL(msm_hdcp_cache_repeater_topology);

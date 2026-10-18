@@ -17,6 +17,7 @@
 #include <linux/pinctrl/pinconf-generic.h>
 #include <linux/slab.h>
 #include <linux/gpio/driver.h>
+#include <linux/gpio.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/reboot.h>
@@ -1410,6 +1411,34 @@ SIMPLE_DEV_PM_OPS(msm_pinctrl_dev_pm_ops, msm_pinctrl_suspend,
 		  msm_pinctrl_resume);
 
 EXPORT_SYMBOL(msm_pinctrl_dev_pm_ops);
+
+/*
+ * [VENDOR-PORT Phase7] msm_gpio_mpm_wake_set - make a GPIO wakeup capable
+ * @gpio:   TLMM GPIO number
+ * @enable: true to arm, false to disarm
+ *
+ * REF reached the TLMM wake register directly through soc->groups[gpio]
+ * ->{wake_reg,wake_bit}, but GKI's struct msm_pingroup dropped those fields
+ * along with the vendor board data, so the register has to be reached through
+ * the supported path instead: mark/unmark the GPIO's interrupt as a wakeup
+ * source, which routes through this driver's own irq_set_wake callback
+ * (msm_gpio_irq_set_wake) and programs the TLMM wakeup enable.
+ *
+ * Returns 0 on success, -ENOENT when the GPIO has no interrupt line
+ * (i.e. it genuinely cannot wake the phone), and the error from
+ * irq_set_irq_wake() otherwise.
+ */
+int msm_gpio_mpm_wake_set(unsigned int gpio, bool enable)
+{
+	unsigned int irq;
+
+	irq = gpio_to_irq(gpio);
+	if (irq < 0)
+		return -ENOENT;
+
+	return irq_set_irq_wake(irq, enable);
+}
+EXPORT_SYMBOL(msm_gpio_mpm_wake_set);
 
 int msm_pinctrl_probe(struct platform_device *pdev,
 		      const struct msm_pinctrl_soc_data *soc_data)
