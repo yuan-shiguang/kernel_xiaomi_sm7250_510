@@ -25,9 +25,6 @@ EXPORT_SYMBOL(complete_err_ready);
 void complete_shutdown_ack(void) __attribute__((weak));
 void complete_shutdown_ack(void) {}
 EXPORT_SYMBOL(complete_shutdown_ack);
-void get_hw_version_platform(void) __attribute__((weak));
-void get_hw_version_platform(void) {}
-EXPORT_SYMBOL(get_hw_version_platform);
 void ion_populate_vm_list(void) __attribute__((weak));
 void ion_populate_vm_list(void) {}
 EXPORT_SYMBOL(ion_populate_vm_list);

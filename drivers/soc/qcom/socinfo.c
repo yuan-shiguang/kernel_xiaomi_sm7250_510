@@ -13,6 +13,8 @@
 #include <linux/soc/qcom/smem.h>
 #include <linux/string.h>
 #include <linux/sys_soc.h>
+
+#include <soc/qcom/socinfo.h>
 #include <linux/types.h>
 
 /*
@@ -482,6 +484,13 @@ static void socinfo_debugfs_init(struct qcom_socinfo *qcom_socinfo,
 static void socinfo_debugfs_exit(struct qcom_socinfo *qcom_socinfo) {  }
 #endif /* CONFIG_DEBUG_FS */
 
+/*
+ * [VENDOR-PORT Phase7] cached SMEM socinfo fields, filled in by
+ * qcom_socinfo_probe(); read back by get_hw_version_platform() below.
+ */
+static uint32_t socinfo_hw_platform_id;
+static uint32_t socinfo_platform_version_id;
+
 static int qcom_socinfo_probe(struct platform_device *pdev)
 {
 	struct qcom_socinfo *qs;
@@ -517,6 +526,9 @@ static int qcom_socinfo_probe(struct platform_device *pdev)
 		if (!qs->attr.serial_number)
 			return -ENOMEM;
 	}
+
+	socinfo_hw_platform_id = le32_to_cpu(info->hw_plat);
+	socinfo_platform_version_id = le32_to_cpu(info->plat_ver);
 
 	qs->soc_dev = soc_device_register(&qs->attr);
 	if (IS_ERR(qs->soc_dev))
@@ -569,3 +581,47 @@ uint32_t socinfo_get_serial_number(void)
 	return 0;
 }
 EXPORT_SYMBOL(socinfo_get_serial_number);
+
+/* [VENDOR-PORT Phase7] hw platform ids (REF include/soc/qcom/socinfo.h) */
+#define HW_PLATFORM_J9   0x0d
+#define HW_PLATFORM_J9A  0x0e
+#define HW_PLATFORM_G7A  0x0f
+
+/*
+ * [VENDOR-PORT Phase7] SMEM-backed accessors for the fields the vendor
+ * get_hw_version_platform() helper needs (REF drivers/soc/qcom/socinfo.c).
+ * The v0_3/v0_4 members are gated on item_size because older bootloaders
+ * ship a smaller SMEM socinfo blob.
+ */
+static uint32_t socinfo_hw_platform_id;
+static uint32_t socinfo_platform_version_id;
+
+/*
+ * [VENDOR-PORT Phase7] socinfo_get_platform_type() / _version() are declared
+ * in <soc/qcom/socinfo.h> (vendor API) but nobody implements them in the GKI
+ * socinfo.c.  Read the SMEM socinfo blob fields cached by probe().
+ */
+uint32_t socinfo_get_platform_type(void)
+{
+	return socinfo_hw_platform_id;
+}
+
+uint32_t socinfo_get_platform_version(void)
+{
+	return socinfo_platform_version_id;
+}
+
+uint32_t get_hw_version_platform(void)
+{
+	uint32_t hw_type = socinfo_get_platform_type();
+
+	if (hw_type == HW_PLATFORM_J9A)
+		return HARDWARE_PLATFORM_VANGOGH;
+	else if (hw_type == HW_PLATFORM_G7A)
+		return HARDWARE_PLATFORM_PICASSO;
+	else if (hw_type == HW_PLATFORM_J9)
+		return HARDWARE_PLATFORM_MONET;
+	else
+		return HARDWARE_PLATFORM_UNKNOWN;
+}
+EXPORT_SYMBOL(get_hw_version_platform);
