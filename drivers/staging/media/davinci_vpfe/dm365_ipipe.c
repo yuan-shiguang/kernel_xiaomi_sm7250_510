@@ -1786,7 +1786,7 @@ vpfe_ipipe_init(struct vpfe_ipipe_device *ipipe, struct platform_device *pdev)
 	memres = request_mem_region(res->start, resource_size(res), res->name);
 	if (!memres)
 		return -EBUSY;
-	ipipe->base_addr = ioremap_nocache(memres->start,
+	ipipe->base_addr = ioremap(memres->start,
 					   resource_size(memres));
 	if (!ipipe->base_addr)
 		goto error_release;
@@ -1794,7 +1794,7 @@ vpfe_ipipe_init(struct vpfe_ipipe_device *ipipe, struct platform_device *pdev)
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 6);
 	if (!res)
 		goto error_unmap;
-	ipipe->isp5_base_addr = ioremap_nocache(res->start,
+	ipipe->isp5_base_addr = ioremap(res->start,
 						resource_size(res));
 	if (!ipipe->isp5_base_addr)
 		goto error_unmap;

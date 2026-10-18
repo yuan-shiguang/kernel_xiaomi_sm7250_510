@@ -32,6 +32,12 @@
  */
 #define IOMMU_PRIV	(1 << 5)
 /*
+ * [VENDOR-PORT Phase7] QCOM bus-attribute hints.  Bits 6/7 are free in the
+ * upstream IOMMU prot namespace, matching the vendor tree's numbering.
+ */
+#define IOMMU_USE_UPSTREAM_HINT	(1 << 6)
+#define IOMMU_USE_LLC_NWA	(1 << 7)
+/*
  * Allow caching in a transparent outer level of cache, also known as
  * the last-level or system cache, with a read/write allocation policy.
  * Does not depend on IOMMU_CACHE. Incompatible with IOMMU_SYS_CACHE_NWA.
@@ -65,6 +71,14 @@ struct iommu_domain_geometry {
 	dma_addr_t aperture_start; /* First address that can be mapped    */
 	dma_addr_t aperture_end;   /* Last address that can be mapped     */
 	bool force_aperture;       /* DMA only allowed in mappable range? */
+};
+
+/*
+ * [VENDOR-PORT Phase7] arm-smmu.c exposes the live page-table ops through
+ * DOMAIN_ATTR_PGTBL_INFO; dma-mapping-fast.c consumes it.
+ */
+struct iommu_pgtbl_info {
+	void *ops;
 };
 
 /* Domain feature flags */

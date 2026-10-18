@@ -3170,10 +3170,10 @@ wcnss_trigger_config(struct platform_device *pdev)
 			ret = -ENOENT;
 			goto fail_ioremap;
 		}
-		penv->fiq_reg = ioremap_nocache(res->start, resource_size(res));
+		penv->fiq_reg = ioremap(res->start, resource_size(res));
 		if (!penv->fiq_reg) {
 			wcnss_log(ERR, "%s", __func__,
-			"ioremap_nocache() failed fiq_reg addr:%pr\n",
+			"ioremap() failed fiq_reg addr:%pr\n",
 			&res->start);
 			ret = -ENOMEM;
 			goto fail_ioremap;

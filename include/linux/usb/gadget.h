@@ -26,11 +26,94 @@
 #include <linux/types.h>
 #include <linux/workqueue.h>
 #include <linux/usb/ch9.h>
+#include <linux/pm_runtime.h>
 #include <linux/android_kabi.h>
 
 #define UDC_TRACE_STR_MAX	512
 
+/*
+ * [VENDOR-PORT Phase7] Bit fields describing the usb_request.udc_priv word.
+ * These are set by function drivers that wish to queue usb_requests with
+ * SPS / BAM parameters on the QCOM UDC.
+ */
+#define MSM_PIPE_ID_MASK		(0x1F)
+#define MSM_TX_PIPE_ID_OFS		(16)
+#define MSM_SPS_MODE			BIT(5)
+#define MSM_IS_FINITE_TRANSFER		BIT(6)
+#define MSM_PRODUCER			BIT(7)
+#define MSM_DISABLE_WB			BIT(8)
+#define MSM_ETD_IOC			BIT(9)
+#define MSM_INTERNAL_MEM		BIT(10)
+#define MSM_VENDOR_ID			BIT(16)
+
 struct usb_ep;
+struct usb_function;
+
+/* [VENDOR-PORT Phase7] endpoint kind: plain vs. hardware-accelerated (GSI) */
+enum ep_type {
+	EP_TYPE_NORMAL = 0,
+	EP_TYPE_GSI,
+};
+
+/* [VENDOR-PORT Phase7] operation codes for GSI enabled EPs */
+enum gsi_ep_op {
+	GSI_EP_OP_CONFIG = 0,
+	GSI_EP_OP_STARTXFER,
+	GSI_EP_OP_STORE_DBL_INFO,
+	GSI_EP_OP_ENABLE_GSI,
+	GSI_EP_OP_UPDATEXFER,
+	GSI_EP_OP_RING_DB,
+	GSI_EP_OP_ENDXFER,
+	GSI_EP_OP_GET_CH_INFO,
+	GSI_EP_OP_GET_XFER_IDX,
+	GSI_EP_OP_PREPARE_TRBS,
+	GSI_EP_OP_FREE_TRBS,
+	GSI_EP_OP_SET_CLR_BLOCK_DBL,
+	GSI_EP_OP_CHECK_FOR_SUSPEND,
+	GSI_EP_OP_DISABLE,
+};
+
+/*
+ * [VENDOR-PORT Phase7] Per-EP GSI bookkeeping handed to the UDC.
+ * @buf_base_addr: base pointer of the per-EP TRB buffer pool
+ * @dma: DMA address of @buf_base_addr
+ * @num_bufs: number of non-ZLP TRBs allocated for this EP
+ * @buf_len: size of each individual buffer
+ * @db_reg_phs_addr_lsb: IPA channel doorbell register physical address LSB
+ * @mapped_db_reg_phs_addr_lsb: doorbell LSB IOVA mapped through the IOMMU
+ * @db_reg_phs_addr_msb: IPA channel doorbell register physical address MSB
+ * @sgt_trb_xfer_ring: sgtable for the USB TRB transfer ring
+ * @sgt_data_buff: sgtable for the data buffers
+ * @dev: pointer to the DMA-capable dwc device
+ */
+struct usb_gsi_request {
+	void *buf_base_addr;
+	dma_addr_t dma;
+	size_t num_bufs;
+	size_t buf_len;
+	u32 db_reg_phs_addr_lsb;
+	dma_addr_t mapped_db_reg_phs_addr_lsb;
+	u32 db_reg_phs_addr_msb;
+	struct sg_table sgt_trb_xfer_ring;
+	struct sg_table sgt_data_buff;
+	struct device *dev;
+};
+
+/*
+ * [VENDOR-PORT Phase7] GSI channel description returned by
+ * GSI_EP_OP_GET_CH_INFO.
+ */
+struct gsi_channel_info {
+	u16 last_trb_addr;
+	u8 const_buffer_size;
+	u32 depcmd_low_addr;
+	u8 depcmd_hi_addr;
+	u32 gevntcount_low_addr;
+	u8 gevntcount_hi_addr;
+	u16 xfer_ring_len;
+	u64 xfer_ring_base_addr;
+	struct usb_gsi_request *ch_req;
+};
 
 /**
  * struct usb_request - describes one i/o request
@@ -123,6 +206,8 @@ struct usb_request {
 
 	int			status;
 	unsigned		actual;
+	/* [VENDOR-PORT Phase7] vendor private data used by the QCOM UDC */
+	unsigned int		udc_priv;
 
 	ANDROID_KABI_RESERVE(1);
 };
@@ -245,6 +330,11 @@ struct usb_ep {
 	u8			address;
 	const struct usb_endpoint_descriptor	*desc;
 	const struct usb_ss_ep_comp_descriptor	*comp_desc;
+	/* [VENDOR-PORT Phase7] QCOM endpoint description */
+	enum ep_type		ep_type;
+	u8			ep_num;
+	u8			ep_intr_num;
+	bool			endless;
 
 	ANDROID_KABI_RESERVE(1);
 };
@@ -264,6 +354,8 @@ int usb_ep_clear_halt(struct usb_ep *ep);
 int usb_ep_set_wedge(struct usb_ep *ep);
 int usb_ep_fifo_status(struct usb_ep *ep);
 void usb_ep_fifo_flush(struct usb_ep *ep);
+int usb_gsi_ep_op(struct usb_ep *ep,
+		struct usb_gsi_request *req, enum gsi_ep_op op);
 #else
 static inline void usb_ep_set_maxpacket_limit(struct usb_ep *ep,
 		unsigned maxpacket_limit)
@@ -293,6 +385,9 @@ static inline int usb_ep_fifo_status(struct usb_ep *ep)
 { return 0; }
 static inline void usb_ep_fifo_flush(struct usb_ep *ep)
 { }
+static inline int usb_gsi_ep_op(struct usb_ep *ep,
+		struct usb_gsi_request *req, enum gsi_ep_op op)
+{ return 0; }
 #endif /* USB_GADGET */
 
 /*-------------------------------------------------------------------------*/
@@ -318,6 +413,8 @@ struct usb_udc;
 struct usb_gadget_ops {
 	int	(*get_frame)(struct usb_gadget *);
 	int	(*wakeup)(struct usb_gadget *);
+	/* [VENDOR-PORT Phase7] Function Wake notification (USB3 9.2.5.2) */
+	int	(*func_wakeup)(struct usb_gadget *g, int interface_id);
 	int	(*set_selfpowered) (struct usb_gadget *, int is_selfpowered);
 	int	(*vbus_session) (struct usb_gadget *, int is_active);
 	int	(*vbus_draw) (struct usb_gadget *, unsigned mA);
@@ -458,6 +555,13 @@ struct usb_gadget {
 	unsigned			connected:1;
 	unsigned			lpm_capable:1;
 	int				irq;
+	/* [VENDOR-PORT Phase7] QCOM gadget capabilities */
+	unsigned			remote_wakeup:1;
+	bool				bam2bam_func_enabled;
+	u32				extra_buf_alloc;
+	bool				l1_supported;
+	bool				is_chipidea;
+	bool				self_powered;
 
 	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);
@@ -617,6 +721,7 @@ static inline int gadget_is_otg(struct usb_gadget *g)
 #if IS_ENABLED(CONFIG_USB_GADGET)
 int usb_gadget_frame_number(struct usb_gadget *gadget);
 int usb_gadget_wakeup(struct usb_gadget *gadget);
+int usb_gadget_func_wakeup(struct usb_gadget *gadget, int interface_id);
 int usb_gadget_set_selfpowered(struct usb_gadget *gadget);
 int usb_gadget_clear_selfpowered(struct usb_gadget *gadget);
 int usb_gadget_vbus_connect(struct usb_gadget *gadget);
@@ -631,6 +736,9 @@ int usb_gadget_check_config(struct usb_gadget *gadget);
 static inline int usb_gadget_frame_number(struct usb_gadget *gadget)
 { return 0; }
 static inline int usb_gadget_wakeup(struct usb_gadget *gadget)
+{ return 0; }
+static inline int usb_gadget_func_wakeup(struct usb_gadget *gadget,
+					 int interface_id)
 { return 0; }
 static inline int usb_gadget_set_selfpowered(struct usb_gadget *gadget)
 { return 0; }
@@ -933,6 +1041,75 @@ extern int usb_gadget_ep_match_desc(struct usb_gadget *gadget,
 /* utility to update vbus status for udc core, it may be scheduled */
 extern void usb_udc_vbus_handler(struct usb_gadget *gadget, bool status);
 
+/*
+ * [VENDOR-PORT Phase7] Runtime-PM helpers for gadget function drivers.
+ * Upstream removed the usb_gadget_autopm_*() family in 5.10; the vendor
+ * function drivers (f_cdev / f_gsi / f_qdss / f_serial ...) still use them.
+ */
+static inline int usb_gadget_autopm_get(struct usb_gadget *gadget)
+{
+	int status = -ENODEV;
+
+	if (!gadget || !gadget->dev.parent)
+		return status;
+
+	status = pm_runtime_get_sync(gadget->dev.parent);
+	if (status < 0)
+		pm_runtime_put_sync(gadget->dev.parent);
+
+	if (status > 0)
+		status = 0;
+	return status;
+}
+
+static inline int usb_gadget_autopm_get_async(struct usb_gadget *gadget)
+{
+	int status = -ENODEV;
+
+	if (!gadget || !gadget->dev.parent)
+		return status;
+
+	status = pm_runtime_get(gadget->dev.parent);
+	if (status < 0 && status != -EINPROGRESS)
+		pm_runtime_put_noidle(gadget->dev.parent);
+
+	if (status > 0 || status == -EINPROGRESS)
+		status = 0;
+	return status;
+}
+
+static inline void usb_gadget_autopm_get_noresume(struct usb_gadget *gadget)
+{
+	if (gadget && gadget->dev.parent)
+		pm_runtime_get_noresume(gadget->dev.parent);
+}
+
+static inline void usb_gadget_autopm_put(struct usb_gadget *gadget)
+{
+	if (gadget && gadget->dev.parent)
+		pm_runtime_put_sync(gadget->dev.parent);
+}
+
+static inline void usb_gadget_autopm_put_async(struct usb_gadget *gadget)
+{
+	if (gadget && gadget->dev.parent)
+		pm_runtime_put(gadget->dev.parent);
+}
+
+static inline void usb_gadget_autopm_put_no_suspend(struct usb_gadget *gadget)
+{
+	if (gadget && gadget->dev.parent)
+		pm_runtime_put_noidle(gadget->dev.parent);
+}
+
+/*
+ * [VENDOR-PORT Phase7] Like usb_ep_queue(), but first checks whether the
+ * function is in USB3 Function Suspend state and if so raises a Function
+ * Wake notification (USB 3.0 spec, section 9.2.5.2).
+ */
+int usb_func_ep_queue(struct usb_function *func, struct usb_ep *ep,
+		      struct usb_request *req, gfp_t gfp_flags);
+
 /*-------------------------------------------------------------------------*/
 
 /* utility wrapping a simple endpoint selection policy */
@@ -949,4 +1126,43 @@ extern void usb_ep_autoconfig_release(struct usb_ep *);
 
 extern void usb_ep_autoconfig_reset(struct usb_gadget *);
 
+/* [VENDOR-PORT Phase7] pick an endpoint by its name (e.g. "gsi-epin1") */
+extern struct usb_ep *usb_ep_autoconfig_by_name(struct usb_gadget *gadget,
+			struct usb_endpoint_descriptor *desc,
+			const char *ep_name);
+
+/*
+ * [VENDOR-PORT Phase7] QCOM dwc3-msm endpoint / FIFO hooks used by the
+ * vendor function drivers (u_qdss, u_data_ipa, ...).
+ */
+#ifdef CONFIG_USB_DWC3_MSM
+int msm_ep_config(struct usb_ep *ep, struct usb_request *request);
+int msm_ep_unconfig(struct usb_ep *ep);
+void dwc3_tx_fifo_resize_request(struct usb_ep *ep, bool qdss_enable);
+int msm_data_fifo_config(struct usb_ep *ep, unsigned long addr, u32 size,
+			 u8 dst_pipe_idx);
+bool msm_dwc3_reset_ep_after_lpm(struct usb_gadget *gadget);
+int msm_dwc3_reset_dbm_ep(struct usb_ep *ep);
+#else
+static inline int msm_data_fifo_config(struct usb_ep *ep, unsigned long addr,
+				       u32 size, u8 dst_pipe_idx)
+{ return -ENODEV; }
+
+static inline int msm_ep_config(struct usb_ep *ep, struct usb_request *request)
+{ return -ENODEV; }
+
+static inline int msm_ep_unconfig(struct usb_ep *ep)
+{ return -ENODEV; }
+
+static inline void dwc3_tx_fifo_resize_request(struct usb_ep *ep,
+					       bool qdss_enable)
+{ }
+
+static inline bool msm_dwc3_reset_ep_after_lpm(struct usb_gadget *gadget)
+{ return false; }
+
+static inline int msm_dwc3_reset_dbm_ep(struct usb_ep *ep)
+{ return -ENODEV; }
+#endif
 #endif /* __LINUX_USB_GADGET_H */
+

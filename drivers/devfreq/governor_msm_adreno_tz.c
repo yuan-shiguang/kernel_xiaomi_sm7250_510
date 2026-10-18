@@ -269,7 +269,7 @@ static int tz_init_ca(struct devfreq_msm_adreno_tz_data *priv)
 			TZ_V2_INIT_CA_ID_64),
 			&desc);
 	if (!qtee_shmbridge_is_enabled())
-		kzfree(tz_buf);
+		kfree_sensitive(tz_buf);
 	else
 		qtee_shmbridge_free_shm(&shm);
 
@@ -318,7 +318,7 @@ static int tz_init(struct devfreq_msm_adreno_tz_data *priv,
 		if (!ret)
 			priv->is_64 = true;
 		if (!qtee_shmbridge_is_enabled())
-			kzfree(tz_buf);
+			kfree_sensitive(tz_buf);
 		else
 			qtee_shmbridge_free_shm(&shm);
 	} else

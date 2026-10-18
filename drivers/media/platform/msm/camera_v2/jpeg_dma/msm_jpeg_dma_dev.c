@@ -432,14 +432,14 @@ static void *msm_jpegdma_get_userptr(struct device *alloc_ctx,
 
 	msm_jpegdma_cast_long_to_buff_ptr(vaddr, &up_buff);
 
-	if (!access_ok(VERIFY_READ, up_buff,
+	if (!access_ok(up_buff,
 		sizeof(struct msm_jpeg_dma_buff)) ||
 		get_user(kp_buff.fd, &up_buff->fd)) {
 		dev_err(dma->dev, "Error getting user data\n");
 		return ERR_PTR(-ENOMEM);
 	}
 
-	if (!access_ok(VERIFY_WRITE, up_buff,
+	if (!access_ok(up_buff,
 		sizeof(struct msm_jpeg_dma_buff)) ||
 		put_user(kp_buff.fd, &up_buff->fd)) {
 		dev_err(dma->dev, "Error putting user data\n");
@@ -456,7 +456,7 @@ static void *msm_jpegdma_get_userptr(struct device *alloc_ctx,
 
 	return buf;
 error:
-	kzfree(buf);
+	kfree_sensitive(buf);
 	return ERR_PTR(-ENOMEM);
 }
 
@@ -471,7 +471,7 @@ static void msm_jpegdma_put_userptr(void *buf_priv)
 
 	msm_jpegdma_hw_unmap_buffer(buf_priv);
 
-	kzfree(buf_priv);
+	kfree_sensitive(buf_priv);
 }
 
 /* Videobuf2 memory callbacks. */
@@ -842,7 +842,7 @@ static int msm_jpegdma_qbuf(struct file *file, void *fh,
 
 	msm_jpegdma_cast_long_to_buff_ptr(buf->m.userptr, &up_buff);
 	mutex_lock(&ctx->lock);
-	if (!access_ok(VERIFY_READ, up_buff,
+	if (!access_ok(up_buff,
 		sizeof(struct msm_jpeg_dma_buff)) ||
 		get_user(kp_buff.fd, &up_buff->fd) ||
 		get_user(kp_buff.offset, &up_buff->offset)) {
@@ -851,7 +851,7 @@ static int msm_jpegdma_qbuf(struct file *file, void *fh,
 		return -EFAULT;
 	}
 
-	if (!access_ok(VERIFY_WRITE, up_buff,
+	if (!access_ok(up_buff,
 		sizeof(struct msm_jpeg_dma_buff)) ||
 		put_user(kp_buff.fd, &up_buff->fd) ||
 		put_user(kp_buff.offset, &up_buff->offset)) {

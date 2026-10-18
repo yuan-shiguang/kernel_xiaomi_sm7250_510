@@ -33,6 +33,9 @@
 /* use value, which < 0K, to indicate an invalid/uninitialized temperature */
 #define THERMAL_TEMP_INVALID	-274000
 
+/* [VENDOR-PORT Phase7] virtual sensor limit (REF thermal.h 36) */
+#define THERMAL_MAX_VIRT_SENSORS 10
+
 struct thermal_zone_device;
 struct thermal_cooling_device;
 struct thermal_instance;
@@ -90,6 +93,16 @@ struct thermal_cooling_device_ops {
 	int (*get_requested_power)(struct thermal_cooling_device *, u32 *);
 	int (*state2power)(struct thermal_cooling_device *, unsigned long, u32 *);
 	int (*power2state)(struct thermal_cooling_device *, u32, unsigned long *);
+	/*
+	 * QCOM vendor extension: floor/ceil clamping requested by the
+	 * platform mitigation layer. Appended (instead of following REF's
+	 * position after set_cur_state) so the offsets of the upstream
+	 * members above stay unchanged.
+	 */
+	int (*set_min_state)(struct thermal_cooling_device *cdev,
+			unsigned long target);
+	int (*get_min_state)(struct thermal_cooling_device *cdev,
+			unsigned long *target);
 
 	ANDROID_KABI_RESERVE(1);
 };
@@ -325,8 +338,29 @@ struct thermal_zone_of_device_ops {
 	int (*set_trips)(void *, int, int);
 	int (*set_emul_temp)(void *, int);
 	int (*set_trip_temp)(void *, int, int);
+	int (*get_trip_temp)(void *, int, int *);
 
 	ANDROID_KABI_RESERVE(1);
+};
+
+/* [VENDOR-PORT Phase7] virtual thermal sensors (REF include/linux/thermal.h 410-441) */
+/* Different aggregation logic supported for virtual sensors */
+enum aggregation_logic {
+	VIRT_WEIGHTED_AVG,
+	VIRT_MAXIMUM,
+	VIRT_MINIMUM,
+	VIRT_AGGREGATION_NR,
+};
+
+struct virtual_sensor_data {
+	int                    num_sensors;
+	char                   virt_zone_name[THERMAL_NAME_LENGTH];
+	char                   *sensor_names[THERMAL_MAX_VIRT_SENSORS];
+	enum aggregation_logic logic;
+	int                    coefficients[THERMAL_MAX_VIRT_SENSORS];
+	int                    coefficient_ct;
+	int                    avg_offset;
+	int                    avg_denominator;
 };
 
 /* Function declarations */
@@ -344,6 +378,11 @@ struct thermal_zone_device *devm_thermal_zone_of_sensor_register(
 		const struct thermal_zone_of_device_ops *ops);
 void devm_thermal_zone_of_sensor_unregister(struct device *dev,
 					    struct thermal_zone_device *tz);
+
+/* [VENDOR-PORT Phase7] virtual sensor registration */
+struct thermal_zone_device *devm_thermal_of_virtual_sensor_register(
+		struct device *dev,
+		const struct virtual_sensor_data *sensor_data);
 #else
 
 static inline int thermal_zone_of_get_sensor_id(struct device_node *tz_np,
@@ -376,6 +415,14 @@ static inline
 void devm_thermal_zone_of_sensor_unregister(struct device *dev,
 					    struct thermal_zone_device *tz)
 {
+}
+
+static inline struct thermal_zone_device *
+devm_thermal_of_virtual_sensor_register(
+		struct device *dev,
+		const struct virtual_sensor_data *sensor_data)
+{
+	return ERR_PTR(-ENODEV);
 }
 
 #endif

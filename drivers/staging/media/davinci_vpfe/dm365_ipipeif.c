@@ -1011,7 +1011,7 @@ int vpfe_ipipeif_init(struct vpfe_ipipeif_device *ipipeif,
 	if (!res)
 		return -EBUSY;
 
-	ipipeif->ipipeif_base_addr = ioremap_nocache(res->start, res_len);
+	ipipeif->ipipeif_base_addr = ioremap(res->start, res_len);
 	if (!ipipeif->ipipeif_base_addr) {
 		ret =  -EBUSY;
 		goto fail;

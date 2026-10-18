@@ -2163,6 +2163,37 @@ int hrtimers_dead_cpu(unsigned int scpu)
 	return 0;
 }
 
+/* [VENDOR-PORT Phase7] hrtimer quiesce from 5.10.100 REF
+ * (adapted: 5.10.270 migrate_hrtimer_list is 2-arg, no remove_pinned) */
+static void __migrate_hrtimers(unsigned int scpu)
+{
+	struct hrtimer_cpu_base *old_base, *new_base;
+	unsigned long flags;
+	int i;
+
+	local_irq_save(flags);
+	old_base = &per_cpu(hrtimer_bases, scpu);
+	new_base = this_cpu_ptr(&hrtimer_bases);
+	raw_spin_lock(&new_base->lock);
+	raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+
+	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
+		migrate_hrtimer_list(&old_base->clock_base[i],
+				     &new_base->clock_base[i]);
+	}
+
+	hrtimer_update_softirq_timer(new_base, false);
+	raw_spin_unlock(&old_base->lock);
+	raw_spin_unlock(&new_base->lock);
+	__hrtimer_peek_ahead_timers();
+	local_irq_restore(flags);
+}
+
+void hrtimer_quiesce_cpu(void *cpup)
+{
+	__migrate_hrtimers(*(int *)cpup);
+}
+
 #endif /* CONFIG_HOTPLUG_CPU */
 
 void __init hrtimers_init(void)

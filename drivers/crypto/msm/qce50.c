@@ -2801,10 +2801,13 @@ static int qce_sps_init_ep_conn(struct qce_device *pce_dev,
 					sizeof(struct sps_iovec);
 	if (sps_connect_info->desc.size > MAX_SPS_DESC_FIFO_SIZE)
 		sps_connect_info->desc.size = MAX_SPS_DESC_FIFO_SIZE;
-	sps_connect_info->desc.base = dma_zalloc_coherent(pce_dev->pdev,
+	sps_connect_info->desc.base = dma_alloc_coherent(pce_dev->pdev,
 					sps_connect_info->desc.size,
 					&sps_connect_info->desc.phys_base,
 					GFP_KERNEL);
+	if (sps_connect_info->desc.base != NULL)
+		memset(sps_connect_info->desc.base, 0,
+		       sps_connect_info->desc.size);
 	if (sps_connect_info->desc.base == NULL) {
 		rc = -ENOMEM;
 		pr_err("Can not allocate coherent memory for sps data\n");
@@ -2945,7 +2948,7 @@ static int qce_sps_get_bam(struct qce_device *pce_dev)
 	}
 	pbam->cnt = 1;
 	pbam->bam_mem = pce_dev->bam_mem;
-	pbam->bam_iobase = ioremap_nocache(pce_dev->bam_mem,
+	pbam->bam_iobase = ioremap(pce_dev->bam_mem,
 					pce_dev->bam_mem_size);
 	if (!pbam->bam_iobase) {
 		kfree(pbam);
@@ -4875,7 +4878,7 @@ again:
 			pce_dev->intr_cadence = 0;
 			atomic_set(&pce_dev->bunch_cmd_seq, 0);
 			atomic_set(&pce_dev->last_intr_seq, 0);
-			pce_dev->cadence_flag = ~pce_dev->cadence_flag;
+	pce_dev->cadence_flag = !pce_dev->cadence_flag;
 		}
 	}
 
@@ -5924,7 +5927,7 @@ static int __qce_get_device_tree_data(struct platform_device *pdev,
 							"crypto-base");
 	if (resource) {
 		pce_dev->phy_iobase = resource->start;
-		pce_dev->iobase = ioremap_nocache(resource->start,
+		pce_dev->iobase = ioremap(resource->start,
 					resource_size(resource));
 		if (!pce_dev->iobase) {
 			pr_err("Can not map CRYPTO io memory\n");

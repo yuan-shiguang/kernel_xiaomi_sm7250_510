@@ -67,11 +67,24 @@ enum pwm_output_type {
  * @polarity: PWM polarity
  * @enabled: PWM enabled status
  */
+/**
+ * struct pwm_output_pattern - PWM duty pattern for MODULATED duty type
+ * @duty_pattern: PWM duty cycles in the pattern for duty modulation
+ * @num_entries: number of entries in the pattern
+ * @cycles_per_duty: number of PWM period cycles an entry stays at
+ */
+struct pwm_output_pattern {
+	u64 *duty_pattern;
+	unsigned int num_entries;
+	u64 cycles_per_duty;
+};
+
 struct pwm_state {
 	u64 period;
 	u64 duty_cycle;
 	enum pwm_polarity polarity;
 	enum pwm_output_type output_type;
+	struct pwm_output_pattern *output_pattern;
 	bool enabled;
 };
 
@@ -96,6 +109,7 @@ struct pwm_device {
 	void *chip_data;
 
 	struct pwm_args args;
+	struct pwm_output_pattern *output_pattern;
 	struct pwm_state state;
 	struct pwm_state last;
 
@@ -111,6 +125,37 @@ static inline void pwm_get_state(const struct pwm_device *pwm,
 				 struct pwm_state *state)
 {
 	*state = pwm->state;
+}
+
+static inline void pwm_set_period_extend(struct pwm_device *pwm, u64 period)
+{
+	if (pwm)
+		pwm->state.period = period;
+}
+
+static inline u64 pwm_get_period_extend(const struct pwm_device *pwm)
+{
+	struct pwm_state state;
+
+	pwm_get_state(pwm, &state);
+
+	return state.period;
+}
+
+static inline void pwm_set_duty_cycle_extend(struct pwm_device *pwm,
+		u64 duty)
+{
+	if (pwm)
+		pwm->state.duty_cycle = duty;
+}
+
+static inline u64 pwm_get_duty_cycle_extend(const struct pwm_device *pwm)
+{
+	struct pwm_state state;
+
+	pwm_get_state(pwm, &state);
+
+	return state.duty_cycle;
 }
 
 static inline bool pwm_is_enabled(const struct pwm_device *pwm)
@@ -292,6 +337,13 @@ struct pwm_ops {
 			  struct pwm_state *state);
 	int (*get_output_type_supported)(struct pwm_chip *chip,
 			struct pwm_device *pwm);
+	int (*config_extend)(struct pwm_chip *chip, struct pwm_device *pwm,
+			u64 duty_ns, u64 period_ns);
+	int (*set_output_type)(struct pwm_chip *chip, struct pwm_device *pwm,
+			enum pwm_output_type output_type);
+	int (*set_output_pattern)(struct pwm_chip *chip,
+			struct pwm_device *pwm,
+			struct pwm_output_pattern *output_pattern);
 	struct module *owner;
 
 	/* Only used by legacy drivers */

@@ -960,7 +960,7 @@ static void kasan_bitops_tags(struct kunit *test)
 	kfree(bits);
 }
 
-static void kmalloc_double_kzfree(struct kunit *test)
+static void kmalloc_double_kfree_sensitive(struct kunit *test)
 {
 	char *ptr;
 	size_t size = 16;

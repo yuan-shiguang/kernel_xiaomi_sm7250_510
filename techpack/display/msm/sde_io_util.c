@@ -74,7 +74,7 @@ void dss_reg_dump(void __iomem *base, u32 length, const char *prefix,
 } /* dss_reg_dump */
 EXPORT_SYMBOL(dss_reg_dump);
 
-static struct resource *msm_dss_get_res_byname(struct platform_device *pdev,
+struct resource *msm_dss_get_res_byname(struct platform_device *pdev,
 	unsigned int type, const char *name)
 {
 	struct resource *res = NULL;

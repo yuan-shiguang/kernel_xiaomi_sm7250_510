@@ -483,12 +483,95 @@ int usb_interface_id(struct usb_configuration *config,
 
 	if (id < MAX_CONFIG_INTERFACES) {
 		config->interface[id] = function;
+		function->intf_id = id;
 		config->next_interface_id = id + 1;
 		return id;
 	}
 	return -ENODEV;
 }
 EXPORT_SYMBOL_GPL(usb_interface_id);
+
+/*
+ * [VENDOR-PORT Phase7] Function Wake support (USB 3.0 spec 9.2.5.2).
+ * A function that is in Function Suspend state must raise a Function Wake
+ * notification before it may queue further transfers.
+ */
+static int usb_func_wakeup_int(struct usb_function *func)
+{
+	struct usb_gadget *gadget;
+
+	pr_debug("%s - %s function wakeup\n",
+		 __func__, func->name ? func->name : "");
+
+	if (!func || !func->config || !func->config->cdev ||
+	    !func->config->cdev->gadget)
+		return -EINVAL;
+
+	gadget = func->config->cdev->gadget;
+	if ((gadget->speed != USB_SPEED_SUPER) || !func->func_wakeup_allowed) {
+		DBG(func->config->cdev,
+		    "Function Wakeup is not possible. speed=%u, func_wakeup_allowed=%u\n",
+		    gadget->speed, func->func_wakeup_allowed);
+		return -EOPNOTSUPP;
+	}
+
+	return usb_gadget_func_wakeup(gadget, func->intf_id);
+}
+
+int usb_func_wakeup(struct usb_function *func)
+{
+	int ret;
+	unsigned long flags;
+
+	pr_debug("%s function wakeup\n", func->name ? func->name : "");
+
+	spin_lock_irqsave(&func->config->cdev->lock, flags);
+	ret = usb_func_wakeup_int(func);
+	if (ret == -EAGAIN) {
+		DBG(func->config->cdev,
+		    "Function wakeup for %s delayed until after bus resume.\n",
+		    func->name ? func->name : "");
+		ret = 0;
+	} else if (ret < 0 && ret != -EOPNOTSUPP) {
+		ERROR(func->config->cdev,
+		      "Failed to wake function %s from suspend state. ret=%d.\n",
+		      func->name ? func->name : "", ret);
+	}
+
+	spin_unlock_irqrestore(&func->config->cdev->lock, flags);
+	return ret;
+}
+EXPORT_SYMBOL(usb_func_wakeup);
+
+int usb_func_ep_queue(struct usb_function *func, struct usb_ep *ep,
+		      struct usb_request *req, gfp_t gfp_flags)
+{
+	struct usb_gadget *gadget;
+	int ret;
+
+	if (!func || !func->config || !func->config->cdev ||
+	    !func->config->cdev->gadget || !ep || !req)
+		return -EINVAL;
+
+	gadget = func->config->cdev->gadget;
+	if (func->func_is_suspended && func->func_wakeup_allowed) {
+		ret = usb_gadget_func_wakeup(gadget, func->intf_id);
+		if (ret == -EAGAIN)
+			pr_debug("bus suspended func wakeup for %s delayed until bus resume.\n",
+				 func->name ? func->name : "");
+		else if (ret < 0 && ret != -EOPNOTSUPP)
+			pr_err("Failed to wake function %s from suspend state. ret=%d.\n",
+			       func->name ? func->name : "", ret);
+		return 0;
+	}
+
+	if (func->func_is_suspended && !func->func_wakeup_allowed)
+		return -EOPNOTSUPP;
+
+	return usb_ep_queue(ep, req, gfp_flags);
+}
+EXPORT_SYMBOL(usb_func_ep_queue);
+
 
 static u8 encode_bMaxPower(enum usb_device_speed speed,
 		struct usb_configuration *c)

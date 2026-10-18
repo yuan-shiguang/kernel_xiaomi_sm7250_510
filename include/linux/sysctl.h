@@ -72,6 +72,11 @@ int proc_doulongvec_minmax(struct ctl_table *, int, void *, size_t *, loff_t *);
 int proc_doulongvec_ms_jiffies_minmax(struct ctl_table *table, int, void *,
 		size_t *, loff_t *);
 int proc_do_large_bitmap(struct ctl_table *, int, void *, size_t *, loff_t *);
+/* [VENDOR-PORT Phase7] sched capacity / ravg window helpers */
+int proc_douintvec_capacity(struct ctl_table *table, int write,
+			    void __user *buffer, size_t *lenp, loff_t *ppos);
+int proc_douintvec_ravg_window(struct ctl_table *table, int write,
+			       void __user *buffer, size_t *lenp, loff_t *ppos);
 int proc_do_static_key(struct ctl_table *table, int write, void *buffer,
 		size_t *lenp, loff_t *ppos);
 

@@ -4428,7 +4428,7 @@ static void mdss_dp_handle_attention(struct mdss_dp_drv_pdata *dp)
 		list_del(&node->list);
 		mutex_unlock(&dp->attention_lock);
 
-		kzfree(node);
+		kfree_sensitive(node);
 
 		dp->alt_mode.dp_status.response = vdo;
 		mdss_dp_usbpd_ext_dp_status(&dp->alt_mode.dp_status);

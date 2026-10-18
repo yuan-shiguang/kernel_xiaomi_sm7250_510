@@ -234,7 +234,22 @@ static int boost_adjust_notify(struct notifier_block *nb, unsigned long val,
 			 cpu, policy->min);
 		pr_debug("CPU%u boost min: %u kHz\n", cpu, ib_min);
 
-		cpufreq_verify_within_limits(policy, ib_min, UINT_MAX);
+		{
+			/*
+			 * 5.10 changed cpufreq_verify_within_limits() to operate on
+			 * struct cpufreq_policy_data. Clamp there and write the
+			 * result back so the caller's policy keeps the boost floor.
+			 */
+			struct cpufreq_policy_data pd = {
+				.cpu = policy->cpu,
+				.min = policy->min,
+				.max = policy->max,
+			};
+
+			cpufreq_verify_within_limits(&pd, ib_min, UINT_MAX);
+			policy->min = pd.min;
+			policy->max = pd.max;
+		}
 
 		pr_debug("CPU%u policy min after boost: %u kHz\n",
 			 cpu, policy->min);

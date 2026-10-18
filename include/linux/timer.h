@@ -217,6 +217,7 @@ unsigned long round_jiffies_up_relative(unsigned long j);
 #ifdef CONFIG_HOTPLUG_CPU
 int timers_prepare_cpu(unsigned int cpu);
 int timers_dead_cpu(unsigned int cpu);
+extern void timer_quiesce_cpu(void *cpup); /* [VENDOR-PORT Phase7] */
 #else
 #define timers_prepare_cpu	NULL
 #define timers_dead_cpu		NULL

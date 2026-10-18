@@ -11,6 +11,7 @@
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/pm_runtime.h>
+#include <linux/string.h>
 #include <linux/slimbus.h>
 #include "slimbus.h"
 
@@ -19,12 +20,19 @@ static DEFINE_IDA(ctrl_ida);
 static const struct slim_device_id *slim_match(const struct slim_device_id *id,
 					       const struct slim_device *sbdev)
 {
-	while (id->manf_id != 0 || id->prod_code != 0) {
-		if (id->manf_id == sbdev->e_addr.manf_id &&
+	while (id->manf_id != 0 || id->prod_code != 0 || id->name) {
+		/* QCOM vendor extension: name-based match (see mod_devicetable.h) */
+		if (id->name) {
+			const char *devname = dev_name(&sbdev->dev);
+
+			if (devname && !strcmp(id->name, devname))
+				return id;
+		} else if (id->manf_id == sbdev->e_addr.manf_id &&
 		    id->prod_code == sbdev->e_addr.prod_code &&
 		    id->dev_index == sbdev->e_addr.dev_index &&
-		    id->instance == sbdev->e_addr.instance)
+		    id->instance == sbdev->e_addr.instance) {
 			return id;
+		}
 		id++;
 	}
 	return NULL;

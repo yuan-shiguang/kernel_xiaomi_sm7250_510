@@ -101,24 +101,24 @@ static ssize_t hardidletimer_tg_show(struct kobject *kobj,
 {
 	struct hardidletimer_tg *timer;
 	ktime_t expires;
-	struct timespec ktimespec;
+	struct timespec64 ktimespec;
 
-	memset(&ktimespec, 0, sizeof(struct timespec));
+	memset(&ktimespec, 0, sizeof(struct timespec64));
 	mutex_lock(&list_mutex);
 
 	timer =	__hardidletimer_tg_find_by_label(attr->name);
 	if (timer) {
 		expires = alarm_expires_remaining(&timer->alarm);
-		ktimespec = ktime_to_timespec(expires);
+		ktimespec = ktime_to_timespec64(expires);
 	}
 
 	mutex_unlock(&list_mutex);
 
 	if (ktimespec.tv_sec >= 0)
-		return snprintf(buf, PAGE_SIZE, "%ld\n", ktimespec.tv_sec);
+		return snprintf(buf, PAGE_SIZE, "%lld\n", (long long)ktimespec.tv_sec);
 
 	if ((timer) && timer->send_nl_msg)
-		return snprintf(buf, PAGE_SIZE, "0 %ld\n", ktimespec.tv_sec);
+		return snprintf(buf, PAGE_SIZE, "0 %lld\n", (long long)ktimespec.tv_sec);
 	else
 		return snprintf(buf, PAGE_SIZE, "0\n");
 }
@@ -226,9 +226,9 @@ static int hardidletimer_tg_checkentry(const struct xt_tgchk_param *par)
 	struct hardidletimer_tg_info *info = par->targinfo;
 	int ret;
 	ktime_t tout;
-	struct timespec ktimespec;
+	struct timespec64 ktimespec;
 
-	memset(&ktimespec, 0, sizeof(struct timespec));
+	memset(&ktimespec, 0, sizeof(struct timespec64));
 
 	pr_debug("checkentry targinfo %s\n", info->label);
 
@@ -251,11 +251,11 @@ static int hardidletimer_tg_checkentry(const struct xt_tgchk_param *par)
 		info->timer->refcnt++;
 		/* calculate remaining expiry time */
 		tout = alarm_expires_remaining(&info->timer->alarm);
-		ktimespec = ktime_to_timespec(tout);
+		ktimespec = ktime_to_timespec64(tout);
 
 		if (ktimespec.tv_sec > 0) {
-			pr_debug("time_expiry_remaining %ld\n",
-				 ktimespec.tv_sec);
+			pr_debug("time_expiry_remaining %lld\n",
+				 (long long)ktimespec.tv_sec);
 			alarm_start_relative(&info->timer->alarm, tout);
 		}
 

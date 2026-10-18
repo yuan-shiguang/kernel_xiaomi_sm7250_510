@@ -2786,7 +2786,7 @@ DAC960_DetectController(struct pci_dev *PCI_Device,
  if (MemoryWindowSize < PAGE_SIZE)
 	MemoryWindowSize = PAGE_SIZE;
   Controller->MemoryMappedAddress =
-	ioremap_nocache(Controller->PCI_Address & PAGE_MASK, MemoryWindowSize);
+	ioremap(Controller->PCI_Address & PAGE_MASK, MemoryWindowSize);
   Controller->BaseAddress =
 	Controller->MemoryMappedAddress + (Controller->PCI_Address & ~PAGE_MASK);
   if (Controller->MemoryMappedAddress == NULL)

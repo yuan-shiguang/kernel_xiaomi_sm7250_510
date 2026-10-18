@@ -1,3 +1,4 @@
+#include <linux/delay.h>
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  *  kernel/sched/core.c
@@ -6,11 +7,11 @@
  *
  *  Copyright (C) 1991-2002  Linus Torvalds
  */
+/* [VENDOR-PORT Phase7] sched.h pulls in kernel/sched/walt.h and <trace/events/sched.h> at
+ * its very end, so CREATE_TRACE_POINTS has to be defined before it. */
 #define CREATE_TRACE_POINTS
-#include <trace/events/sched.h>
-#undef CREATE_TRACE_POINTS
-
 #include "sched.h"
+#undef CREATE_TRACE_POINTS
 
 #include <linux/nospec.h>
 
@@ -6796,6 +6797,39 @@ void show_state_filter(unsigned long state_filter)
 		debug_show_all_locks();
 }
 
+/*
+ * QCOM vendor extension: like show_state_filter() but only dumps tasks
+ * whose state is exactly equal to @state_filter. Used by the PMIC PON
+ * driver to collect D/R-state process info on a long key combo.
+ */
+void show_state_filter_single(unsigned long state_filter)
+{
+	struct task_struct *g, *p;
+
+#if BITS_PER_LONG == 32
+	printk(KERN_INFO
+		"  task                PC stack   pid father\n");
+#else
+	printk(KERN_INFO
+		"  task                        PC stack   pid father\n");
+#endif
+	rcu_read_lock();
+	for_each_process_thread(g, p) {
+		/*
+		 * reset the NMI-timeout, listing all files on a slow
+		 * console might take a lot of time:
+		 * Also, reset softlockup watchdogs on all CPUs, because
+		 * another CPU might be blocked waiting for us to process
+		 * an IPI.
+		 */
+		touch_nmi_watchdog();
+		touch_all_softlockup_watchdogs();
+		if (p->state == state_filter)
+			sched_show_task(p);
+	}
+	rcu_read_unlock();
+}
+
 /**
  * init_idle - set up an idle thread for a given CPU
  * @idle: task in question
@@ -7152,6 +7186,230 @@ void sched_cpu_drain_rq_wait(unsigned int cpu)
 	if (rq_drain->done)
 		cpu_stop_work_wait(rq_drain);
 }
+
+/* [VENDOR-PORT Phase7] watchdog_configured() fallback.
+ * kernel/watchdog.c is only built when CONFIG_LOCKUP_DETECTOR is enabled.
+ * When it is NOT built, sched_isolate_cpu() still references
+ * watchdog_configured(), so provide the always-true fallback here (no
+ * lockup/softlockup watchdog present => nothing to wait for).
+ */
+#ifndef CONFIG_LOCKUP_DETECTOR
+bool watchdog_configured(unsigned int cpu)
+{
+	return true;
+}
+EXPORT_SYMBOL(watchdog_configured);
+#endif
+
+/* [VENDOR-PORT Phase7] sched_isolate subsystem from 5.10.100 REF
+ * (adapted for 5.10.270: cpu_isolated_mask, watchdog_configured,
+ *  hrtimer_quiesce_cpu/timer_quiesce_cpu, SOFTLOCKUP-off guards) */
+
+/* [VENDOR-PORT Phase7] externs for kernel-internal helpers used by the
+ * sched_isolate subsystem (not exported via core.c's normal headers). */
+extern void irq_migrate_all_off_this_cpu(void);
+extern void irq_lock_sparse(void);
+extern void irq_unlock_sparse(void);
+extern void init_sched_groups_capacity(int cpu, struct sched_domain *sd);
+
+#ifdef CONFIG_HOTPLUG_CPU
+
+void set_rq_online(struct rq *rq);
+void set_rq_offline(struct rq *rq);
+
+int do_isolation_work_cpu_stop(void *data)
+{
+	unsigned int cpu = smp_processor_id();
+	struct rq *rq = cpu_rq(cpu);
+	struct rq_flags rf;
+
+	local_irq_disable();
+
+	irq_migrate_all_off_this_cpu();
+
+	/*
+	 * [VENDOR-PORT Phase7] REF 5.10.100 called sched_ttwu_pending() here to
+	 * flush this rq's pending wakeup list. In 5.10.270 the TTWU pending list
+	 * moved into the SMP call-function queue (flushed by the normal IPI path /
+	 * flush_smp_call_function_from_idle), so the manual flush is dropped, matching
+	 * mainline GKI CPU-down behavior.
+	 */
+
+	rq_lock(rq, &rf);
+
+	if (rq->rd) {
+		BUG_ON(!cpumask_test_cpu(cpu, rq->rd->span));
+		set_rq_offline(rq);
+	}
+
+	migrate_tasks(rq, &rf, false);
+
+	if (rq->rd)
+		set_rq_online(rq);
+	rq_unlock(rq, &rf);
+
+	clear_walt_request(cpu);
+	local_irq_enable();
+	return 0;
+}
+
+int do_unisolation_work_cpu_stop(void *data)
+{
+#ifdef CONFIG_SOFTLOCKUP_DETECTOR
+	watchdog_enable(smp_processor_id());
+#endif
+	return 0;
+}
+
+static void sched_update_group_capacities(int cpu)
+{
+	struct sched_domain *sd;
+
+	mutex_lock(&sched_domains_mutex);
+	rcu_read_lock();
+
+	for_each_domain(cpu, sd) {
+		int balance_cpu = group_balance_cpu(sd->groups);
+
+		init_sched_groups_capacity(cpu, sd);
+		if (cpu != balance_cpu)
+			init_sched_groups_capacity(balance_cpu, sd);
+	}
+
+	rcu_read_unlock();
+	mutex_unlock(&sched_domains_mutex);
+}
+
+static unsigned int cpu_isolation_vote[NR_CPUS];
+
+int sched_isolate_count(const cpumask_t *mask, bool include_offline)
+{
+	cpumask_t count_mask = CPU_MASK_NONE;
+
+	if (include_offline) {
+		cpumask_complement(&count_mask, cpu_online_mask);
+		cpumask_or(&count_mask, &count_mask, cpu_isolated_mask);
+		cpumask_and(&count_mask, &count_mask, mask);
+	} else {
+		cpumask_and(&count_mask, mask, cpu_isolated_mask);
+	}
+
+	return cpumask_weight(&count_mask);
+}
+
+int sched_isolate_cpu(int cpu)
+{
+	struct rq *rq;
+	cpumask_t avail_cpus;
+	int ret_code = 0;
+	u64 start_time = 0;
+
+	if (trace_sched_isolate_enabled())
+		start_time = sched_clock();
+
+	cpu_maps_update_begin();
+
+	cpumask_andnot(&avail_cpus, cpu_online_mask, cpu_isolated_mask);
+
+	if (cpu < 0 || cpu >= nr_cpu_ids || !cpu_possible(cpu)
+			|| !cpu_online(cpu)) {
+		ret_code = -EINVAL;
+		goto out;
+	}
+
+	rq = cpu_rq(cpu);
+
+	if (++cpu_isolation_vote[cpu] > 1)
+		goto out;
+
+	if (cpumask_weight(&avail_cpus) == 1) {
+		--cpu_isolation_vote[cpu];
+		ret_code = -EINVAL;
+		goto out;
+	}
+
+	if (!watchdog_configured(cpu)) {
+		msleep(20);
+		if (!watchdog_configured(cpu)) {
+			--cpu_isolation_vote[cpu];
+			ret_code = -EBUSY;
+			goto out;
+		}
+	}
+
+	set_cpu_isolated(cpu, true);
+	cpumask_clear_cpu(cpu, &avail_cpus);
+
+	smp_call_function_any(&avail_cpus, hrtimer_quiesce_cpu, &cpu, 1);
+	smp_call_function_any(&avail_cpus, timer_quiesce_cpu, &cpu, 1);
+
+#ifdef CONFIG_SOFTLOCKUP_DETECTOR
+	watchdog_disable(cpu);
+#endif
+	irq_lock_sparse();
+	stop_one_cpu(cpu, do_isolation_work_cpu_stop, 0);
+	irq_unlock_sparse();
+
+	calc_load_migrate(rq);
+	update_max_interval();
+	sched_update_group_capacities(cpu);
+
+out:
+	cpu_maps_update_done();
+	trace_sched_isolate(cpu, cpumask_bits(cpu_isolated_mask)[0],
+				    start_time, 1);
+	return ret_code;
+}
+
+int sched_unisolate_cpu_unlocked(int cpu)
+{
+	int ret_code = 0;
+	u64 start_time = 0;
+
+	if (cpu < 0 || cpu >= nr_cpu_ids || !cpu_possible(cpu)) {
+		ret_code = -EINVAL;
+		goto out;
+	}
+	if (trace_sched_isolate_enabled())
+		start_time = sched_clock();
+
+	if (!cpu_isolation_vote[cpu]) {
+		ret_code = -EINVAL;
+		goto out;
+	}
+
+	if (--cpu_isolation_vote[cpu])
+		goto out;
+
+	set_cpu_isolated(cpu, false);
+	update_max_interval();
+	sched_update_group_capacities(cpu);
+
+	if (cpu_online(cpu)) {
+		stop_one_cpu(cpu, do_unisolation_work_cpu_stop, 0);
+
+		if (!atomic_fetch_or(NOHZ_KICK_MASK, nohz_flags(cpu)))
+			smp_send_reschedule(cpu);
+	}
+
+out:
+	trace_sched_isolate(cpu, cpumask_bits(cpu_isolated_mask)[0],
+				    start_time, 0);
+	return ret_code;
+}
+
+int sched_unisolate_cpu(int cpu)
+{
+	int ret_code;
+
+	cpu_maps_update_begin();
+	ret_code = sched_unisolate_cpu_unlocked(cpu);
+	cpu_maps_update_done();
+	return ret_code;
+}
+
+#endif /* CONFIG_HOTPLUG_CPU */
+
 #endif /* CONFIG_HOTPLUG_CPU */
 
 void set_rq_online(struct rq *rq)
@@ -8942,3 +9200,7 @@ void call_trace_sched_update_nr_running(struct rq *rq, int count)
 {
         trace_sched_update_nr_running_tp(rq, count);
 }
+
+/* [VENDOR-PORT Phase7] missing global defs from 5.10.100 REF */
+__read_mostly bool sched_predl = true;
+

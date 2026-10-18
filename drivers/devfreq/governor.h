@@ -19,6 +19,8 @@
 #define DEVFREQ_GOV_START			0x1
 #define DEVFREQ_GOV_STOP			0x2
 #define DEVFREQ_GOV_UPDATE_INTERVAL		0x3
+/* [VENDOR-PORT Phase7] vendor spelling of the same event */
+#define DEVFREQ_GOV_INTERVAL			DEVFREQ_GOV_UPDATE_INTERVAL
 #define DEVFREQ_GOV_SUSPEND			0x4
 #define DEVFREQ_GOV_RESUME			0x5
 
@@ -61,6 +63,9 @@ void devfreq_monitor_start(struct devfreq *devfreq);
 void devfreq_monitor_stop(struct devfreq *devfreq);
 void devfreq_monitor_suspend(struct devfreq *devfreq);
 void devfreq_monitor_resume(struct devfreq *devfreq);
+/* [VENDOR-PORT Phase7] governor-side polling-interval update helper */
+extern void devfreq_interval_update(struct devfreq *devfreq,
+				    unsigned int *delay);
 void devfreq_update_interval(struct devfreq *devfreq, unsigned int *delay);
 
 int devfreq_add_governor(struct devfreq_governor *governor);

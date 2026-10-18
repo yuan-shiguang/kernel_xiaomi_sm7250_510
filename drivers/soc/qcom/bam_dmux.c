@@ -2312,7 +2312,7 @@ static int bam_init(void)
 	in_global_reset = 0;
 	vote_dfab();
 	/* init BAM */
-	a2_virt_addr = ioremap_nocache(a2_phys_base, a2_phys_size);
+	a2_virt_addr = ioremap(a2_phys_base, a2_phys_size);
 	if (!a2_virt_addr) {
 		pr_err("%s: ioremap failed\n", __func__);
 		ret = -ENOMEM;

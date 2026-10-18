@@ -295,6 +295,9 @@ struct pmu {
 	atomic_t			exclusive_cnt; /* < 0: cpu; > 0: tsk */
 	int				task_ctx_nr;
 	int				hrtimer_interval_ms;
+	/* QCOM vendor extension: keep events alive across CPU hotplug */
+	u32				events_across_hotplug:1,
+					reserved:31;
 
 	/* number of address filters this PMU can do */
 	unsigned int			nr_addr_filters;
@@ -718,6 +721,8 @@ struct perf_event {
 
 	int				oncpu;
 	int				cpu;
+	/* QCOM vendor extension: CPUs that may read this event directly */
+	cpumask_t			readable_on_cpus;
 
 	struct list_head		owner_entry;
 	struct task_struct		*owner;

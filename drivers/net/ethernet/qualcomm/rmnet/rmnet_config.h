@@ -50,6 +50,7 @@ struct rmnet_port {
 	struct timespec64 agg_last;
 	struct hrtimer hrtimer;
 	struct work_struct agg_wq;
+	void *qmi_info; /* [VENDOR-PORT Phase7] re-added from 5.10.100 REF */
 };
 
 extern struct rtnl_link_ops rmnet_link_ops;
@@ -85,6 +86,7 @@ struct rmnet_priv {
 	struct rmnet_pcpu_stats __percpu *pcpu_stats;
 	struct gro_cells gro_cells;
 	struct rmnet_priv_stats stats;
+	void *qos_info; /* [VENDOR-PORT Phase7] re-added from 5.10.100 REF */
 };
 
 struct rmnet_port *rmnet_get_port_rcu(struct net_device *real_dev);

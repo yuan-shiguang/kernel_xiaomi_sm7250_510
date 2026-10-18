@@ -250,7 +250,7 @@ err_detach:
 err_put:
 	dma_buf_put(buff->map_info.dbuf);
 err_get:
-	kzfree(buff);
+	kfree_sensitive(buff);
 	return 0;
 }
 
@@ -263,7 +263,7 @@ static void msm_vpe_dequeue_buffer_info(struct vpe_device *vpe_dev,
 	dma_buf_detach(buff->map_info.dbuf, buff->map_info.attachment);
 	dma_buf_put(buff->map_info.dbuf);
 	list_del_init(&buff->entry);
-	kzfree(buff);
+	kfree_sensitive(buff);
 }
 
 static unsigned long msm_vpe_fetch_buffer_info(struct vpe_device *vpe_dev,
@@ -391,7 +391,7 @@ static int32_t msm_vpe_create_buff_queue(struct vpe_device *vpe_dev,
 
 	if (vpe_dev->buff_queue) {
 		pr_err("Buff queue not empty\n");
-		kzfree(buff_queue);
+		kfree_sensitive(buff_queue);
 		return -EINVAL;
 	}
 	vpe_dev->buff_queue = buff_queue;
@@ -413,7 +413,7 @@ static void msm_vpe_delete_buff_queue(struct vpe_device *vpe_dev)
 				vpe_dev->buff_queue[i].stream_id);
 		}
 	}
-	kzfree(vpe_dev->buff_queue);
+	kfree_sensitive(vpe_dev->buff_queue);
 	vpe_dev->buff_queue = NULL;
 	vpe_dev->num_buffq = 0;
 }

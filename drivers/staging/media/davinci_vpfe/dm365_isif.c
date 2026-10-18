@@ -2007,7 +2007,7 @@ int vpfe_isif_init(struct vpfe_isif_device *isif, struct platform_device *pdev)
 			status = -EBUSY;
 			goto fail_nobase_res;
 		}
-		addr = ioremap_nocache(res->start, res_len);
+		addr = ioremap(res->start, res_len);
 		if (!addr) {
 			status = -EBUSY;
 			goto fail_base_iomap;

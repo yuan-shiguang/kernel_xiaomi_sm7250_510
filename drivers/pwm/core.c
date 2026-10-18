@@ -585,6 +585,8 @@ int pwm_apply_state(struct pwm_device *pwm, const struct pwm_state *state)
 	if (state->period == pwm->state.period &&
 	    state->duty_cycle == pwm->state.duty_cycle &&
 	    state->polarity == pwm->state.polarity &&
+	    state->output_type == pwm->state.output_type &&
+	    state->output_pattern == pwm->state.output_pattern &&
 	    state->enabled == pwm->state.enabled)
 		return 0;
 
@@ -628,11 +630,46 @@ int pwm_apply_state(struct pwm_device *pwm, const struct pwm_state *state)
 			pwm->state.polarity = state->polarity;
 		}
 
+		if (state->output_type != pwm->state.output_type) {
+			if (!chip->ops->set_output_type)
+				return -ENOTSUPP;
+
+			err = chip->ops->set_output_type(chip, pwm,
+						state->output_type);
+			if (err)
+				return err;
+
+			pwm->state.output_type = state->output_type;
+		}
+
+		if (state->output_pattern != pwm->state.output_pattern &&
+				state->output_pattern != NULL) {
+			if (!chip->ops->set_output_pattern)
+				return -ENOTSUPP;
+
+			err = chip->ops->set_output_pattern(chip, pwm,
+					state->output_pattern);
+			if (err)
+				return err;
+
+			pwm->state.output_pattern = state->output_pattern;
+		}
+
 		if (state->period != pwm->state.period ||
 		    state->duty_cycle != pwm->state.duty_cycle) {
-			err = chip->ops->config(pwm->chip, pwm,
+			if (chip->ops->config_extend) {
+				err = chip->ops->config_extend(chip, pwm,
 						state->duty_cycle,
 						state->period);
+			} else {
+				if (state->period > UINT_MAX)
+					pr_warn("period %llu duty_cycle %llu will be truncated\n",
+							state->period,
+							state->duty_cycle);
+				err = chip->ops->config(chip, pwm,
+						state->duty_cycle,
+						state->period);
+			}
 			if (err)
 				return err;
 

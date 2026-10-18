@@ -310,7 +310,7 @@ struct dpu_hw_cdm *dpu_hw_cdm_init(enum dpu_cdm idx,
 	return c;
 
 blk_init_error:
-	kzfree(c);
+	kfree_sensitive(c);
 
 	return ERR_PTR(rc);
 }

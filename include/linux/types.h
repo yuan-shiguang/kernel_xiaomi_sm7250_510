@@ -9,6 +9,8 @@
 
 #define DECLARE_BITMAP(name,bits) \
 	unsigned long name[BITS_TO_LONGS(bits)]
+#define DECLARE_BITMAP_ARRAY(name, nr, bits) \
+	unsigned long name[nr][BITS_TO_LONGS(bits)]
 
 typedef u32 __kernel_dev_t;
 

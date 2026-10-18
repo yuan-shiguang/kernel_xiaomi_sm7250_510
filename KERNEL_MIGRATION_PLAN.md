@@ -135,19 +135,54 @@ Phase 6 结论：
 
 ## 待执行阶段
 
-### Phase 7: 核心 API 修复
+### Phase 7: 核心 API 移植 + 全树编译修复  ✅ 已完成
 
-- [ ] 内存: page→folio 迁移 (5.10 引入 folio)
-- [ ] 时间: timer_setup / ktime / timekeeping
-- [ ] I/O: iov_iter, read_iter/write_iter
-- [ ] 并发: atomic/refcount/lockdep
-- [ ] 设备: gpiod, clk_hw, regulator
+**策略: REF-锚定移植法。** WORK(5.10.270) 链接阶段暴露的未定义 vendor 符号，
+全部从 REF(5.10.100 vendor) 取原文实现，再调和 5.10.100→5.10.270 的 API 漂移。
+
+**自 REF 全量移植并落地的 vendor 子系统:**
+1. WALT / schedtune rotation (`kernel/sched/walt.c`, `fair.c`) — build16 前已编过
+2. rmnet QMI/QoS getter-setter 全族 (`rmnet_config.h`/`config.c`/`map_data.c`, `qmi_rmnet.c`)
+3. `sched_isolate` 整段子系统 (`core.c`+`hrtimer.c`+`timer.c`+`watchdog.c`+`cpumask.h`+`trace/events/sched.h`+`nmi.h`)
+4. build16 暴露的其余未定义符号全部补齐
+
+**build16 的 8 个未定义符号 → 落地位置:**
+
+| 符号 | 落地文件 |
+| --- | --- |
+| `sched_isolate_count` / `sched_unisolate_cpu_unlocked` / `sched_unisolate_cpu` / `sched_isolate_cpu` | `kernel/sched/core.c` (移植 sched_isolate 整段) |
+| `rmnet_get_qmi_pt` / `rmnet_get_qos_pt` / `rmnet_get_rmnet_dev` / `rmnet_map_tx_qmap_cmd` | `rmnet_*.c` (移植 getter/setter + qmap 命令) |
+
+**调和的 5.10.100→5.10.270 API 漂移点:**
+- rmnet 结构体: `qmi_info`/`qos_info` 字段被上游移除 → 回填 `void *qmi_info`/`void *qos_info` 并实装 getter/setter 族
+- `rmnet_get_port()` 移除 → 改用 `rmnet_get_port_rcu()` (需 `rcu_read_lock_bh`)
+- `agg_skb` → `skbagg_head`; egress 聚合门控由 `RMNET_EGRESS_FORMAT_AGGREGATION` 位 → `egress_agg_params.count`
+- `agg_time` 类型 `timespec` → `timespec64` (memset 用 `sizeof(port->agg_time)`)
+- `migrate_*_list` 去掉 `remove_pinned` 第 3 参数 (2 参数化)
+- `stop_cpus()` 在 GKI 已移除 → 单核隔离改用 `stop_one_cpu(cpu, fn, arg)`
+- `sched_ttwu_pending(void)` → `sched_ttwu_pending(void *arg)` (TTWU 挂起队列移入 SMP call-function 队列) → 隔离路径移除手动 flush (与主线 CPU-down 行为一致)
+- `init_sched_groups_capacity` 在 `topology.c` 为 `static` → 去 `static` 并 `extern` 声明供 `core.c` 调用
+- `watchdog_configured()` 依赖 `watchdog.c` (`CONFIG_LOCKUP_DETECTOR` 未开则不编译) → 在 `core.c` 提供 `#ifndef CONFIG_LOCKUP_DETECTOR` 的恒真 fallback
+- `irq_migrate_all_off_this_cpu` / `irq_lock_sparse` / `irq_unlock_sparse` 无声明 → `core.c` 补 `extern`
+- `__cpu_isolated_mask` 为 struct, 改用 `cpumask.h` 的 `cpu_isolated_mask` 指针宏
+
+**相关脚本 (幂等, 位于 `p6work_scripts/`):**
+- `fix7_rmnet.py` / `fix7_isolate.py`: 首批移植 (struct 字段 / getter-setter / 子系统块)
+- `fix8.py` / `fix8b.py` / `fix8c.py`: API 漂移调和补丁
 
 ### Phase 8: 编译验证
 
-- [ ] LLVM/Clang 编译
-- [ ] 迭代修复编译/链接错误
-- [ ] 启动验证
+- [x] 定向编译: rmnet/isolate 相关 object 全部 0 错误 0 失败 (`build17_t4`)
+- [x] 全量构建 `vmlinux`: 本次移植的 8 个符号已 100% 链接通过 (build17 中 0 条来自移植代码的 `error:`)
+- [ ] **未决**: `ld.lld` 仍报 21 个未定义符号, **均非本次移植引入** (与子系统无关), 为既有 defconfig / 模块编译问题 — built-in 代码引用了 =m (模块) 才提供的符号:
+  - `subsys_notif_register_notifier` / `subsys_notif_unregister_notifier`
+  - `qcom_glink_spi_register`
+  - `socinfo_get_serial_number`
+  - `create_ramdump_device` / `destroy_ramdump_device` / `do_ramdump`
+  - `wlfw_*_msg_v01_ei` (WLAN/QMI 编码表, 来自 =m 的 wifi 驱动)
+  - (build16 因 `ld.lld` error-limit=20 先报了首批 vendor 符号, 这 21 个当时被截断未显示)
+  - 解法: 通过 defconfig 将对应提供者置为 `=y`, 或将引用方置为 `=m`, 留作独立的链接修复阶段
+- [ ] 启动验证 (设备 / 模拟器)
 
 ---
 

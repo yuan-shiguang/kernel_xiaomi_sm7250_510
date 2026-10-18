@@ -507,6 +507,15 @@ struct slim_device_id {
 
 	/* Data private to the driver */
 	kernel_ulong_t driver_data;
+
+	/*
+	 * QCOM vendor extension: optional device-name match. The vendor tree
+	 * identifies the BT SLIM slave by the name given in DT
+	 * (qcom,btfm-slim-ifd) rather than by enumeration address. When set,
+	 * slim_match() compares against slim_device->name and ignores the
+	 * four ID fields above; when NULL the upstream ID match is used.
+	 */
+	const char *name;
 };
 
 #define APR_NAME_SIZE	32

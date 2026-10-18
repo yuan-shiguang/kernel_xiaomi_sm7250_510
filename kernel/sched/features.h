@@ -101,3 +101,6 @@ SCHED_FEAT(UTIL_EST_FASTUP, true)
 
 SCHED_FEAT(ALT_PERIOD, true)
 SCHED_FEAT(BASE_SLICE, true)
+
+/* [VENDOR-PORT Phase7] vendor schedtune boost hold (REF features.h) */
+SCHED_FEAT(SCHEDTUNE_BOOST_HOLD_ALL, false)

@@ -1388,7 +1388,7 @@ EXPORT_SYMBOL(hdcp2_init);
 
 void hdcp2_deinit(void *ctx)
 {
-	kzfree(ctx);
+	kfree_sensitive(ctx);
 }
 EXPORT_SYMBOL(hdcp2_deinit);
 

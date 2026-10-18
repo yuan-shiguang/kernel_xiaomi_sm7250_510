@@ -1104,7 +1104,7 @@ static int __init calgary_locate_bbars(void)
 			continue;
 
 		/* map entire 1MB of Calgary config space */
-		bbar = ioremap_nocache(rio->BBAR, 1024 * 1024);
+		bbar = ioremap(rio->BBAR, 1024 * 1024);
 		if (!bbar)
 			goto error;
 

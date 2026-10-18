@@ -393,6 +393,10 @@ struct dma_buf_ops {
  *
  * Device DMA access is handled by the separate &struct dma_buf_attachment.
  */
+/* [VENDOR-PORT Phase7] vendor destructor hook (REF include/linux/dma-buf.h 399) */
+typedef int (*dma_buf_destructor)(struct dma_buf *dmabuf,
+				  void *dtor_data);
+
 struct dma_buf {
 	size_t size;
 	struct file *file;
@@ -425,6 +429,10 @@ struct dma_buf {
 		struct dma_buf *dmabuf;
 	} *sysfs_entry;
 #endif
+
+	/* [VENDOR-PORT Phase7] vendor destructor hook */
+	dma_buf_destructor dtor;
+	void *dtor_data;
 
 	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);
@@ -621,10 +629,28 @@ int dma_buf_end_cpu_access_partial(struct dma_buf *dma_buf,
 
 int dma_buf_mmap(struct dma_buf *, struct vm_area_struct *,
 		 unsigned long);
+/* [VENDOR-PORT Phase7] 4.19 single-page kmap API, emulated on top of vmap */
+void *dma_buf_kmap(struct dma_buf *, unsigned long);
+void dma_buf_kunmap(struct dma_buf *, unsigned long, void *);
+
 void *dma_buf_vmap(struct dma_buf *);
 void dma_buf_vunmap(struct dma_buf *, void *vaddr);
 long dma_buf_set_name(struct dma_buf *dmabuf, const char *name);
 int dma_buf_get_flags(struct dma_buf *dmabuf, unsigned long *flags);
 int dma_buf_get_uuid(struct dma_buf *dmabuf, uuid_t *uuid);
+
+/**
+ * dma_buf_set_destructor - set the dma-buf's destructor
+ * @dmabuf:		[in]	pointer to dma-buf
+ * @dtor		[in]	the destructor function
+ * @dtor_data:		[in]	destructor data associated with this buffer
+ */
+static inline void dma_buf_set_destructor(struct dma_buf *dmabuf,
+					  dma_buf_destructor dtor,
+					  void *dtor_data)
+{
+	dmabuf->dtor = dtor;
+	dmabuf->dtor_data = dtor_data;
+}
 
 #endif /* __DMA_BUF_H__ */

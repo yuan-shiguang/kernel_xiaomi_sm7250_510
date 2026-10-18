@@ -623,6 +623,7 @@ config CRYPTO_DEV_QCE
 	tristate "Qualcomm crypto engine accelerator"
 	depends on ARCH_QCOM || COMPILE_TEST
 	depends on HAS_IOMEM
+	select CRYPTO_BLKCIPHER # [VENDOR-PORT Phase7] legacy blkcipher API
 	help
 	  This driver supports Qualcomm crypto engine accelerator
 	  hardware. To compile this driver as a module, choose M here. The
@@ -913,6 +914,7 @@ config CRYPTO_DEV_SA2UL
 config CRYPTO_DEV_QCEDEV
 	tristate "QCEDEV Interface to CE module"
 	depends on ARCH_QCOM
+	select CRYPTO_BLKCIPHER # [VENDOR-PORT Phase7] legacy blkcipher API
 	help
 	  This driver supports QTI QCEDEV Crypto Engine 5.0.
 	  This exposes the interface to the QCE hardware accelerator
@@ -926,6 +928,7 @@ config CRYPTO_DEV_QCEDEV
 config CRYPTO_DEV_QCOM_MSM_QCE
 	tristate "QTI Crypto Engine (QCE) module"
 	depends on ARCH_QCOM
+	select CRYPTO_BLKCIPHER # [VENDOR-PORT Phase7] legacy blkcipher API
 	help
 	  This driver supports QTI Crypto Engine accelerator hardware, which
 	  is present on SDM845, etc. This is the core crypto driver which adds

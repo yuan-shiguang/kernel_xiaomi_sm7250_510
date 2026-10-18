@@ -111,6 +111,20 @@ config CRYPTO_RNG2
 	tristate
 	select CRYPTO_ALGAPI2
 
+# [VENDOR-PORT Phase7] legacy block cipher API (REF crypto/Kconfig)
+config CRYPTO_BLKCIPHER
+	tristate
+	select CRYPTO_BLKCIPHER2
+	select CRYPTO_ALGAPI
+	help
+	  This option provides the legacy ablkcipher/blkcipher block cipher API
+	  used by the Qualcomm crypto engine driver (QCE/QCE50).
+
+config CRYPTO_BLKCIPHER2
+	tristate
+	select CRYPTO_ALGAPI2
+	select CRYPTO_RNG2
+
 config CRYPTO_RNG_DEFAULT
 	tristate
 	select CRYPTO_DRBG_MENU

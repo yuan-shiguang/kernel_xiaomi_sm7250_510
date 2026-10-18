@@ -187,8 +187,14 @@ struct devfreq {
 
 	struct dev_pm_qos_request user_min_freq_req;
 	struct dev_pm_qos_request user_max_freq_req;
+	/* [VENDOR-PORT Phase7] QCOM devfreq-boost bookkeeping */
+	unsigned long min_freq;
+	unsigned long max_freq;
 	unsigned long scaling_min_freq;
 	unsigned long scaling_max_freq;
+	bool is_boost_device;
+	bool max_boost;
+	bool dev_suspended;
 	bool stop_polling;
 
 	unsigned long suspend_freq;

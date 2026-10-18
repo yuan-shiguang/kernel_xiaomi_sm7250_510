@@ -20,6 +20,12 @@ obj-$(CONFIG_CRYPTO_SKCIPHER2) += skcipher.o
 obj-$(CONFIG_CRYPTO_SEQIV) += seqiv.o
 obj-$(CONFIG_CRYPTO_ECHAINIV) += echainiv.o
 
+# [VENDOR-PORT Phase7] legacy block cipher API (REF crypto/Makefile; REF also packs skcipher.o
+# into crypto_blkcipher, but WORK/GKI builds skcipher.o via CONFIG_CRYPTO_SKCIPHER2)
+crypto_blkcipher-y := ablkcipher.o
+crypto_blkcipher-y += blkcipher.o
+obj-$(CONFIG_CRYPTO_BLKCIPHER2) += crypto_blkcipher.o
+
 crypto_hash-y += ahash.o
 crypto_hash-y += shash.o
 obj-$(CONFIG_CRYPTO_HASH2) += crypto_hash.o

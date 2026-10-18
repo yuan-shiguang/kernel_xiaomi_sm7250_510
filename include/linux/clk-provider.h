@@ -33,6 +33,8 @@
 /* duty cycle call may be forwarded to the parent clock */
 #define CLK_DUTY_CYCLE_PARENT	BIT(13)
 #define CLK_DONT_HOLD_STATE	BIT(14) /* Don't hold state */
+/* QCOM vendor extension: enable the clock as part of registration */
+#define CLK_ENABLE_HAND_OFF	BIT(15)
 
 struct clk;
 struct clk_hw;

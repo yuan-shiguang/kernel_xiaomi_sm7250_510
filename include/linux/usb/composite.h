@@ -43,6 +43,16 @@
 #include <linux/configfs.h>
 
 /*
+ * [VENDOR-PORT Phase7] FUNCTION_SUSPEND suspend options (USB 3.0 spec,
+ * Table 9-7) and the Function Wake status bits.
+ */
+#define FUNC_SUSPEND_OPT_SUSP_MASK	BIT(0)
+#define FUNC_SUSPEND_OPT_RW_EN_MASK	BIT(1)
+
+#define FUNC_WAKEUP_CAPABLE_SHIFT	0
+#define FUNC_WAKEUP_ENABLE_SHIFT	1
+
+/*
  * USB function drivers should return USB_GADGET_DELAYED_STATUS if they
  * wish to delay the data/status stages of the control transfer till they
  * are ready. The control transfer will then be kept from completing till
@@ -190,6 +200,8 @@ struct usb_os_desc_table {
 
 struct usb_function {
 	const char			*name;
+	/* [VENDOR-PORT Phase7] first interface id owned by this function */
+	int				intf_id;
 	struct usb_gadget_strings	**strings;
 	struct usb_descriptor_header	**fs_descriptors;
 	struct usb_descriptor_header	**hs_descriptors;
@@ -233,6 +245,10 @@ struct usb_function {
 	int			(*get_status)(struct usb_function *);
 	int			(*func_suspend)(struct usb_function *,
 						u8 suspend_opt);
+	/* [VENDOR-PORT Phase7] USB3 Function Suspend / Remote Wakeup state */
+	unsigned		func_is_suspended:1;
+	unsigned		func_wakeup_allowed:1;
+	unsigned		func_wakeup_pending:1;
 	/* private: */
 	/* internals */
 	struct list_head		list;
@@ -248,6 +264,7 @@ int usb_function_deactivate(struct usb_function *);
 int usb_function_activate(struct usb_function *);
 
 int usb_interface_id(struct usb_configuration *, struct usb_function *);
+int usb_func_wakeup(struct usb_function *func);
 
 int config_ep_by_speed_and_alt(struct usb_gadget *g, struct usb_function *f,
 				struct usb_ep *_ep, u8 alt);
@@ -497,6 +514,8 @@ struct usb_composite_dev {
 	struct usb_composite_driver	*driver;
 	u8				next_string_id;
 	char				*def_manufacturer;
+	/* [VENDOR-PORT Phase7] Microsoft OS descriptors active */
+	bool				isMSOS;
 
 	/* the gadget driver won't enable the data pullup
 	 * while the deactivation count is nonzero.

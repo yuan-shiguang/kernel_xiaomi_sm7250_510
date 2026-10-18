@@ -667,3 +667,40 @@ void rmnet_map_tx_aggregate_exit(struct rmnet_port *port)
 	}
 	spin_unlock_bh(&port->agg_lock);
 }
+
+#ifdef CONFIG_QCOM_QMI_RMNET
+
+/* [VENDOR-PORT Phase7] rmnet_map_tx_qmap_cmd from 5.10.100 REF.
+ * Use sizeof(port->agg_time) because 5.10.270 changed it to timespec64. */
+void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb)
+{
+    struct rmnet_port *port;
+    struct sk_buff *agg_skb;
+    unsigned long flags;
+
+    rcu_read_lock_bh();
+    port = rmnet_get_port_rcu(qmap_skb->dev);
+    rcu_read_unlock_bh();
+
+    if (port && port->egress_agg_params.count) {
+        spin_lock_irqsave(&port->agg_lock, flags);
+        if (port->skbagg_head) {
+            agg_skb = port->skbagg_head;
+            port->skbagg_head = NULL;
+            port->agg_count = 0;
+            memset(&port->agg_time, 0, sizeof(port->agg_time));
+            port->agg_state = 0;
+            spin_unlock_irqrestore(&port->agg_lock, flags);
+            hrtimer_cancel(&port->hrtimer);
+            dev_queue_xmit(agg_skb);
+        } else {
+            spin_unlock_irqrestore(&port->agg_lock, flags);
+        }
+    }
+
+    dev_queue_xmit(qmap_skb);
+}
+EXPORT_SYMBOL(rmnet_map_tx_qmap_cmd);
+
+#endif /* CONFIG_QCOM_QMI_RMNET */
+

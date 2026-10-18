@@ -70,4 +70,24 @@ static inline void cpuidle_cooling_register(struct cpuidle_driver *drv)
 }
 #endif /* CONFIG_CPU_IDLE_THERMAL */
 
+
+/* [VENDOR-PORT Phase7] platform cooling ops (REF include/linux/cpu_cooling.h) */
+typedef int (*plat_mitig_t)(int cpu, u32 clip_freq);
+
+struct cpu_cooling_ops {
+	plat_mitig_t ceil_limit, floor_limit;
+};
+
+#ifdef CONFIG_CPU_FREQ_THERMAL
+struct thermal_cooling_device *
+cpufreq_platform_cooling_register(struct cpufreq_policy *policy,
+				struct cpu_cooling_ops *ops);
+#else
+static inline struct thermal_cooling_device *
+cpufreq_platform_cooling_register(struct cpufreq_policy *policy,
+				struct cpu_cooling_ops *ops)
+{
+	return NULL;
+}
+#endif
 #endif /* __CPU_COOLING_H__ */

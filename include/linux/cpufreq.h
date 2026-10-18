@@ -487,6 +487,12 @@ static inline void cpufreq_resume(void) {}
  *********************************************************************/
 
 #define CPUFREQ_TRANSITION_NOTIFIER	(0)
+/*
+ * QCOM vendor extension: notification reason emitted right before a
+ * policy is verified, so listeners can still clamp policy->min/max.
+ */
+#define CPUFREQ_ADJUST			(0)
+
 #define CPUFREQ_POLICY_NOTIFIER		(1)
 
 /* Transition notifiers */
@@ -1040,6 +1046,12 @@ extern struct freq_attr cpufreq_freq_attr_scaling_available_freqs;
 extern struct freq_attr cpufreq_freq_attr_scaling_boost_freqs;
 extern struct freq_attr *cpufreq_generic_attr[];
 int cpufreq_table_validate_and_sort(struct cpufreq_policy *policy);
+
+/* [VENDOR-PORT Phase7] thermal-scale hook declarations (REF cpufreq.h) */
+extern void arch_set_max_freq_scale(struct cpumask *cpus,
+				    unsigned long policy_max_freq);
+extern void arch_set_max_thermal_scale(struct cpumask *cpus,
+					unsigned long max_thermal_freq);
 
 unsigned int cpufreq_generic_get(unsigned int cpu);
 void cpufreq_generic_init(struct cpufreq_policy *policy,

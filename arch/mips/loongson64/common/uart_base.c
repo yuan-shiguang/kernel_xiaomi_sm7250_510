@@ -46,5 +46,5 @@ void prom_init_loongson_uart_base(void)
 	}
 
 	_loongson_uart_base[0] =
-		(unsigned long)ioremap_nocache(loongson_uart_base[0], 8);
+		(unsigned long)ioremap(loongson_uart_base[0], 8);
 }

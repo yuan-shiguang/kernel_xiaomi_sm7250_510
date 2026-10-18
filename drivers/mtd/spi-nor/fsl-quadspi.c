@@ -895,7 +895,7 @@ static ssize_t fsl_qspi_read(struct spi_nor *nor, loff_t from,
 		q->memmap_offs = q->chip_base_addr + from;
 		q->memmap_len = len > QUADSPI_MIN_IOMAP ? len : QUADSPI_MIN_IOMAP;
 
-		q->ahb_addr = ioremap_nocache(
+		q->ahb_addr = ioremap(
 				q->memmap_phy + q->memmap_offs,
 				q->memmap_len);
 		if (!q->ahb_addr) {
@@ -910,7 +910,7 @@ static ssize_t fsl_qspi_read(struct spi_nor *nor, loff_t from,
 
 		q->memmap_offs = q->chip_base_addr + from;
 		q->memmap_len = len > QUADSPI_MIN_IOMAP ? len : QUADSPI_MIN_IOMAP;
-		q->ahb_addr = ioremap_nocache(
+		q->ahb_addr = ioremap(
 				q->memmap_phy + q->memmap_offs,
 				q->memmap_len);
 		if (!q->ahb_addr) {

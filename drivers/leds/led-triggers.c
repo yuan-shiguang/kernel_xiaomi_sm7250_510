@@ -49,7 +49,8 @@ ssize_t led_trigger_write(struct file *filp, struct kobject *kobj,
 		goto unlock;
 	}
 
-	if (sysfs_streq(buf, "none")) {
+	if (sysfs_streq(buf, "none") &&
+			!(led_cdev->flags & LED_KEEP_TRIGGER)) {
 		led_trigger_remove(led_cdev);
 		goto unlock;
 	}

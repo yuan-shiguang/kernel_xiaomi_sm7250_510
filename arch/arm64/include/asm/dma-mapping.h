@@ -30,15 +30,6 @@ struct iommu_ops;
 
 extern const struct dma_map_ops dummy_dma_ops;
 
-/*
- * 5.10 removed the per-device dma_ops accessors; the vendor SMMU glue
- * still saves/restores them around iommu_attach/detach.  Implemented as
- * out-of-line helpers in arch/arm64/mm/dma-mapping.c because struct
- * device is not complete at this point of the include chain.
- */
-extern void set_dma_ops(struct device *dev, const struct dma_map_ops *ops);
-extern const struct dma_map_ops *get_dma_ops(struct device *dev);
-
 static inline const struct dma_map_ops *get_arch_dma_ops(struct bus_type *bus)
 {
 	/*

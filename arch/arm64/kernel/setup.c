@@ -57,6 +57,18 @@ static struct resource *standard_resources;
 phys_addr_t __fdt_pointer __initdata;
 
 /*
+ * QCOM vendor extension: globals consumed by drivers/input/misc/
+ * qpnp-power-on.c to report the power-on reason and whether this is a
+ * cold or warm boot. REF keeps them as plain stubs here as well; the
+ * PON driver fills them in during probe.
+ */
+unsigned int boot_reason;
+EXPORT_SYMBOL_GPL(boot_reason);
+
+unsigned int cold_boot;
+EXPORT_SYMBOL_GPL(cold_boot);
+
+/*
  * Standard memory resources
  */
 static struct resource mem_res[] = {

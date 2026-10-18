@@ -1073,6 +1073,7 @@ void *qmi_rmnet_qos_init(struct net_device *real_dev,
 	qos->mux_id = mux_id;
 	qos->real_dev = real_dev;
 	qos->vnd_dev = vnd_dev;
+	rmnet_init_qos_pt(vnd_dev, qos); /* [VENDOR-PORT Phase7] */
 	qos->tran_num = 0;
 	INIT_LIST_HEAD(&qos->flow_head);
 	INIT_LIST_HEAD(&qos->bearer_head);

@@ -480,6 +480,12 @@ static void watchdog_disable(unsigned int cpu)
 	wait_for_completion(this_cpu_ptr(&softlockup_completion));
 }
 
+/* [VENDOR-PORT Phase7] */
+bool watchdog_configured(unsigned int cpu)
+{
+	return cpumask_test_cpu(cpu, &watchdog_allowed_mask);
+}
+
 static int softlockup_stop_fn(void *data)
 {
 	watchdog_disable(smp_processor_id());
@@ -581,6 +587,12 @@ static __init void lockup_detector_setup(void)
 }
 
 #else /* CONFIG_SOFTLOCKUP_DETECTOR */
+
+/* [VENDOR-PORT Phase7] */
+bool watchdog_configured(unsigned int cpu)
+{
+	return true;
+}
 static void __lockup_detector_reconfigure(void)
 {
 	cpus_read_lock();

@@ -622,14 +622,14 @@ static int spcom_local_powerup(const struct subsys_desc *subsys)
 	void __iomem *regs, *err_regs;
 	u32 pbl_status_reg = 0;
 
-	err_regs = ioremap_nocache(spcom_rmb_error_reg_addr, sizeof(u32));
+	err_regs = ioremap(spcom_rmb_error_reg_addr, sizeof(u32));
 	if (!err_regs)
 		return -ENOMEM;
 
 	pbl_status_reg = readl_relaxed(err_regs);
 
 	if (pbl_status_reg == 0) {
-		regs = ioremap_nocache(spcom_sp2soc_rmb_reg_addr, sizeof(u32));
+		regs = ioremap(spcom_sp2soc_rmb_reg_addr, sizeof(u32));
 		if (!regs) {
 			iounmap(err_regs);
 			return -ENOMEM;
@@ -1874,7 +1874,7 @@ static inline int handle_poll(struct file *file,
 					  &spcom_dev->rpmsg_state_change);
 			spcom_pr_dbg("ch [%s] link state change signaled\n",
 				     name);
-			regs = ioremap_nocache(spcom_soc2sp_rmb_reg_addr,
+			regs = ioremap(spcom_soc2sp_rmb_reg_addr,
 					sizeof(u32));
 			if (regs) {
 				writel_relaxed(spcom_soc2sp_rmb_sp_ssr_mask,

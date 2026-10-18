@@ -9,6 +9,10 @@
  */
 
 #define SCHED_CPUFREQ_IOWAIT	(1U << 0)
+/* [VENDOR-PORT Phase7] vendor cpufreq update reasons */
+#define SCHED_CPUFREQ_INTERCLUSTER_MIG (1U << 3)
+#define SCHED_CPUFREQ_WALT (1U << 4)
+#define SCHED_CPUFREQ_CONTINUE (1U << 8)
 
 #ifdef CONFIG_CPU_FREQ
 struct cpufreq_policy;

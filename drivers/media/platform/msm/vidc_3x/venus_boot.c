@@ -437,7 +437,7 @@ int venus_boot_init(struct msm_vidc_platform_resources *res,
 		dprintk(VIDC_ERR, "Invalid venus context bank device\n");
 		return -ENODEV;
 	}
-	venus_data->reg_base = ioremap_nocache(res->register_base,
+	venus_data->reg_base = ioremap(res->register_base,
 			(unsigned long)res->register_size);
 	if (!venus_data->reg_base) {
 		dprintk(VIDC_ERR,

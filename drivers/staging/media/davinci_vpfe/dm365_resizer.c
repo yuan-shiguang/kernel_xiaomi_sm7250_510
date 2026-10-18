@@ -1897,7 +1897,7 @@ int vpfe_resizer_init(struct vpfe_resizer_device *vpfe_rsz,
 	if (!res)
 		return -EBUSY;
 
-	vpfe_rsz->base_addr = ioremap_nocache(res->start, res_len);
+	vpfe_rsz->base_addr = ioremap(res->start, res_len);
 	if (!vpfe_rsz->base_addr)
 		return -EBUSY;
 

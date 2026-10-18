@@ -6,6 +6,7 @@
 #include <linux/printk.h>
 #include <linux/rcupdate.h>
 #include <linux/slab.h>
+#include <linux/reciprocal_div.h>
 
 #include <trace/events/sched.h>
 

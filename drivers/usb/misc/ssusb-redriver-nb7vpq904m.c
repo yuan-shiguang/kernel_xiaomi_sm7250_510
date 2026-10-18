@@ -558,7 +558,7 @@ static int ssusb_redriver_extcon_register(struct ssusb_redriver *redriver)
 		redriver->dp_nb.notifier_call =
 				ssusb_redriver_dp_notifier;
 		redriver->dp_nb.priority = NOTIFIER_PRIORITY;
-		ret = extcon_register_blocking_notifier(edev, EXTCON_DISP_DP,
+		ret = extcon_register_notifier(edev, EXTCON_DISP_DP,
 				&redriver->dp_nb);
 		if (ret < 0) {
 			dev_err(redriver->dev,

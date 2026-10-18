@@ -242,7 +242,7 @@ static int jz4740_adc_probe(struct platform_device *pdev)
 		return -EBUSY;
 	}
 
-	adc->base = ioremap_nocache(adc->mem->start, resource_size(adc->mem));
+	adc->base = ioremap(adc->mem->start, resource_size(adc->mem));
 	if (!adc->base) {
 		ret = -EBUSY;
 		dev_err(&pdev->dev, "Failed to ioremap mmio memory\n");

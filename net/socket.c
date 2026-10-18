@@ -95,6 +95,7 @@
 #include <net/cls_cgroup.h>
 
 #include <net/sock.h>
+#include <linux/notifier.h>
 #include <linux/netfilter.h>
 
 #include <linux/if_tun.h>
@@ -112,6 +113,7 @@ unsigned int sysctl_net_busy_poll __read_mostly;
 
 static ssize_t sock_read_iter(struct kiocb *iocb, struct iov_iter *to);
 static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
+static BLOCKING_NOTIFIER_HEAD(sockev_notifier_list);
 static int sock_mmap(struct file *file, struct vm_area_struct *vma);
 
 static int sock_close(struct inode *inode, struct file *file);
@@ -171,6 +173,14 @@ static const struct file_operations socket_file_ops = {
 
 static DEFINE_SPINLOCK(net_family_lock);
 static const struct net_proto_family __rcu *net_families[NPROTO] __read_mostly;
+
+/*
+ * Socket Event framework helpers
+ */
+static void sockev_notify(unsigned long event, struct socket *sk)
+{
+	blocking_notifier_call_chain(&sockev_notifier_list, event, sk);
+}
 
 /*
  * Support routines.
@@ -1531,6 +1541,8 @@ int __sys_socket(int family, int type, int protocol)
 	if (retval < 0)
 		return retval;
 
+	sockev_notify(SOCKEV_SOCKET, sock);
+
 	return sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
 }
 
@@ -1667,6 +1679,7 @@ int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 						      (struct sockaddr *)
 						      &address, addrlen);
 		}
+		sockev_notify(SOCKEV_BIND, sock);
 		fput_light(sock->file, fput_needed);
 	}
 	return err;
@@ -1698,6 +1711,9 @@ int __sys_listen(int fd, int backlog)
 		err = security_socket_listen(sock, backlog);
 		if (!err)
 			err = sock->ops->listen(sock, backlog);
+
+		if (!err)
+			sockev_notify(SOCKEV_LISTEN, sock);
 
 		fput_light(sock->file, fput_needed);
 	}
@@ -1793,6 +1809,7 @@ int __sys_accept4_file(struct file *file, unsigned file_flags,
 		return PTR_ERR(newfile);
 	}
 	fd_install(newfd, newfile);
+	sockev_notify(SOCKEV_ACCEPT, SOCKET_I(file_inode(file)));
 	return newfd;
 }
 
@@ -1866,6 +1883,8 @@ int __sys_connect_file(struct file *file, struct sockaddr_storage *address,
 
 	err = sock->ops->connect(sock, (struct sockaddr *)address, addrlen,
 				 sock->file->f_flags | file_flags);
+	if (!err)
+		sockev_notify(SOCKEV_CONNECT, sock);
 out:
 	return err;
 }
@@ -2225,6 +2244,7 @@ int __sys_shutdown(int fd, int how)
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (sock != NULL) {
+		sockev_notify(SOCKEV_SHUTDOWN, sock);
 		err = __sys_shutdown_sock(sock, how);
 		fput_light(sock->file, fput_needed);
 	}
@@ -3637,3 +3657,15 @@ u32 kernel_sock_ip_overhead(struct sock *sk)
 	}
 }
 EXPORT_SYMBOL(kernel_sock_ip_overhead);
+
+int sockev_register_notify(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&sockev_notifier_list, nb);
+}
+EXPORT_SYMBOL(sockev_register_notify);
+
+int sockev_unregister_notify(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&sockev_notifier_list, nb);
+}
+EXPORT_SYMBOL(sockev_unregister_notify);

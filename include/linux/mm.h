@@ -15,6 +15,10 @@
 #include <linux/atomic.h>
 #include <linux/debug_locks.h>
 #include <linux/mm_types.h>
+
+/* [VENDOR-PORT Phase7] 5.10 renamed mm_struct::mmap_sem to mmap_lock; keep the
+ * old spelling working for the vendor drivers. */
+#define mmap_sem mmap_lock
 #include <linux/mmap_lock.h>
 #include <linux/range.h>
 #include <linux/pfn.h>

@@ -582,6 +582,52 @@ out:
 EXPORT_SYMBOL(devfreq_monitor_resume);
 
 /**
+ * devfreq_interval_update() - Update device devfreq monitoring interval
+ * @devfreq:    the devfreq instance.
+ * @delay:      new polling interval to be set.
+ *
+ * Helper for governors handling the DEVFREQ_GOV_INTERVAL event.
+ */
+void devfreq_interval_update(struct devfreq *devfreq, unsigned int *delay)
+{
+	unsigned int cur_delay = devfreq->profile->polling_ms;
+	unsigned int new_delay = *delay;
+
+	mutex_lock(&devfreq->lock);
+	devfreq->profile->polling_ms = new_delay;
+
+	if (devfreq->stop_polling)
+		goto out;
+
+	/* if new delay is zero, stop polling */
+	if (!new_delay) {
+		mutex_unlock(&devfreq->lock);
+		cancel_delayed_work_sync(&devfreq->work);
+		return;
+	}
+
+	/* if current delay is zero, start polling with the new delay */
+	if (!cur_delay) {
+		queue_delayed_work(devfreq_wq, &devfreq->work,
+			msecs_to_jiffies(devfreq->profile->polling_ms));
+		goto out;
+	}
+
+	/* if current delay is greater than the new delay, restart polling */
+	if (cur_delay > new_delay) {
+		mutex_unlock(&devfreq->lock);
+		cancel_delayed_work_sync(&devfreq->work);
+		mutex_lock(&devfreq->lock);
+		if (!devfreq->stop_polling)
+			queue_delayed_work(devfreq_wq, &devfreq->work,
+			      msecs_to_jiffies(devfreq->profile->polling_ms));
+	}
+out:
+	mutex_unlock(&devfreq->lock);
+}
+EXPORT_SYMBOL(devfreq_interval_update);
+
+/**
  * devfreq_update_interval() - Update device devfreq monitoring interval
  * @devfreq:    the devfreq instance.
  * @delay:      new polling interval to be set.

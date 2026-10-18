@@ -509,6 +509,25 @@ out:
 EXPORT_SYMBOL_GPL(usb_gadget_wakeup);
 
 /**
+ * usb_gadget_func_wakeup - raise a Function Wake notification
+ * @gadget: the gadget to notify through
+ * @interface_id: interface whose function is waking up
+ *
+ * Returns 0 on success, -EOPNOTSUPP when unsupported, or another -errno.
+ */
+int usb_gadget_func_wakeup(struct usb_gadget *gadget, int interface_id)
+{
+	if (gadget->speed != USB_SPEED_SUPER)
+		return -EOPNOTSUPP;
+
+	if (!gadget->ops->func_wakeup)
+		return -EOPNOTSUPP;
+
+	return gadget->ops->func_wakeup(gadget, interface_id);
+}
+EXPORT_SYMBOL(usb_gadget_func_wakeup);
+
+/**
  * usb_gadget_set_selfpowered - sets the device selfpowered feature.
  * @gadget:the device being declared as self-powered
  *

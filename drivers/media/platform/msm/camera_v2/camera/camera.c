@@ -586,7 +586,7 @@ static int camera_v4l2_fh_release(struct file *filep)
 		v4l2_fh_del(&sp->fh);
 		v4l2_fh_exit(&sp->fh);
 		mutex_destroy(&sp->lock);
-		kzfree(sp);
+		kfree_sensitive(sp);
 	}
 
 	return 0;
@@ -608,7 +608,7 @@ static int camera_v4l2_vb2_q_init(struct file *filep)
 	}
 	q->lock = kzalloc(sizeof(struct mutex), GFP_KERNEL);
 	if (!q->lock) {
-		kzfree(q->drv_priv);
+		kfree_sensitive(q->drv_priv);
 		return -ENOMEM;
 	}
 	mutex_init(q->lock);
@@ -628,11 +628,11 @@ static void camera_v4l2_vb2_q_release(struct file *filep)
 {
 	struct camera_v4l2_private *sp = filep->private_data;
 
-	kzfree(sp->vb2_q.drv_priv);
+	kfree_sensitive(sp->vb2_q.drv_priv);
 	mutex_lock(&sp->lock);
 	vb2_queue_release(&sp->vb2_q);
 	mutex_destroy(sp->vb2_q.lock);
-	kzfree(sp->vb2_q.lock);
+	kfree_sensitive(sp->vb2_q.lock);
 	mutex_unlock(&sp->lock);
 }
 
@@ -973,7 +973,7 @@ register_fail:
 entity_fail:
 	media_device_unregister(v4l2_dev->mdev);
 media_fail:
-	kzfree(v4l2_dev->mdev);
+	kfree_sensitive(v4l2_dev->mdev);
 mdev_fail:
 #endif
 	kfree(v4l2_dev);

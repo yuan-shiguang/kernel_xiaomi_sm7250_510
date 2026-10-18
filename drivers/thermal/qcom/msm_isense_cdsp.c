@@ -100,7 +100,8 @@ static int limits_create_msm_limits_cdsp_sysfs(struct platform_device *pdev)
 	limits_isense_cdsp_sysfs->attr.show = limits_isense_cdsp_data_show;
 	limits_isense_cdsp_sysfs->attr.store = NULL;
 
-	sysfs_create_file(&m_kobj->kobj, &limits_isense_cdsp_sysfs->attr.attr);
+	err = sysfs_create_file(&m_kobj->kobj,
+				&limits_isense_cdsp_sysfs->attr.attr);
 	if (err) {
 		dev_err(&pdev->dev, "cannot create sysfs file\n");
 		goto exit_handler;

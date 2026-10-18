@@ -110,7 +110,7 @@ static int dp_hdcp2p2_copy_buf(struct dp_hdcp2p2_ctrl *ctrl,
 		return 0;
 	}
 
-	kzfree(ctrl->msg_buf);
+	kfree_sensitive(ctrl->msg_buf);
 
 	ctrl->msg_buf = kmemdup(data->buf+1, ctrl->send_msg_len, GFP_KERNEL);
 
@@ -773,7 +773,7 @@ void dp_hdcp2p2_deinit(void *input)
 	mutex_destroy(&ctrl->mutex);
 	mutex_destroy(&ctrl->msg_lock);
 	mutex_destroy(&ctrl->wakeup_mutex);
-	kzfree(ctrl->msg_buf);
+	kfree_sensitive(ctrl->msg_buf);
 	kfree(ctrl);
 }
 

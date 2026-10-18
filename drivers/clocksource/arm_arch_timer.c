@@ -165,7 +165,7 @@ static notrace u64 arch_counter_get_cntvct_stable(void)
 	return __arch_counter_get_cntvct_stable();
 }
 
-static notrace u64 arch_counter_get_cntvct(void)
+static notrace u64 arch_counter_get_cntvct_default(void)
 {
 	return __arch_counter_get_cntvct();
 }
@@ -176,7 +176,7 @@ static notrace u64 arch_counter_get_cntvct(void)
  * to exist on arm64. arm doesn't use this before DT is probed so even
  * if we don't have the cp15 accessors we won't have a problem.
  */
-u64 (*arch_timer_read_counter)(void) = arch_counter_get_cntvct;
+u64 (*arch_timer_read_counter)(void) = arch_counter_get_cntvct_default;
 EXPORT_SYMBOL_GPL(arch_timer_read_counter);
 
 static u64 arch_counter_read(struct clocksource *cs)
@@ -1005,7 +1005,7 @@ static void __init arch_counter_register(unsigned type)
 			if (arch_timer_counter_has_wa())
 				rd = arch_counter_get_cntvct_stable;
 			else
-				rd = arch_counter_get_cntvct;
+				rd = arch_counter_get_cntvct_default;
 		} else {
 			if (arch_timer_counter_has_wa())
 				rd = arch_counter_get_cntpct_stable;

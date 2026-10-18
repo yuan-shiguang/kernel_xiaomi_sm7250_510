@@ -11,6 +11,8 @@
 #include <asm/nmi.h>
 #endif
 
+extern bool watchdog_configured(unsigned int cpu); /* [VENDOR-PORT Phase7] */
+
 #ifdef CONFIG_LOCKUP_DETECTOR
 void lockup_detector_init(void);
 void lockup_detector_soft_poweroff(void);

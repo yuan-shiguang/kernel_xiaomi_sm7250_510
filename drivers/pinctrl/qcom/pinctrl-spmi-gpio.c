@@ -727,6 +727,22 @@ static int pmic_gpio_get(struct gpio_chip *chip, unsigned pin)
 	return !!pad->out_value;
 }
 
+/*
+ * QCOM vendor extension: allow other drivers (PMIC PON) to sample a PMIC
+ * GPIO by the chip label, without holding a gpio_desc reference.
+ */
+int pmic_gpio_get_external(const char *chip_name, unsigned int pin)
+{
+	struct gpio_chip *chip;
+
+	chip = find_chip_by_name(chip_name);
+	if (!chip)
+		return -ENODEV;
+
+	return pmic_gpio_get(chip, pin);
+}
+EXPORT_SYMBOL_GPL(pmic_gpio_get_external);
+
 static void pmic_gpio_set(struct gpio_chip *chip, unsigned pin, int value)
 {
 	struct pmic_gpio_state *state = gpiochip_get_data(chip);

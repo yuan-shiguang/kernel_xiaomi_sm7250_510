@@ -680,7 +680,7 @@ static int btfm_slim_remove(struct slim_device *slim)
 }
 
 static const struct slim_device_id btfm_slim_id[] = {
-	{SLIM_SLAVE_COMPATIBLE_STR, 0},
+	{ .name = SLIM_SLAVE_COMPATIBLE_STR },
 	{}
 };
 

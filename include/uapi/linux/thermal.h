@@ -14,6 +14,10 @@ enum thermal_trip_type {
 	THERMAL_TRIP_PASSIVE,
 	THERMAL_TRIP_HOT,
 	THERMAL_TRIP_CRITICAL,
+	/* QCOM vendor trip types (REF enum thermal_trip_type) */
+	THERMAL_TRIP_CONFIGURABLE_HI,
+	THERMAL_TRIP_CONFIGURABLE_LOW,
+	THERMAL_TRIP_CRITICAL_LOW,
 };
 
 /* Adding event notification support elements */

@@ -22,6 +22,9 @@ struct qcom_glink_pipe {
 	void (*write)(struct qcom_glink_pipe *glink_pipe,
 		      const void *hdr, size_t hlen,
 		      const void *data, size_t dlen);
+
+	/* QCOM vendor extension: drop any partially transferred state */
+	void (*reset)(struct qcom_glink_pipe *glink_pipe);
 };
 
 struct qcom_glink;

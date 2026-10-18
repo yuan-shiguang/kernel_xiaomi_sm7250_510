@@ -2025,6 +2025,40 @@ int timers_dead_cpu(unsigned int cpu)
 	return 0;
 }
 
+/* [VENDOR-PORT Phase7] timer quiesce from 5.10.100 REF
+ * (adapted: 5.10.270 migrate_timer_list is 2-arg, no remove_pinned) */
+static void __migrate_timers(unsigned int cpu)
+{
+	struct timer_base *old_base;
+	struct timer_base *new_base;
+	unsigned long flags;
+	int b, i;
+
+	for (b = 0; b < NR_BASES; b++) {
+		old_base = per_cpu_ptr(&timer_bases[b], cpu);
+		new_base = get_cpu_ptr(&timer_bases[b]);
+		raw_spin_lock_irqsave(&new_base->lock, flags);
+		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+
+		forward_timer_base(new_base);
+
+		if (!cpu_online(cpu))
+			BUG_ON(old_base->running_timer);
+
+		for (i = 0; i < WHEEL_SIZE; i++)
+			migrate_timer_list(new_base, old_base->vectors + i);
+
+		raw_spin_unlock(&old_base->lock);
+		raw_spin_unlock_irqrestore(&new_base->lock, flags);
+		put_cpu_ptr(&timer_bases);
+	}
+}
+
+void timer_quiesce_cpu(void *cpup)
+{
+	__migrate_timers(*(unsigned int *)cpup);
+}
+
 #endif /* CONFIG_HOTPLUG_CPU */
 
 static void __init init_timer_cpu(int cpu)

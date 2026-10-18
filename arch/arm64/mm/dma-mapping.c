@@ -62,21 +62,88 @@ void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
 #endif
 }
 
-/*
- * 5.10 dropped the per-device dma_ops accessors.  The vendor SMMU/display
- * glue still saves and restores them around iommu_attach/detach, so keep
- * the old API available as real functions.
- */
-void set_dma_ops(struct device *dev, const struct dma_map_ops *ops)
-{
-	dev->dma_ops = ops;
-}
-EXPORT_SYMBOL(set_dma_ops);
 
-const struct dma_map_ops *get_dma_ops(struct device *dev)
+/* [VENDOR-PORT Phase7] dummy_dma_ops from 5.10.100 REF */
+static void *__dummy_alloc(struct device *dev, size_t size,
+			   dma_addr_t *dma_handle, gfp_t flags,
+			   unsigned long attrs)
 {
-	if (dev->dma_ops)
-		return dev->dma_ops;
-	return get_arch_dma_ops(dev->bus);
+	WARN(1, "dma alloc failure, device may be missing a call to arch_setup_dma_ops");
+	return NULL;
 }
-EXPORT_SYMBOL(get_dma_ops);
+
+static void __dummy_free(struct device *dev, size_t size,
+			 void *vaddr, dma_addr_t dma_handle,
+			 unsigned long attrs)
+{
+}
+
+static int __dummy_mmap(struct device *dev,
+			struct vm_area_struct *vma,
+			void *cpu_addr, dma_addr_t dma_addr, size_t size,
+			unsigned long attrs)
+{
+	return -ENXIO;
+}
+
+static dma_addr_t __dummy_map_page(struct device *dev, struct page *page,
+				   unsigned long offset, size_t size,
+				   enum dma_data_direction dir,
+				   unsigned long attrs)
+{
+	return 0;
+}
+
+static void __dummy_unmap_page(struct device *dev, dma_addr_t dev_addr,
+			       size_t size, enum dma_data_direction dir,
+			       unsigned long attrs)
+{
+}
+
+static int __dummy_map_sg(struct device *dev, struct scatterlist *sgl,
+			  int nelems, enum dma_data_direction dir,
+			  unsigned long attrs)
+{
+	return 0;
+}
+
+static void __dummy_unmap_sg(struct device *dev,
+			     struct scatterlist *sgl, int nelems,
+			     enum dma_data_direction dir,
+			     unsigned long attrs)
+{
+}
+
+static void __dummy_sync_single(struct device *dev,
+				dma_addr_t dev_addr, size_t size,
+				enum dma_data_direction dir)
+{
+}
+
+static void __dummy_sync_sg(struct device *dev,
+			    struct scatterlist *sgl, int nelems,
+			    enum dma_data_direction dir)
+{
+}
+
+static int __dummy_dma_supported(struct device *hwdev, u64 mask)
+{
+	return 0;
+}
+
+const struct dma_map_ops dummy_dma_ops = {
+	.alloc                  = __dummy_alloc,
+	.free                   = __dummy_free,
+	.mmap                   = __dummy_mmap,
+	.map_page               = __dummy_map_page,
+	.unmap_page             = __dummy_unmap_page,
+	.map_sg                 = __dummy_map_sg,
+	.unmap_sg               = __dummy_unmap_sg,
+	.sync_single_for_cpu    = __dummy_sync_single,
+	.sync_single_for_device = __dummy_sync_single,
+	.sync_sg_for_cpu        = __dummy_sync_sg,
+	.sync_sg_for_device     = __dummy_sync_sg,
+	.dma_supported          = __dummy_dma_supported,
+};
+EXPORT_SYMBOL(dummy_dma_ops);
+

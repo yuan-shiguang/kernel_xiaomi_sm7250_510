@@ -43,6 +43,10 @@ struct crypto_type {
 	unsigned int tfmsize;
 };
 
+/* [VENDOR-PORT Phase7] legacy block cipher crypto_type objects (REF algapi.h) */
+extern const struct crypto_type crypto_ablkcipher_type;
+extern const struct crypto_type crypto_blkcipher_type;
+
 struct crypto_instance {
 	struct crypto_alg alg;
 
@@ -94,6 +98,54 @@ struct crypto_queue {
 struct scatter_walk {
 	struct scatterlist *sg;
 	unsigned int offset;
+};
+
+/* [VENDOR-PORT Phase7] legacy block cipher walk helpers (REF include/crypto/algapi.h) */
+struct blkcipher_walk {
+	union {
+		struct {
+			struct page *page;
+			unsigned long offset;
+		} phys;
+
+		struct {
+			u8 *page;
+			u8 *addr;
+		} virt;
+	} src, dst;
+
+	struct scatter_walk in;
+	unsigned int nbytes;
+
+	struct scatter_walk out;
+	unsigned int total;
+
+	void *page;
+	u8 *buffer;
+	u8 *iv;
+	unsigned int ivsize;
+
+	int flags;
+	unsigned int walk_blocksize;
+	unsigned int cipher_blocksize;
+	unsigned int alignmask;
+};
+
+struct ablkcipher_walk {
+	struct {
+		struct page *page;
+		unsigned int offset;
+	} src, dst;
+
+	struct scatter_walk	in;
+	unsigned int		nbytes;
+	struct scatter_walk	out;
+	unsigned int		total;
+	struct list_head	buffers;
+	u8			*iv_buffer;
+	u8			*iv;
+	int			flags;
+	unsigned int		blocksize;
 };
 
 void crypto_mod_put(struct crypto_alg *alg);
@@ -248,4 +300,40 @@ enum {
 	CRYPTO_MSG_ALG_LOADED,
 };
 
+
+/* [VENDOR-PORT Phase7] blkcipher helper family (REF algapi.h) */
+static inline struct ablkcipher_alg *crypto_ablkcipher_alg(
+	struct crypto_ablkcipher *tfm)
+{
+	return &crypto_ablkcipher_tfm(tfm)->__crt_alg->cra_ablkcipher;
+}
+
+static inline void *crypto_ablkcipher_ctx(struct crypto_ablkcipher *tfm)
+{
+	return crypto_tfm_ctx(&tfm->base);
+}
+
+static inline void *crypto_ablkcipher_ctx_aligned(struct crypto_ablkcipher *tfm)
+{
+	return crypto_tfm_ctx_aligned(&tfm->base);
+}
+
+static inline struct crypto_blkcipher *crypto_spawn_blkcipher(
+	struct crypto_spawn *spawn)
+{
+	u32 type = CRYPTO_ALG_TYPE_BLKCIPHER;
+	u32 mask = CRYPTO_ALG_TYPE_MASK;
+
+	return __crypto_blkcipher_cast(crypto_spawn_tfm(spawn, type, mask));
+}
+
+static inline void *crypto_blkcipher_ctx(struct crypto_blkcipher *tfm)
+{
+	return crypto_tfm_ctx(&tfm->base);
+}
+
+static inline void *crypto_blkcipher_ctx_aligned(struct crypto_blkcipher *tfm)
+{
+	return crypto_tfm_ctx_aligned(&tfm->base);
+}
 #endif	/* _CRYPTO_ALGAPI_H */

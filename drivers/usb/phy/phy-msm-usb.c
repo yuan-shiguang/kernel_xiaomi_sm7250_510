@@ -4399,7 +4399,7 @@ static int msm_otg_probe(struct platform_device *pdev)
 		if (!res) {
 			dev_dbg(&pdev->dev, "missing TCSR memory resource\n");
 		} else {
-			tcsr = devm_ioremap_nocache(&pdev->dev, res->start,
+			tcsr = devm_ioremap(&pdev->dev, res->start,
 				resource_size(res));
 			if (!tcsr) {
 				dev_dbg(&pdev->dev, "tcsr ioremap failed\n");

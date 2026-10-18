@@ -1295,7 +1295,7 @@ static int __init cpu_clock_init(void)
 	}
 
 	if (is_sdm439) {
-		base = ioremap_nocache(APCS_PLL0, SZ_64);
+		base = ioremap(APCS_PLL0, SZ_64);
 		if (!base)
 			return -ENOMEM;
 
@@ -1306,7 +1306,7 @@ static int __init cpu_clock_init(void)
 		iounmap(base);
 	}
 
-	base = ioremap_nocache(APCS_PLL1, SZ_64);
+	base = ioremap(APCS_PLL1, SZ_64);
 	if (!base)
 		return -ENOMEM;
 
@@ -1316,7 +1316,7 @@ static int __init cpu_clock_init(void)
 
 	iounmap(base);
 
-	base = ioremap_nocache(A53SS_MUX_C1, SZ_8);
+	base = ioremap(A53SS_MUX_C1, SZ_8);
 	if (!base)
 		return -ENOMEM;
 

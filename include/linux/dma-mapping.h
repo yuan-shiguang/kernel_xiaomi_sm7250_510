@@ -92,6 +92,24 @@
 #define DMA_ATTR_IOMMU_USE_UPSTREAM_HINT	(1UL << 17)
 
 /*
+ * [VENDOR-PORT Phase7] vendor attributes that the GKI 5.10 header dropped.  Bits 0 and 3
+ * are the upstream DMA_ATTR_WRITE_BARRIER / DMA_ATTR_NON_CONSISTENT slots,
+ * 10-13 and 18 were unused here.
+ */
+#define DMA_ATTR_WRITE_BARRIER		(1UL << 0)
+#define DMA_ATTR_NON_CONSISTENT		(1UL << 3)
+#define DMA_ATTR_STRONGLY_ORDERED	(1UL << 10)
+#define DMA_ATTR_SKIP_ZEROING		(1UL << 11)
+#define DMA_ATTR_EXEC_MAPPING		(1UL << 12)
+#define DMA_ATTR_FORCE_COHERENT		(1UL << 13)
+#define DMA_ATTR_FORCE_NON_COHERENT	(1UL << 18)
+
+/* 4.19 sentinel for a failed dma_map_*() */
+#ifndef DMA_ERROR_CODE
+#define DMA_ERROR_CODE	(~(dma_addr_t)0)
+#endif
+
+/*
  * A dma_addr_t can hold any valid DMA or bus address for the platform.  It can
  * be given to a device to use as a DMA source or target.  It is specific to a
  * given device and there may be a translation between the CPU physical address

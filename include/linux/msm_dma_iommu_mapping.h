@@ -12,6 +12,14 @@
 #include <linux/dma-mapping.h>
 
 #ifdef CONFIG_QCOM_LAZY_MAPPING
+
+/* [VENDOR-PORT Phase7] GKI 5.10 dma-mapping.h dropped this MSM-specific
+ * attribute (REF 4.19 used bit 11).  Provide a free-bit definition so the
+ * vendor lazy-unmap helpers below compile with unchanged semantics:
+ * msm_dma_iommu_mapping.c only tests this one bit. */
+#ifndef DMA_ATTR_NO_DELAYED_UNMAP
+#define DMA_ATTR_NO_DELAYED_UNMAP	(1UL << 28)
+#endif
 /*
  * This function is not taking a reference to the dma_buf here. It is expected
  * that clients hold reference to the dma_buf until they are done with mapping

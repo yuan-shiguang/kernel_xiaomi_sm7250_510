@@ -237,7 +237,7 @@ av8l_fast_prot_to_pte(struct av8l_fast_io_pgtable *data, int prot)
 }
 
 static int av8l_fast_map(struct io_pgtable_ops *ops, unsigned long iova,
-			 phys_addr_t paddr, size_t size, int prot)
+			 phys_addr_t paddr, size_t size, int prot, gfp_t gfp)
 {
 	struct av8l_fast_io_pgtable *data = iof_pgtable_ops_to_data(ops);
 	av8l_fast_iopte *ptep = iopte_pmd_offset(data->pmds, data->base, iova);
@@ -258,7 +258,7 @@ static int av8l_fast_map(struct io_pgtable_ops *ops, unsigned long iova,
 int av8l_fast_map_public(struct io_pgtable_ops *ops, unsigned long iova,
 			 phys_addr_t paddr, size_t size, int prot)
 {
-	return av8l_fast_map(ops, iova, paddr, size, prot);
+	return av8l_fast_map(ops, iova, paddr, size, prot, GFP_ATOMIC);
 }
 
 static size_t
@@ -291,20 +291,22 @@ void av8l_fast_unmap_public(struct io_pgtable_ops *ops, unsigned long iova,
 }
 
 static size_t av8l_fast_unmap(struct io_pgtable_ops *ops, unsigned long iova,
-			      size_t size)
+			      size_t size,
+			      struct iommu_iotlb_gather *gather)
 {
 	return __av8l_fast_unmap(ops, iova, size, false);
 }
 
 static int av8l_fast_map_sg(struct io_pgtable_ops *ops,
 			unsigned long iova, struct scatterlist *sgl,
-			unsigned int nents, int prot, size_t *size)
+			unsigned int nents, int prot, gfp_t gfp,
+			size_t *mapped)
 {
 	struct scatterlist *sg;
 	int i;
 
 	for_each_sg(sgl, sg, nents, i) {
-		av8l_fast_map(ops, iova, sg_phys(sg), sg->length, prot);
+		av8l_fast_map(ops, iova, sg_phys(sg), sg->length, prot, gfp);
 		iova += sg->length;
 	}
 
@@ -315,7 +317,8 @@ int av8l_fast_map_sg_public(struct io_pgtable_ops *ops,
 			    unsigned long iova, struct scatterlist *sgl,
 			    unsigned int nents, int prot, size_t *size)
 {
-	return av8l_fast_map_sg(ops, iova, sgl, nents, prot, size);
+	return av8l_fast_map_sg(ops, iova, sgl, nents, prot, GFP_ATOMIC,
+				size);
 }
 
 #if defined(CONFIG_ARM64)

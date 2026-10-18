@@ -84,6 +84,17 @@ struct io_pgtable_cfg {
 	#define IO_PGTABLE_QUIRK_ARM_MTK_EXT	BIT(3)
 	#define IO_PGTABLE_QUIRK_NON_STRICT	BIT(4)
 	#define IO_PGTABLE_QUIRK_ARM_TTBR1	BIT(5)
+/*
+ * [VENDOR-PORT Phase7] QCOM fast-map quirks.
+ *
+ * The vendor tree used BIT(4..7) for these, which collide with the
+ * upstream meanings of NON_STRICT (BIT(4)) and ARM_TTBR1 (BIT(5)), so
+ * they are re-based onto free bits.  Only io-pgtable-fast.c interprets
+ * them, and it is built from this same tree, so the renumbering is safe.
+ */
+	#define IO_PGTABLE_QUIRK_NO_DMA			BIT(8)
+	#define IO_PGTABLE_QUIRK_QCOM_USE_UPSTREAM_HINT	BIT(9)
+	#define IO_PGTABLE_QUIRK_QCOM_USE_LLC_NWA	BIT(10)
 	unsigned long			quirks;
 	unsigned long			pgsize_bitmap;
 	unsigned int			ias;
@@ -91,6 +102,10 @@ struct io_pgtable_cfg {
 	bool				coherent_walk;
 	const struct iommu_flush_ops	*tlb;
 	struct device			*iommu_dev;
+
+	/* [VENDOR-PORT Phase7] valid IOVA window for the fast-map pgtable */
+	dma_addr_t			iova_base;
+	dma_addr_t			iova_end;
 
 	/* Low-level data specific to the table format */
 	union {
@@ -131,6 +146,14 @@ struct io_pgtable_cfg {
 			u64	transtab;
 			u64	memattr;
 		} arm_mali_lpae_cfg;
+
+		/* [VENDOR-PORT Phase7] QCOM fast-map (av8l) page table config */
+		struct {
+			u64	ttbr[2];
+			u64	tcr;
+			u64	mair[2];
+			void	*pmds;
+		} av8l_fast_cfg;
 	};
 };
 
@@ -165,6 +188,12 @@ struct io_pgtable_ops {
 			      struct iommu_iotlb_gather *gather);
 	phys_addr_t (*iova_to_phys)(struct io_pgtable_ops *ops,
 				    unsigned long iova);
+	/*
+	 * [VENDOR-PORT Phase7] QCOM fast-map extension: report whether the
+	 * IOVA is mapped with a cacheable shareable attribute.
+	 */
+	bool (*is_iova_coherent)(struct io_pgtable_ops *ops,
+				 unsigned long iova);
 };
 
 /**

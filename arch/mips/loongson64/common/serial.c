@@ -88,7 +88,7 @@ static int __init serial_init(void)
 			uart8250_data[mips_machtype][i].mapbase =
 				loongson_uart_base[i];
 			uart8250_data[mips_machtype][i].membase =
-				ioremap_nocache(loongson_uart_base[i], 8);
+				ioremap(loongson_uart_base[i], 8);
 		} else if (UPIO_PORT == iotype) {
 			uart8250_data[mips_machtype][i].irq =
 				loongson_sysconf.uarts[i].int_offset;

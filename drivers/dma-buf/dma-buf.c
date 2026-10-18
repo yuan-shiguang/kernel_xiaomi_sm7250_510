@@ -98,6 +98,17 @@ static void dma_buf_release(struct dentry *dentry)
 	 */
 	BUG_ON(dmabuf->cb_shared.active || dmabuf->cb_excl.active);
 
+	/* [VENDOR-PORT Phase7] run the vendor destructor first, like 4.19 did */
+	if (dmabuf->dtor) {
+		int dtor_ret = dmabuf->dtor(dmabuf, dmabuf->dtor_data);
+
+		if (dtor_ret) {
+			pr_warn_ratelimited("Leaking dmabuf because destructor failed error:%d\n",
+					    dtor_ret);
+			return;
+		}
+	}
+
 	dma_buf_stats_teardown(dmabuf);
 	dmabuf->ops->release(dmabuf);
 
@@ -1368,6 +1379,45 @@ void dma_buf_vunmap(struct dma_buf *dmabuf, void *vaddr)
 	mutex_unlock(&dmabuf->lock);
 }
 EXPORT_SYMBOL_GPL(dma_buf_vunmap);
+
+/**
+ * dma_buf_kmap - Map a page of the buffer object into kernel address space.
+ * @dmabuf:	[in]	buffer to map page from.
+ * @page_num:	[in]	page in PAGE_SIZE units to map.
+ *
+ * [VENDOR-PORT Phase7] 5.10 removed the per-page kmap exporter callback; emulate it with
+ * the vmap interface, which every in-tree exporter implements.
+ */
+void *dma_buf_kmap(struct dma_buf *dmabuf, unsigned long page_num)
+{
+	void *vaddr;
+
+	if (WARN_ON(!dmabuf))
+		return NULL;
+
+	vaddr = dma_buf_vmap(dmabuf);
+	if (!vaddr)
+		return NULL;
+
+	return (char *)vaddr + (page_num << PAGE_SHIFT);
+}
+EXPORT_SYMBOL_GPL(dma_buf_kmap);
+
+/**
+ * dma_buf_kunmap - Unmap a page obtained by dma_buf_kmap.
+ * @dmabuf:	[in]	buffer to unmap page from.
+ * @page_num:	[in]	page in PAGE_SIZE units to unmap.
+ * @vaddr:	[in]	kernel virtual address of the page.
+ */
+void dma_buf_kunmap(struct dma_buf *dmabuf, unsigned long page_num,
+		    void *vaddr)
+{
+	if (WARN_ON(!dmabuf || !vaddr))
+		return;
+
+	dma_buf_vunmap(dmabuf, (char *)vaddr - (page_num << PAGE_SHIFT));
+}
+EXPORT_SYMBOL_GPL(dma_buf_kunmap);
 
 int dma_buf_get_flags(struct dma_buf *dmabuf, unsigned long *flags)
 {

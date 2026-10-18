@@ -89,6 +89,12 @@ extern unsigned int nr_cpu_ids;
 
 extern struct cpumask __cpu_possible_mask;
 extern struct cpumask __cpu_online_mask;
+/* [VENDOR-PORT Phase7] CPUs of the performance (big) cluster */
+extern const struct cpumask *const cpu_perf_mask;
+/* [VENDOR-PORT Phase7] CPU isolation support (REF include/linux/cpumask.h) */
+extern struct cpumask __cpu_isolated_mask;
+#define cpu_isolated_mask ((const struct cpumask *)&__cpu_isolated_mask)
+#define cpu_isolated(cpu)	cpumask_test_cpu((cpu), cpu_isolated_mask)
 extern struct cpumask __cpu_present_mask;
 extern struct cpumask __cpu_active_mask;
 #define cpu_possible_mask ((const struct cpumask *)&__cpu_possible_mask)
@@ -849,6 +855,16 @@ set_cpu_active(unsigned int cpu, bool active)
 		cpumask_set_cpu(cpu, &__cpu_active_mask);
 	else
 		cpumask_clear_cpu(cpu, &__cpu_active_mask);
+}
+
+/* [VENDOR-PORT Phase7] set_cpu_isolated from 5.10.100 REF */
+static inline void
+set_cpu_isolated(unsigned int cpu, bool isolated)
+{
+	if (isolated)
+		cpumask_set_cpu(cpu, &__cpu_isolated_mask);
+	else
+		cpumask_clear_cpu(cpu, &__cpu_isolated_mask);
 }
 
 

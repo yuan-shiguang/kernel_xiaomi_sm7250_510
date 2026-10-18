@@ -205,6 +205,9 @@ static __always_inline u64 __arch_counter_get_cntvct(void)
 	return cnt;
 }
 
+/* QCOM vendor compatibility: 4.19 name for the non-stable counter read */
+#define arch_counter_get_cntvct()	__arch_counter_get_cntvct()
+
 static inline int arch_timer_arch_init(void)
 {
 	return 0;

@@ -1080,7 +1080,7 @@ static void gsi_ring_db(struct usb_ep *ep, struct usb_gsi_request *request)
 	int num_trbs = (dep->direction) ? (2 * (request->num_bufs) + 2)
 					: (request->num_bufs + 2);
 
-	gsi_dbl_address_lsb = ioremap_nocache(request->db_reg_phs_addr_lsb,
+	gsi_dbl_address_lsb = ioremap(request->db_reg_phs_addr_lsb,
 				sizeof(u32));
 	if (!gsi_dbl_address_lsb) {
 		dev_err(mdwc->dev, "Failed to map GSI DBL address LSB 0x%x\n",
@@ -1088,7 +1088,7 @@ static void gsi_ring_db(struct usb_ep *ep, struct usb_gsi_request *request)
 		return;
 	}
 
-	gsi_dbl_address_msb = ioremap_nocache(request->db_reg_phs_addr_msb,
+	gsi_dbl_address_msb = ioremap(request->db_reg_phs_addr_msb,
 				sizeof(u32));
 	if (!gsi_dbl_address_msb) {
 		dev_err(mdwc->dev, "Failed to map GSI DBL address MSB 0x%x\n",
@@ -3474,7 +3474,7 @@ static int dwc3_msm_extcon_register(struct dwc3_msm *mdwc)
 
 		mdwc->extcon[idx].blocking_sync_nb.notifier_call =
 					dwc3_usb_blocking_sync;
-		extcon_register_blocking_notifier(edev, EXTCON_USB_HOST,
+		extcon_register_notifier(edev, EXTCON_USB_HOST,
 					&mdwc->extcon[idx].blocking_sync_nb);
 
 		/* Update initial VBUS/ID state */
@@ -3848,7 +3848,7 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 		goto err;
 	}
 
-	mdwc->base = devm_ioremap_nocache(&pdev->dev, res->start,
+	mdwc->base = devm_ioremap(&pdev->dev, res->start,
 			resource_size(res));
 	if (!mdwc->base) {
 		dev_err(&pdev->dev, "ioremap failed\n");
@@ -3859,7 +3859,7 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 							"ahb2phy_base");
 	if (res) {
-		mdwc->ahb2phy_base = devm_ioremap_nocache(&pdev->dev,
+		mdwc->ahb2phy_base = devm_ioremap(&pdev->dev,
 					res->start, resource_size(res));
 		if (IS_ERR_OR_NULL(mdwc->ahb2phy_base)) {
 			dev_err(dev, "couldn't find ahb2phy_base addr.\n");

@@ -29,7 +29,7 @@
 #include <linux/platform_device.h> /* platform_driver_register() */
 #include <linux/of.h>       /* of_property_count_strings() */
 #include <linux/of_address.h>   /* of_address_to_resource() */
-#include <linux/io.h>       /* ioremap_nocache() */
+#include <linux/io.h>       /* ioremap() */
 #include <linux/notifier.h>
 #include <linux/sizes.h>    /* SZ_4K */
 #include <linux/uaccess.h>  /* copy_from_user() */
@@ -191,7 +191,7 @@ static ssize_t spss_debug_reg_show(struct device *dev,
 
 	pr_debug("spss_debug_reg_addr [0x%x].\n", spss_debug_reg_addr);
 
-	spss_debug_reg = ioremap_nocache(spss_debug_reg_addr, sizeof(u32)*2);
+	spss_debug_reg = ioremap(spss_debug_reg_addr, sizeof(u32)*2);
 
 	if (!spss_debug_reg) {
 		pr_err("can't map debug reg addr\n");
@@ -755,14 +755,14 @@ static int spss_parse_dt(struct device_node *node)
 	pr_debug("spss fuse2 addr [0x%x] bit [%d]\n",
 		(int) spss_fuse2_addr, (int) spss_fuse2_bit);
 
-	spss_fuse1_reg = ioremap_nocache(spss_fuse1_addr, sizeof(u32));
+	spss_fuse1_reg = ioremap(spss_fuse1_addr, sizeof(u32));
 
 	if (!spss_fuse1_reg) {
 		pr_err("can't map fuse1 addr\n");
 		return -EINVAL;
 	}
 
-	spss_fuse2_reg = ioremap_nocache(spss_fuse2_addr, sizeof(u32));
+	spss_fuse2_reg = ioremap(spss_fuse2_addr, sizeof(u32));
 
 	if (!spss_fuse2_reg) {
 		iounmap(spss_fuse1_reg);
@@ -809,7 +809,7 @@ static int spss_parse_dt(struct device_node *node)
 		return -EINVAL;
 	}
 
-	spss_emul_type_reg = ioremap_nocache(spss_emul_type_reg_addr,
+	spss_emul_type_reg = ioremap(spss_emul_type_reg_addr,
 					     sizeof(u32));
 	if (!spss_emul_type_reg) {
 		pr_err("can't map soc-emulation-type reg addr\n");
@@ -872,7 +872,7 @@ static int spss_parse_dt(struct device_node *node)
 		return -EFAULT;
 	}
 
-	spss_fuse3_reg = ioremap_nocache(spss_fuse3_addr, sizeof(u32));
+	spss_fuse3_reg = ioremap(spss_fuse3_addr, sizeof(u32));
 
 	if (!spss_fuse3_reg) {
 		pr_err("can't map fuse3 addr.\n");
@@ -905,7 +905,7 @@ static int spss_parse_dt(struct device_node *node)
 		return -EFAULT;
 	}
 
-	spss_fuse4_reg = ioremap_nocache(spss_fuse4_addr, sizeof(u32));
+	spss_fuse4_reg = ioremap(spss_fuse4_addr, sizeof(u32));
 
 	if (!spss_fuse4_reg) {
 		pr_err("can't map fuse4 addr.\n");
@@ -931,7 +931,7 @@ static int spss_set_fw_cmac(u32 *cmac, size_t cmac_size)
 	int i;
 
 	if (cmac_mem == NULL) {
-		cmac_mem = ioremap_nocache(cmac_mem_addr, cmac_mem_size);
+		cmac_mem = ioremap(cmac_mem_addr, cmac_mem_size);
 		if (!cmac_mem) {
 			pr_err("can't map cmac_mem.\n");
 			return -EFAULT;

@@ -515,6 +515,10 @@ static int init_rootdomain(struct root_domain *rd)
 
 	if (cpupri_init(&rd->cpupri) != 0)
 		goto free_cpudl;
+
+	/* [VENDOR-PORT Phase7] capacity extremes (REF kernel/sched/topology.c 505) */
+	rd->max_cap_orig_cpu = rd->min_cap_orig_cpu = -1;
+	rd->mid_cap_orig_cpu = -1;
 	return 0;
 
 free_cpudl:
@@ -1149,7 +1153,7 @@ build_sched_groups(struct sched_domain *sd, int cpu)
  * group having more cpu_capacity will pickup more load compared to the
  * group having less cpu_capacity.
  */
-static void init_sched_groups_capacity(int cpu, struct sched_domain *sd)
+void init_sched_groups_capacity(int cpu, struct sched_domain *sd)
 {
 	struct sched_group *sg = sd->groups;
 
@@ -2042,12 +2046,26 @@ build_sched_domains(const struct cpumask *cpu_map, struct sched_domain_attr *att
 	/* Attach the domains */
 	rcu_read_lock();
 	for_each_cpu(i, cpu_map) {
+		int max_cpu = READ_ONCE(d.rd->max_cap_orig_cpu);
+		int min_cpu = READ_ONCE(d.rd->min_cap_orig_cpu);
+
 		rq = cpu_rq(i);
 		sd = *per_cpu_ptr(d.sd, i);
 
 		/* Use READ_ONCE()/WRITE_ONCE() to avoid load/store tearing: */
 		if (rq->cpu_capacity_orig > READ_ONCE(d.rd->max_cpu_capacity))
 			WRITE_ONCE(d.rd->max_cpu_capacity, rq->cpu_capacity_orig);
+
+		/* [VENDOR-PORT Phase7] track capacity extremes (REF topology.c 1996-2008) */
+		if ((max_cpu < 0) ||
+		    (arch_scale_cpu_capacity(i) >
+		     arch_scale_cpu_capacity(max_cpu)))
+			WRITE_ONCE(d.rd->max_cap_orig_cpu, i);
+
+		if ((min_cpu < 0) ||
+		    (arch_scale_cpu_capacity(i) <
+		     arch_scale_cpu_capacity(min_cpu)))
+			WRITE_ONCE(d.rd->min_cap_orig_cpu, i);
 
 		cpu_attach_domain(sd, d.rd, i);
 	}

@@ -79,6 +79,14 @@ struct led_classdev {
 #define LED_BRIGHT_HW_CHANGED	BIT(21)
 #define LED_RETAIN_AT_SHUTDOWN	BIT(22)
 #define LED_INIT_DEFAULT_TRIGGER BIT(23)
+/*
+ * QCOM vendor extension: LED whose trigger must survive brightness=0 /
+ * "none" writes (flash / WLED keep-on). REF (4.19) used BIT(23) here,
+ * but BIT(23) is already taken by upstream LED_INIT_DEFAULT_TRIGGER in
+ * this tree and the two bits have incompatible semantics, so use the
+ * next free bit.
+ */
+#define LED_KEEP_TRIGGER	BIT(24)
 
 	/* set_brightness_work / blink_timer flags, atomic, private. */
 	unsigned long		work_flags;

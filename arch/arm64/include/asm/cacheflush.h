@@ -72,6 +72,20 @@ extern void __flush_dcache_area(void *addr, size_t len);
 #define dmac_flush_range(start, end)				\
 	__flush_dcache_area((start), (unsigned long)(end) - \
 			    (unsigned long)(start))
+/*
+ * [VENDOR-PORT Phase7] The vendor fast-map IOMMU driver uses the classic
+ * dmac_*() DMA cache-maintenance names.  __dma_clean_area()/__dma_inv_area()
+ * are file-local symbols in cache.S on 5.10, so map onto the exported
+ * PoC/PoU variants instead.
+ */
+#define dmac_clean_range(start, end)				\
+	__clean_dcache_area_poc((void *)(start),		\
+				(size_t)((unsigned long)(end) -	\
+					 (unsigned long)(start)))
+#define dmac_inv_range(start, end)				\
+	__inval_dcache_area((void *)(start),			\
+			    (size_t)((unsigned long)(end) -	\
+				     (unsigned long)(start)))
 extern void __inval_dcache_area(void *addr, size_t len);
 extern void __clean_dcache_area_poc(void *addr, size_t len);
 extern void __clean_dcache_area_pop(void *addr, size_t len);

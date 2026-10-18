@@ -1864,10 +1864,10 @@ static int qpnp_pon_config_init(struct qpnp_pon *pon,
 		if (rc)
 			return rc;
 
-			if (cfg->pon_type == PON_KPDPWR_RESIN) {
-				comb_reset_time = cfg->s1_timer + cfg->s2_timer;
-				comb_reset_enable = true;
-			}
+		if (cfg->pon_type == PON_KPDPWR_RESIN) {
+			comb_reset_time = cfg->s1_timer + cfg->s2_timer;
+			comb_reset_enable = true;
+		}
 		/*
 		 * Get the standard key parameters. This might not be
 		 * specified if there is no key mapping on the reset line.

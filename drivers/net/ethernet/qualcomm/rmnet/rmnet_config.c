@@ -519,3 +519,91 @@ module_init(rmnet_init)
 module_exit(rmnet_exit)
 MODULE_ALIAS_RTNL_LINK("rmnet");
 MODULE_LICENSE("GPL v2");
+
+#ifdef CONFIG_QCOM_QMI_RMNET
+
+/* [VENDOR-PORT Phase7] rmnet QMI/QoS getters+setters from 5.10.100 REF.
+ * NOTE: 5.10.270 dropped qmi_info/qos_info from the rmnet structs, so the
+ * fields were re-added to struct rmnet_port / struct rmnet_priv above. */
+void rmnet_init_qmi_pt(void *port, void *qmi)
+{
+    if (port)
+        ((struct rmnet_port *)port)->qmi_info = qmi;
+}
+EXPORT_SYMBOL(rmnet_init_qmi_pt);
+
+void rmnet_reset_qmi_pt(void *port)
+{
+    if (port)
+        ((struct rmnet_port *)port)->qmi_info = NULL;
+}
+EXPORT_SYMBOL(rmnet_reset_qmi_pt);
+
+void *rmnet_get_qmi_pt(void *port)
+{
+    if (port)
+        return ((struct rmnet_port *)port)->qmi_info;
+
+    return NULL;
+}
+EXPORT_SYMBOL(rmnet_get_qmi_pt);
+
+void rmnet_init_qos_pt(struct net_device *dev, void *qos)
+{
+    struct rmnet_priv *priv;
+
+    if (dev) {
+        priv = netdev_priv(dev);
+        rcu_assign_pointer(priv->qos_info, qos);
+    }
+}
+EXPORT_SYMBOL(rmnet_init_qos_pt);
+
+void *rmnet_get_qos_pt(struct net_device *dev)
+{
+    struct rmnet_priv *priv;
+
+    if (dev) {
+        priv = netdev_priv(dev);
+        return rcu_dereference_check(priv->qos_info, true);
+    }
+
+    return NULL;
+}
+EXPORT_SYMBOL(rmnet_get_qos_pt);
+
+void *rmnet_get_rmnet_port(struct net_device *dev)
+{
+    struct rmnet_priv *priv;
+
+    if (dev) {
+        priv = netdev_priv(dev);
+        {
+            struct rmnet_port *port;
+            rcu_read_lock_bh();
+            port = rmnet_get_port_rcu(priv->real_dev);
+            rcu_read_unlock_bh();
+            return (void *)port;
+        }
+    }
+
+    return NULL;
+}
+EXPORT_SYMBOL(rmnet_get_rmnet_port);
+
+struct net_device *rmnet_get_rmnet_dev(void *port, u8 mux_id)
+{
+    struct rmnet_endpoint *ep;
+
+    if (port) {
+        ep = rmnet_get_endpoint((struct rmnet_port *)port, mux_id);
+        if (ep)
+            return ep->egress_dev;
+    }
+
+    return NULL;
+}
+EXPORT_SYMBOL(rmnet_get_rmnet_dev);
+
+#endif /* CONFIG_QCOM_QMI_RMNET */
+

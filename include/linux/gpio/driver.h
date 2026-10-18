@@ -560,6 +560,9 @@ extern int devm_gpiochip_add_data_with_key(struct device *dev, struct gpio_chip 
 					   struct lock_class_key *lock_key,
 					   struct lock_class_key *request_key);
 
+/* QCOM vendor extension: look up a gpio_chip by its label */
+extern struct gpio_chip *find_chip_by_name(const char *name);
+
 extern struct gpio_chip *gpiochip_find(void *data,
 			      int (*match)(struct gpio_chip *gc, void *data));
 

@@ -2130,6 +2130,80 @@ int usb_hcd_get_frame_number (struct usb_device *udev)
 	return hcd->driver->get_frame_number (hcd);
 }
 
+/*
+ * QCOM vendor extension: GSI host transport helpers used by
+ * sound/usb/usb_audio_qmi_svc.c. The vendor hooks live in struct
+ * hc_driver; not every HCD registers them, so treat a missing hook as
+ * "not supported" instead of dereferencing NULL.
+ */
+int usb_hcd_sec_event_ring_setup(struct usb_device *udev,
+	unsigned int intr_num)
+{
+	struct usb_hcd	*hcd = bus_to_hcd(udev->bus);
+
+	if (!HCD_RH_RUNNING(hcd) || !hcd->driver->sec_event_ring_setup)
+		return 0;
+
+	return hcd->driver->sec_event_ring_setup(hcd, intr_num);
+}
+
+int usb_hcd_sec_event_ring_cleanup(struct usb_device *udev,
+	unsigned int intr_num)
+{
+	struct usb_hcd	*hcd = bus_to_hcd(udev->bus);
+
+	if (!HCD_RH_RUNNING(hcd) || !hcd->driver->sec_event_ring_cleanup)
+		return 0;
+
+	return hcd->driver->sec_event_ring_cleanup(hcd, intr_num);
+}
+
+phys_addr_t
+usb_hcd_get_sec_event_ring_phys_addr(struct usb_device *udev,
+	unsigned int intr_num, dma_addr_t *dma)
+{
+	struct usb_hcd	*hcd = bus_to_hcd(udev->bus);
+
+	if (!HCD_RH_RUNNING(hcd) ||
+		!hcd->driver->get_sec_event_ring_phys_addr)
+		return 0;
+
+	return hcd->driver->get_sec_event_ring_phys_addr(hcd, intr_num, dma);
+}
+
+phys_addr_t
+usb_hcd_get_xfer_ring_phys_addr(struct usb_device *udev,
+		struct usb_host_endpoint *ep, dma_addr_t *dma)
+{
+	struct usb_hcd	*hcd = bus_to_hcd(udev->bus);
+
+	if (!HCD_RH_RUNNING(hcd) || !hcd->driver->get_xfer_ring_phys_addr)
+		return 0;
+
+	return hcd->driver->get_xfer_ring_phys_addr(hcd, udev, ep, dma);
+}
+
+int usb_hcd_get_controller_id(struct usb_device *udev)
+{
+	struct usb_hcd	*hcd = bus_to_hcd(udev->bus);
+
+	if (!HCD_RH_RUNNING(hcd) || !hcd->driver->get_core_id)
+		return -EINVAL;
+
+	return hcd->driver->get_core_id(hcd);
+}
+
+int usb_hcd_stop_endpoint(struct usb_device *udev,
+		struct usb_host_endpoint *ep)
+{
+	struct usb_hcd	*hcd = bus_to_hcd(udev->bus);
+
+	if (!hcd->driver->stop_endpoint)
+		return -ENODEV;
+
+	return hcd->driver->stop_endpoint(hcd, udev, ep);
+}
+
 /*-------------------------------------------------------------------------*/
 
 #ifdef	CONFIG_PM

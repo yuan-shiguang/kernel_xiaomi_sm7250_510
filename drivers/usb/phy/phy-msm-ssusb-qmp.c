@@ -791,7 +791,7 @@ static int msm_ssphy_qmp_extcon_register(struct msm_ssphy_qmp *phy,
 	phy->extcon_dp = edev;
 	phy->phy.vbus_nb.notifier_call = msm_ssphy_qmp_vbus_notifier;
 	phy->dp_nb.notifier_call = msm_ssphy_qmp_dp_notifier;
-	ret = extcon_register_blocking_notifier(edev, EXTCON_DISP_DP,
+	ret = extcon_register_notifier(edev, EXTCON_DISP_DP,
 								&phy->dp_nb);
 	if (ret < 0) {
 		dev_err(dev, "failed to register blocking notifier\n");
@@ -998,7 +998,7 @@ static int msm_ssphy_qmp_probe(struct platform_device *pdev)
 	 * For USB QMP DP combo PHY, common set of registers shall be accessed
 	 * by DP driver as well.
 	 */
-	phy->base = devm_ioremap_nocache(dev, res->start, resource_size(res));
+	phy->base = devm_ioremap(dev, res->start, resource_size(res));
 	if (IS_ERR_OR_NULL(phy->base)) {
 		ret = PTR_ERR(phy->base);
 		goto err;

@@ -340,7 +340,7 @@ static int qrtr_fifo_xprt_probe(struct platform_device *pdev)
 	of_node_put(ipc_shm_np);
 
 	xprtp->fifo_size = resource_size(r);
-	xprtp->fifo_base = devm_ioremap_nocache(&pdev->dev, r->start,
+	xprtp->fifo_base = devm_ioremap(&pdev->dev, r->start,
 						resource_size(r));
 	if (!xprtp->fifo_base) {
 		pr_err("ioreamp_nocache() failed\n");

@@ -1339,7 +1339,9 @@ static int __init core_ctl_init(void)
 			"core_ctl/isolation:online",
 			core_ctl_isolation_online_cpu, NULL);
 
-	cpuhp_setup_state_nocalls(CPUHP_CORE_CTL_ISOLATION_DEAD,
+	/* [VENDOR-PORT Phase7] 5.10 has no CPUHP_CORE_CTL_ISOLATION_DEAD slot; a dynamic
+	 * online state gives us the same teardown hook. */
+	cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN,
 			"core_ctl/isolation:dead",
 			NULL, core_ctl_isolation_dead_cpu);
 

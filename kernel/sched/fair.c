@@ -760,6 +760,16 @@ static u64 sched_vslice(struct cfs_rq *cfs_rq, struct sched_entity *se)
 
 static int select_idle_sibling(struct task_struct *p, int prev_cpu, int cpu);
 static unsigned long task_h_load(struct task_struct *p);
+/* [VENDOR-PORT Phase7] current capacity after cpu and freq scaling
+ *   (REF kernel/sched/fair.c 7049-7059) */
+unsigned long capacity_curr_of(int cpu)
+{
+	unsigned long max_cap = cpu_rq(cpu)->cpu_capacity_orig;
+	unsigned long scale_freq = arch_scale_freq_capacity(cpu);
+
+	return cap_scale(max_cap, scale_freq);
+}
+
 static unsigned long capacity_of(int cpu);
 
 /* Give new sched_entity start runnable values to heavy its load in infant time */
@@ -3927,11 +3937,6 @@ static inline unsigned long cfs_rq_load_avg(struct cfs_rq *cfs_rq)
 
 static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf);
 
-static inline unsigned long task_util(struct task_struct *p)
-{
-	return READ_ONCE(p->se.avg.util_avg);
-}
-
 static inline unsigned long _task_util_est(struct task_struct *p)
 {
 	struct util_est ue = READ_ONCE(p->se.avg.util_est);
@@ -5977,11 +5982,6 @@ static unsigned long cpu_runnable_without(struct rq *rq, struct task_struct *p)
 	return runnable;
 }
 
-static unsigned long capacity_of(int cpu)
-{
-	return cpu_rq(cpu)->cpu_capacity;
-}
-
 static void record_wakee(struct task_struct *p)
 {
 	/*
@@ -6610,20 +6610,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
  *
  * Return: the (estimated) utilization for the specified CPU
  */
-static inline unsigned long cpu_util(int cpu)
-{
-	struct cfs_rq *cfs_rq;
-	unsigned int util;
-
-	cfs_rq = &cpu_rq(cpu)->cfs;
-	util = READ_ONCE(cfs_rq->avg.util_avg);
-
-	if (sched_feat(UTIL_EST))
-		util = max(util, READ_ONCE(cfs_rq->avg.util_est.enqueued));
-
-	return min_t(unsigned long, util, capacity_orig_of(cpu));
-}
-
 /*
  * cpu_util_without: compute cpu utilization without any contributions from *p
  * @cpu: the CPU which utilization is requested
@@ -11775,3 +11761,74 @@ int sched_trace_rq_nr_running(struct rq *rq)
         return rq ? rq->nr_running : -1;
 }
 EXPORT_SYMBOL_GPL(sched_trace_rq_nr_running);
+
+/* [VENDOR-PORT Phase7] missing global defs from 5.10.100 REF */
+DEFINE_PER_CPU_READ_MOSTLY(int, sched_load_boost);
+
+unsigned int sched_capacity_margin_up[CPU_NR] = {
+	[0 ... CPU_NR - 1] = 1078
+}; /* ~5% margin */
+unsigned int sched_capacity_margin_down[CPU_NR] = {
+	[0 ... CPU_NR - 1] = 1078
+}; /* ~5% margin */
+
+#ifdef CONFIG_SCHED_WALT
+unsigned int sysctl_sched_min_task_util_for_boost = 51;
+unsigned int sysctl_sched_min_task_util_for_colocation = 35;
+unsigned int sysctl_walt_rtg_cfs_boost_prio = 99; /* disabled by default */
+#endif
+
+#ifdef CONFIG_SCHED_TUNE
+struct reciprocal_value schedtune_spc_rdiv;
+#endif
+
+
+/* [VENDOR-PORT Phase7] WALT rotation from 5.10.100 REF */
+#ifdef CONFIG_SCHED_WALT
+struct walt_rotate_work {
+	struct work_struct w;
+	struct task_struct *src_task;
+	struct task_struct *dst_task;
+	int src_cpu;
+	int dst_cpu;
+};
+
+static DEFINE_PER_CPU(struct walt_rotate_work, walt_rotate_works);
+
+static void walt_rotate_work_func(struct work_struct *work)
+{
+	struct walt_rotate_work *wr = container_of(work,
+					struct walt_rotate_work, w);
+	struct rq *src_rq = cpu_rq(wr->src_cpu), *dst_rq = cpu_rq(wr->dst_cpu);
+	unsigned long flags;
+
+	migrate_swap(wr->src_task, wr->dst_task, wr->dst_cpu, wr->src_cpu);
+
+	put_task_struct(wr->src_task);
+	put_task_struct(wr->dst_task);
+
+	local_irq_save(flags);
+	double_rq_lock(src_rq, dst_rq);
+
+	dst_rq->active_balance = 0;
+	src_rq->active_balance = 0;
+
+	double_rq_unlock(src_rq, dst_rq);
+	local_irq_restore(flags);
+
+	clear_reserved(wr->src_cpu);
+	clear_reserved(wr->dst_cpu);
+}
+
+void walt_rotate_work_init(void)
+{
+	int i;
+
+	for_each_possible_cpu(i) {
+		struct walt_rotate_work *wr = &per_cpu(walt_rotate_works, i);
+
+		INIT_WORK(&wr->w, walt_rotate_work_func);
+	}
+}
+#endif
+
