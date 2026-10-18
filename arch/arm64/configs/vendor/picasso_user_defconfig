@@ -712,3 +712,5 @@ CONFIG_TEST_BPF=m
 # 的 depends on 父符号；4.19 的 defconfig 未引用它，导致全部 qcom 时钟被门控。
 # ---------------------------------------------------------------------------
 CONFIG_COMMON_CLK_QCOM=y
+CONFIG_QCOM_SOCINFO=y
+CONFIG_CNSS_QMI_SVC=y

@@ -556,3 +556,16 @@ module_platform_driver(qcom_socinfo_driver);
 MODULE_DESCRIPTION("Qualcomm SoCinfo driver");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:qcom-socinfo");
+
+/*
+ * [VENDOR-PORT Phase7] socinfo_get_serial_number() was dropped from the GKI
+ * socinfo.c (its struct no longer carries the v0_10 serial_number field and the
+ * driver exports nothing). Vendor consumers (icnss/icnss2/wcnss) still call it.
+ * Provide a minimal accessor returning 0 so the tree links; replace with a real
+ * SMEM-backed read if per-device serial-specific tuning is required.
+ */
+uint32_t socinfo_get_serial_number(void)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_serial_number);

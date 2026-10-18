@@ -217,8 +217,7 @@ static ssize_t ramdump_read(struct file *filep, char __user *buf, size_t count,
 
 	rd_dev->attrs = 0;
 	rd_dev->attrs |= DMA_ATTR_SKIP_ZEROING;
-	device_mem = vaddr ?: dma_remap(rd_dev->dev->parent, NULL, addr,
-						copy_size, rd_dev->attrs);
+	device_mem = vaddr ?: memremap(addr, copy_size, MEMREMAP_WC);
 	origdevice_mem = device_mem;
 
 	if (device_mem == NULL) {
@@ -269,7 +268,7 @@ static ssize_t ramdump_read(struct file *filep, char __user *buf, size_t count,
 
 	kfree(finalbuf);
 	if (!vaddr && origdevice_mem)
-		dma_unremap(rd_dev->dev->parent, origdevice_mem, copy_size);
+		memunmap(origdevice_mem);
 
 	*pos += copy_size;
 
@@ -282,7 +281,7 @@ static ssize_t ramdump_read(struct file *filep, char __user *buf, size_t count,
 
 ramdump_done:
 	if (!vaddr && origdevice_mem)
-		dma_unremap(rd_dev->dev->parent, origdevice_mem, copy_size);
+		memunmap(origdevice_mem);
 
 	srcu_read_unlock(&rd_dev->rd_srcu, srcu_idx);
 	kfree(finalbuf);
@@ -536,11 +535,23 @@ static int _do_ramdump(void *handle, struct ramdump_segment *segments,
 
 }
 
+/*
+ * [VENDOR-PORT Phase7] elf_str_table() was removed from <linux/elf.h> in
+ * 5.10.270. Reconstruct the section-header string table pointer from the ELF
+ * header (offset of the shstrtab section named by e_shstrndx).
+ */
+static inline char *ramdump_elf_str_table(struct elfhdr *ehdr)
+{
+	struct elf_shdr *shdr = (struct elf_shdr *)((char *)ehdr + ehdr->e_shoff);
+
+	return (char *)ehdr + shdr[ehdr->e_shstrndx].sh_offset;
+}
+
 static inline unsigned int set_section_name(const char *name,
 					    struct elfhdr *ehdr,
 					    int *strtable_idx)
 {
-	char *strtab = elf_str_table(ehdr);
+	char *strtab = ramdump_elf_str_table(ehdr);
 	int idx, ret = 0;
 
 	idx = *strtable_idx;

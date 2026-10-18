@@ -399,7 +399,12 @@ static void probe_subsystem(struct device *dev, struct device_node *np)
 		einfo->unregister_fn = glink_probe_spss_unreg;
 	} else if (!strcmp(transport, "spi")) {
 		/* SPI SSR is self contained */
+#ifdef CONFIG_RPMSG_QCOM_GLINK_SPI
 		einfo->glink = qcom_glink_spi_register(dev, np);
+#else
+		GLINK_ERR(dev, "%s spi transport not supported (CONFIG_RPMSG_QCOM_GLINK_SPI disabled)\n", einfo->ssr_label);
+		goto free_einfo;
+#endif
 		if (IS_ERR_OR_NULL(einfo->glink)) {
 			GLINK_ERR(dev, "%s failed\n", einfo->ssr_label);
 			goto free_einfo;
