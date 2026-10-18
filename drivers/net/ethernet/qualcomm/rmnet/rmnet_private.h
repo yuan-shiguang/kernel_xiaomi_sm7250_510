@@ -10,6 +10,25 @@
 #define RMNET_NEEDED_HEADROOM      16
 #define RMNET_TX_QUEUE_LEN         1000
 
+/* [VENDOR-PORT Phase7] re-added from 5.10.100 REF (GKI dropped these) */
+/* Constants */
+#define RMNET_EGRESS_FORMAT_AGGREGATION         BIT(31)
+#define RMNET_INGRESS_FORMAT_DL_MARKER_V1       BIT(30)
+#define RMNET_INGRESS_FORMAT_DL_MARKER_V2       BIT(29)
+
+#define RMNET_INGRESS_FORMAT_DL_MARKER  (RMNET_INGRESS_FORMAT_DL_MARKER_V1 |\
+RMNET_INGRESS_FORMAT_DL_MARKER_V2)
+
+/* UL Packet prioritization */
+#define RMNET_EGRESS_FORMAT_PRIORITY            BIT(28)
+
+/* Power save feature*/
+#define RMNET_INGRESS_FORMAT_PS                 BIT(27)
+#define RMNET_FORMAT_PS_NOTIF                   BIT(26)
+
+/* UL Aggregation parameters */
+#define RMNET_PAGE_RECYCLE                      BIT(0)
+
 /* Replace skb->dev to a virtual rmnet device and pass up the stack */
 #define RMNET_EPMODE_VND (1)
 /* Pass the frame directly to another device with dev_queue_xmit() */

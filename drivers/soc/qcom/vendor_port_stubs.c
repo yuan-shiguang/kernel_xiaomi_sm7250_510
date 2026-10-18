@@ -88,30 +88,6 @@ EXPORT_SYMBOL(of_thermal_handle_trip_temp);
 void register_system_pm_ops(void) __attribute__((weak));
 void register_system_pm_ops(void) {}
 EXPORT_SYMBOL(register_system_pm_ops);
-void rmnet_all_flows_enabled(void) __attribute__((weak));
-void rmnet_all_flows_enabled(void) {}
-EXPORT_SYMBOL(rmnet_all_flows_enabled);
-void rmnet_clear_powersave_format(void) __attribute__((weak));
-void rmnet_clear_powersave_format(void) {}
-EXPORT_SYMBOL(rmnet_clear_powersave_format);
-void rmnet_enable_all_flows(void) __attribute__((weak));
-void rmnet_enable_all_flows(void) {}
-EXPORT_SYMBOL(rmnet_enable_all_flows);
-void rmnet_get_dlmarker_info(void) __attribute__((weak));
-void rmnet_get_dlmarker_info(void) {}
-EXPORT_SYMBOL(rmnet_get_dlmarker_info);
-void rmnet_get_packets(void) __attribute__((weak));
-void rmnet_get_packets(void) {}
-EXPORT_SYMBOL(rmnet_get_packets);
-void rmnet_get_powersave_notif(void) __attribute__((weak));
-void rmnet_get_powersave_notif(void) {}
-EXPORT_SYMBOL(rmnet_get_powersave_notif);
-void rmnet_prepare_ps_bearers(void) __attribute__((weak));
-void rmnet_prepare_ps_bearers(void) {}
-EXPORT_SYMBOL(rmnet_prepare_ps_bearers);
-void rmnet_set_powersave_format(void) __attribute__((weak));
-void rmnet_set_powersave_format(void) {}
-EXPORT_SYMBOL(rmnet_set_powersave_format);
 void slim_add_device(void) __attribute__((weak));
 void slim_add_device(void) {}
 EXPORT_SYMBOL(slim_add_device);

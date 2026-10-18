@@ -181,7 +181,7 @@ Phase 6 结论：
 - [x] **务实修复** (用户决策: “让其编译后功能基本正常就行”):
   - 真实修复 (代码层面): `drivers/soc/qcom/Makefile` 补 `obj-y += subsystem_notif.o` / `ramdump.o` (REF 即 `obj-y` 内置); `glink_probe.c` 对 `qcom_glink_spi_register` 调用加 `#ifdef CONFIG_RPMSG_QCOM_GLINK_SPI` 守卫 (picasso 用 smem/spss glink, 无需编译 2432 行 `glink_spi.c`); `socinfo.c` 回补 `socinfo_get_serial_number()` (GKI 已丢弃, 返回安全 0 并 `EXPORT_SYMBOL`); defconfig + `.config` 开 `CONFIG_QCOM_SOCINFO=y` / `CONFIG_CNSS_QMI_SVC=y` (并自动 select `SOC_BUS`)。
   - 运行时兜底 (链接层面): 新增 `drivers/soc/qcom/vendor_port_stubs.c`, 为 GKI 不再提供的 **101 个** 符号提供 **weak 兜底定义** (`[VENDOR-PORT Phase7]` 标记), 使 `vmlinux` 得以链接。真实 vendor 驱动若日后接回, 会以其强符号自动覆盖 weak 兜底。
-- [x] **桩退役第一阶段 (build21~build29): 101 → 51 个 weak 兜底**
+- [x] **桩退役第一阶段 (build21~build31): 101 → 43 个 weak 兜底**
 
   修复思路: 逐个把「GKI 树里有真身、只是没接线 / 有 API 漂移」的 provider 接回,
   再把被真身覆盖的 weak 桩删掉 (否则 modpost 报 `exported twice`)。
@@ -191,6 +191,7 @@ Phase 6 结论：
   | `drivers/net/wireless/cnss_utils/` | `drivers/net/wireless/Makefile` 补 `obj-$(CONFIG_CNSS_UTILS) += cnss_utils/`; `cnss_utils.c` 补 `#define DEVICE` (vendor 树从未编译过此文件, `MODULE_DESCRIPTION(DEVICE ...)` 一直是个潜伏 bug) | 30 (`wlfw_*_msg_v01_ei`) | build22 |
   | `drivers/soc/qcom/subsystem_restart.c` | Makefile 补 `obj-$(CONFIG_MSM_SUBSYSTEM_RESTART)`; 修 5.10.270 漂移: `struct timeval`/`do_gettimeofday` → `struct timespec64`/`ktime_get_real_ts64`, `bus_find_device()` 回调 const 化 | 11 (`subsystem_*` / `subsys_*`) | build26 |
   | `drivers/soc/qcom/msm_bus/` | Makefile 补 `obj-$(CONFIG_QCOM_BUS_SCALING) += msm_bus/` + defconfig 开 `CONFIG_QCOM_BUS_SCALING`(含 `QCOM_BUS_CONFIG_RPMH`); 修 22 处漂移 | 9 (`msm_bus_scale_*`) | build29 |
+  | `drivers/net/ethernet/qualcomm/rmnet/` | 从 REF 取回 GKI 删掉的 144 行 vendor 扩展 (8 个 `rmnet_*` 函数) 放进既有的 `#ifdef CONFIG_QCOM_QMI_RMNET` 段; `rmnet_private.h` 补回 `RMNET_INGRESS_FORMAT_*` 常量; `.c` 补 `#include <soc/qcom/qmi_rmnet.h>` | 8 (`rmnet_*`) | build31 |
 
   msm_bus 的 5.10.270 漂移点 (22 errors → 0):
   1. `BCM_TCS_CMD_VOTE_MASK` / `BCM_TCS_CMD_VOTE_Y_MASK` / `BCM_TCS_CMD()` 已由 GKI `<soc/qcom/tcs.h>` 提供 (且新版带 `cpu_to_le32()`), 删掉本地重复定义;
@@ -201,7 +202,7 @@ Phase 6 结论：
 
   踩坑: 中途把 `CONFIG_QCOM_BUS_SCALING` 关过一次, 导致其依赖项 `CONFIG_QCOM_BUS_CONFIG_RPMH` 被 syncconfig 清掉, 再开回来时 kconfig 判断为 NEW 而**停在交互提示上等 stdin**, 构建挂了 22 分钟。已给 `bld.sh` 的 make 加 `< /dev/null` 防呆。
 
-- [!] **已知限制 (剩余 51 个 weak 兜底)**: 目前仍是空壳的符号集中在
+- [!] **已知限制 (剩余 43 个 weak 兜底)**: 目前仍是空壳的符号集中在
   - `slim_*` (13, SLIMbus 音频编解码总线 —— GKI 的 `drivers/slimbus/core.c` 只有标准 API, vendor 扩展已被删除, 需要从 REF 移植);
   - `rmnet_*` (9, 数据上网 —— WORK 的 `rmnet_config.c` 比 REF 少约 200 行 vendor 扩展, 引用方是 `drivers/soc/qcom/qmi_rmnet.c`);
   - `mipi_dsi_*` (5, 显示 —— GKI 有 `drm_mipi_dsi.c`, 但 `CONFIG_DRM_MIPI_DSI` 未开);

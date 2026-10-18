@@ -13,6 +13,9 @@
 #include "rmnet_vnd.h"
 #include "rmnet_private.h"
 #include "rmnet_map.h"
+/* [VENDOR-PORT Phase7] needed by the re-added vendor extensions */
+#include <soc/qcom/rmnet_qmi.h>
+#include <soc/qcom/qmi_rmnet.h>
 
 /* Local Definitions and Declarations */
 
@@ -604,6 +607,153 @@ struct net_device *rmnet_get_rmnet_dev(void *port, u8 mux_id)
     return NULL;
 }
 EXPORT_SYMBOL(rmnet_get_rmnet_dev);
+
+
+/* [VENDOR-PORT Phase7] re-added from 5.10.100 REF (GKI dropped these) */
+void rmnet_get_packets(void *port, u64 *rx, u64 *tx)
+{
+	struct rmnet_priv *priv;
+	struct rmnet_pcpu_stats *ps;
+	unsigned int cpu, start;
+
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+
+	if (!port || !tx || !rx)
+		return;
+
+	*tx = 0;
+	*rx = 0;
+	rcu_read_lock();
+	hash_for_each(((struct rmnet_port *)port)->muxed_ep, bkt, ep, hlnode) {
+		priv = netdev_priv(ep->egress_dev);
+		for_each_possible_cpu(cpu) {
+			ps = per_cpu_ptr(priv->pcpu_stats, cpu);
+			do {
+				start = u64_stats_fetch_begin_irq(&ps->syncp);
+				*tx += ps->stats.tx_pkts;
+				*rx += ps->stats.rx_pkts;
+			} while (u64_stats_fetch_retry_irq(&ps->syncp, start));
+		}
+	}
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL(rmnet_get_packets);
+
+void  rmnet_set_powersave_format(void *port)
+{
+	if (!port)
+		return;
+	((struct rmnet_port *)port)->data_format |= RMNET_INGRESS_FORMAT_PS;
+}
+EXPORT_SYMBOL(rmnet_set_powersave_format);
+
+void  rmnet_clear_powersave_format(void *port)
+{
+	if (!port)
+		return;
+	((struct rmnet_port *)port)->data_format &= ~RMNET_INGRESS_FORMAT_PS;
+}
+EXPORT_SYMBOL(rmnet_clear_powersave_format);
+
+void rmnet_enable_all_flows(void *port)
+{
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+
+	if (unlikely(!port))
+		return;
+
+	rcu_read_lock();
+	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
+			  bkt, ep, hlnode) {
+		qmi_rmnet_enable_all_flows(ep->egress_dev);
+	}
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL(rmnet_enable_all_flows);
+
+bool rmnet_all_flows_enabled(void *port)
+{
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+	bool ret = true;
+
+	if (unlikely(!port))
+		return true;
+
+	rcu_read_lock();
+	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
+			  bkt, ep, hlnode) {
+		if (!qmi_rmnet_all_flows_enabled(ep->egress_dev)) {
+			ret = false;
+			goto out;
+		}
+	}
+out:
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(rmnet_all_flows_enabled);
+
+void rmnet_prepare_ps_bearers(void *port, u8 *num_bearers, u8 *bearer_id)
+{
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+	u8 current_num_bearers = 0;
+	u8 number_bearers_left = 0;
+	u8 num_bearers_in_out;
+
+	if (unlikely(!port || !num_bearers))
+		return;
+
+	number_bearers_left = *num_bearers;
+
+	rcu_read_lock();
+	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
+			  bkt, ep, hlnode) {
+		num_bearers_in_out = number_bearers_left;
+		qmi_rmnet_prepare_ps_bearers(ep->egress_dev,
+					     &num_bearers_in_out,
+					     bearer_id ? bearer_id +
+						current_num_bearers : NULL);
+		current_num_bearers += num_bearers_in_out;
+		number_bearers_left -= num_bearers_in_out;
+	}
+	rcu_read_unlock();
+
+	*num_bearers = current_num_bearers;
+}
+EXPORT_SYMBOL(rmnet_prepare_ps_bearers);
+
+int rmnet_get_powersave_notif(void *port)
+{
+	if (!port)
+		return 0;
+	return ((struct rmnet_port *)port)->data_format & RMNET_FORMAT_PS_NOTIF;
+}
+EXPORT_SYMBOL(rmnet_get_powersave_notif);
+
+struct net_device *rmnet_get_real_dev(void *port)
+{
+	if (port)
+		return ((struct rmnet_port *)port)->dev;
+
+	return NULL;
+}
+EXPORT_SYMBOL(rmnet_get_real_dev);
+
+int rmnet_get_dlmarker_info(void *port)
+{
+	if (!port)
+		return 0;
+
+	return ((struct rmnet_port *)port)->data_format &
+		(RMNET_INGRESS_FORMAT_DL_MARKER_V1 |
+		RMNET_INGRESS_FORMAT_DL_MARKER_V2);
+}
+EXPORT_SYMBOL(rmnet_get_dlmarker_info);
 
 #endif /* CONFIG_QCOM_QMI_RMNET */
 
