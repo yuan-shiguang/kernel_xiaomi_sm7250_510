@@ -182,6 +182,7 @@ Phase 6 结论：
   - 真实修复 (代码层面): `drivers/soc/qcom/Makefile` 补 `obj-y += subsystem_notif.o` / `ramdump.o` (REF 即 `obj-y` 内置); `glink_probe.c` 对 `qcom_glink_spi_register` 调用加 `#ifdef CONFIG_RPMSG_QCOM_GLINK_SPI` 守卫 (picasso 用 smem/spss glink, 无需编译 2432 行 `glink_spi.c`); `socinfo.c` 回补 `socinfo_get_serial_number()` (GKI 已丢弃, 返回安全 0 并 `EXPORT_SYMBOL`); defconfig + `.config` 开 `CONFIG_QCOM_SOCINFO=y` / `CONFIG_CNSS_QMI_SVC=y` (并自动 select `SOC_BUS`)。
   - 运行时兜底 (链接层面): 新增 `drivers/soc/qcom/vendor_port_stubs.c`, 为 GKI 不再提供的 **101 个** 符号提供 **weak 兜底定义** (`[VENDOR-PORT Phase7]` 标记), 使 `vmlinux` 得以链接。真实 vendor 驱动若日后接回, 会以其强符号自动覆盖 weak 兜底。
 - [x] **桩退役第一阶段 (build21~build31): 101 → 43 个 weak 兜底**
+- [x] **桩退役第二阶段 (build32~build42): 43 → 32 个 weak 兜底**
 
   修复思路: 逐个把「GKI 树里有真身、只是没接线 / 有 API 漂移」的 provider 接回,
   再把被真身覆盖的 weak 桩删掉 (否则 modpost 报 `exported twice`)。
@@ -192,6 +193,10 @@ Phase 6 结论：
   | `drivers/soc/qcom/subsystem_restart.c` | Makefile 补 `obj-$(CONFIG_MSM_SUBSYSTEM_RESTART)`; 修 5.10.270 漂移: `struct timeval`/`do_gettimeofday` → `struct timespec64`/`ktime_get_real_ts64`, `bus_find_device()` 回调 const 化 | 11 (`subsystem_*` / `subsys_*`) | build26 |
   | `drivers/soc/qcom/msm_bus/` | Makefile 补 `obj-$(CONFIG_QCOM_BUS_SCALING) += msm_bus/` + defconfig 开 `CONFIG_QCOM_BUS_SCALING`(含 `QCOM_BUS_CONFIG_RPMH`); 修 22 处漂移 | 9 (`msm_bus_scale_*`) | build29 |
   | `drivers/net/ethernet/qualcomm/rmnet/` | 从 REF 取回 GKI 删掉的 144 行 vendor 扩展 (8 个 `rmnet_*` 函数) 放进既有的 `#ifdef CONFIG_QCOM_QMI_RMNET` 段; `rmnet_private.h` 补回 `RMNET_INGRESS_FORMAT_*` 常量; `.c` 补 `#include <soc/qcom/qmi_rmnet.h>` | 8 (`rmnet_*`) | build31 |
+  | `drivers/gpu/drm/drm_mipi_dsi.c` (已存在, 只是没被编) | 为 vendor 显示栈补 Kconfig 入口: 新增 `techpack/display/Kconfig` → `TECHPACK_DISPLAY`, 由 `techpack/Kconfig` source; 它 `select DRM_MIPI_DSI` (LITO 下 `default y`)。**不能直接往 defconfig/.config 写 `CONFIG_DRM_MIPI_DSI=y`**: 该符号是无 prompt 的 bool, kconfig 会静默丢弃 (syncconfig 实测被删) | 5 (`mipi_dsi_*`) | build34 |
+  | `drivers/thermal/thermal_of.c` + `drivers/thermal/cpufreq_cooling.c` | 实做 `of_thermal_handle_trip[_temp]()` (重估 thermal zone)、`cpufreq_platform_cooling_register()` (注册真 cooling device, `plat_ops` 未接: GKI cooling 无平台缓解回调)、`devm_thermal_of_virtual_sensor_register()` (返回 `-ENODEV`, 让调用方干净地探针失败, 而不是拿野指针) | 4 (thermal/cpufreq) | build36 |
+  | `drivers/soc/qcom/socinfo.c` | 实做 `get_hw_version_platform()`: probe 里缓存 SMEM 的 `hw_plat`/`plat_ver`, 并补 `<soc/qcom/socinfo.h>` 已声明但无人定义的 `socinfo_get_platform_type()/_version()` | 1 (`get_hw_version_platform`) | build39 |
+  | `drivers/pinctrl/qcom/pinctrl-msm.c` | 实做 `msm_gpio_mpm_wake_set()`: GKI 的 `struct msm_pingroup` 已删 `wake_reg`/`wake_bit`, 改走 `gpio_to_irq()` + `irq_set_irq_wake()` (即本驱动自己的 `msm_gpio_irq_set_wake`) | 1 (`msm_gpio_mpm_wake_set`) | build42 |
 
   msm_bus 的 5.10.270 漂移点 (22 errors → 0):
   1. `BCM_TCS_CMD_VOTE_MASK` / `BCM_TCS_CMD_VOTE_Y_MASK` / `BCM_TCS_CMD()` 已由 GKI `<soc/qcom/tcs.h>` 提供 (且新版带 `cpu_to_le32()`), 删掉本地重复定义;
@@ -202,12 +207,16 @@ Phase 6 结论：
 
   踩坑: 中途把 `CONFIG_QCOM_BUS_SCALING` 关过一次, 导致其依赖项 `CONFIG_QCOM_BUS_CONFIG_RPMH` 被 syncconfig 清掉, 再开回来时 kconfig 判断为 NEW 而**停在交互提示上等 stdin**, 构建挂了 22 分钟。已给 `bld.sh` 的 make 加 `< /dev/null` 防呆。
 
-- [!] **已知限制 (剩余 43 个 weak 兜底)**: 目前仍是空壳的符号集中在
-  - `slim_*` (13, SLIMbus 音频编解码总线 —— GKI 的 `drivers/slimbus/core.c` 只有标准 API, vendor 扩展已被删除, 需要从 REF 移植);
-  - `rmnet_*` (9, 数据上网 —— WORK 的 `rmnet_config.c` 比 REF 少约 200 行 vendor 扩展, 引用方是 `drivers/soc/qcom/qmi_rmnet.c`);
-  - `mipi_dsi_*` (5, 显示 —— GKI 有 `drm_mipi_dsi.c`, 但 `CONFIG_DRM_MIPI_DSI` 未开);
-  - thermal / cpufreq (5)、`msm_hdcp_*` (3)、ION / fastrpc / usb_gsi / mi_drm / gpio / cpuidle / snd / rq_stats 等 (16)。
+- [!] **已知限制 (剩余 32 个 weak 兜底)**: 目前仍是空壳的符号集中在
+  - `slim_*` (13, SLIMbus 音频编解码总线 —— GKI 的 `drivers/slimbus/core.c` 只有标准 API, vendor 扩展已被删除, 需要从 REF 整树移植);
+  - `msm_hdcp_*` (3)、`thermal`/`cpufreq` 残留 (1: `arch_set_max_thermal_scale`)、ION / fastrpc / usb_gsi / mi_drm / cpuidle / snd / rq_stats 等 (15)。
   这些功能在运行时**不会真正工作**, 仅保证内核可链接、可启动到基本可用态。彻底修复需按子系统把 GKI 删掉的 vendor 实现接回。
+
+  > build32~build42 本轮的根因模式: **「GKI 把文件重命名 / 拆分了」**。
+  > REF 的 `of-thermal.c`/`cpu_cooling.c`/`cpu_cooling.c` 被 GKI 改名为
+  > `thermal_of.c`/`cpufreq_cooling.c`, 于是 vendor 版文件在树里躺着、却从未编进
+  > 构建。本轮统一做法: **在 GKI 的文件里补回 REF 的实现** (而不是改 Makefile
+  > 把 vendor 版编进去), 以免两套文件重复定义。
 
 - [!] **已知限制 (原始 101 个兜底)**: 兜底符号对应的功能在运行时**不会真正工作**, 仅保证内核可链接、可启动到基本可用态。彻底修复需在对应目录补 Makefile 递归条目、并把 GKI 删掉的 vendor 实现接回 —— 其中 50 个已在下面的「桩退役第一阶段」中恢复为真身。
 - [ ] 启动验证 (设备 / 模拟器)
