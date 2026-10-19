@@ -19,24 +19,9 @@ EXPORT_SYMBOL(arch_set_max_thermal_scale);
 void compat_fastrpc_device_ioctl(void) __attribute__((weak));
 void compat_fastrpc_device_ioctl(void) {}
 EXPORT_SYMBOL(compat_fastrpc_device_ioctl);
-void complete_err_ready(void) __attribute__((weak));
-void complete_err_ready(void) {}
-EXPORT_SYMBOL(complete_err_ready);
-void complete_shutdown_ack(void) __attribute__((weak));
-void complete_shutdown_ack(void) {}
-EXPORT_SYMBOL(complete_shutdown_ack);
 void ion_populate_vm_list(void) __attribute__((weak));
 void ion_populate_vm_list(void) {}
 EXPORT_SYMBOL(ion_populate_vm_list);
-void notify_before_auth_and_reset(void) __attribute__((weak));
-void notify_before_auth_and_reset(void) {}
-EXPORT_SYMBOL(notify_before_auth_and_reset);
-void notify_proxy_unvote(void) __attribute__((weak));
-void notify_proxy_unvote(void) {}
-EXPORT_SYMBOL(notify_proxy_unvote);
-void notify_proxy_vote(void) __attribute__((weak));
-void notify_proxy_vote(void) {}
-EXPORT_SYMBOL(notify_proxy_vote);
 void slim_add_device(void) __attribute__((weak));
 void slim_add_device(void) {}
 EXPORT_SYMBOL(slim_add_device);
