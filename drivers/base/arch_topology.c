@@ -81,6 +81,46 @@ void topology_set_thermal_pressure(const struct cpumask *cpus,
 }
 EXPORT_SYMBOL_GPL(topology_set_thermal_pressure);
 
+/*
+ * [VENDOR-PORT Phase7] vendor thermal-freq-cap hook.
+ *
+ * drivers/thermal/qcom/msm_lmh_dcvs.c calls this with the LMh DCVS frequency
+ * cap (kHz) for a cluster cpumask.  REF keeps the 4.19 per_cpu
+ * (max_thermal_scale) implementation here, plus sched-side readers.  5.10
+ * replaced that with per_cpu(thermal_pressure) (see above), which the
+ * scheduler subtracts from the cpu's max capacity - same net effect.  Translate
+ * the request instead of resurrecting the vendor per-cpu.
+ *
+ * max_thermal_freq is in kHz, like policy->cpuinfo.max_freq.
+ */
+void arch_set_max_thermal_scale(struct cpumask *cpus,
+				unsigned long max_thermal_freq)
+{
+	unsigned long max_cap, max_freq, capped_cap;
+	struct cpufreq_policy *policy;
+	int cpu;
+
+	for_each_cpu(cpu, cpus) {
+		policy = cpufreq_cpu_get_raw(cpu);
+		if (!policy)
+			continue;
+
+		max_freq = policy->cpuinfo.max_freq;
+		max_cap = per_cpu(cpu_scale, cpu);
+		if (!max_freq || !max_cap)
+			continue;
+
+		capped_cap = (min(max_thermal_freq, max_freq) <<
+			      SCHED_CAPACITY_SHIFT) / max_freq;
+		if (capped_cap > max_cap)
+			continue;
+
+		WRITE_ONCE(per_cpu(thermal_pressure, cpu),
+			   max_cap - capped_cap);
+	}
+}
+EXPORT_SYMBOL_GPL(arch_set_max_thermal_scale);
+
 static ssize_t cpu_capacity_show(struct device *dev,
 				 struct device_attribute *attr,
 				 char *buf)

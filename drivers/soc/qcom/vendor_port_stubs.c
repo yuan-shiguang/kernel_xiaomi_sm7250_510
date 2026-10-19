@@ -13,12 +13,6 @@
 #include <linux/export.h>
 
 /* ---- function stubs (no-op, safe default return) ---- */
-void arch_set_max_thermal_scale(void) __attribute__((weak));
-void arch_set_max_thermal_scale(void) {}
-EXPORT_SYMBOL(arch_set_max_thermal_scale);
-void compat_fastrpc_device_ioctl(void) __attribute__((weak));
-void compat_fastrpc_device_ioctl(void) {}
-EXPORT_SYMBOL(compat_fastrpc_device_ioctl);
 void ion_populate_vm_list(void) __attribute__((weak));
 void ion_populate_vm_list(void) {}
 EXPORT_SYMBOL(ion_populate_vm_list);
