@@ -28,12 +28,6 @@ EXPORT_SYMBOL(complete_shutdown_ack);
 void ion_populate_vm_list(void) __attribute__((weak));
 void ion_populate_vm_list(void) {}
 EXPORT_SYMBOL(ion_populate_vm_list);
-void mi_drm_notifier_call_chain(void) __attribute__((weak));
-void mi_drm_notifier_call_chain(void) {}
-EXPORT_SYMBOL(mi_drm_notifier_call_chain);
-void msm_cpuidle_get_deep_idle_latency(void) __attribute__((weak));
-void msm_cpuidle_get_deep_idle_latency(void) {}
-EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);
 void notify_before_auth_and_reset(void) __attribute__((weak));
 void notify_before_auth_and_reset(void) {}
 EXPORT_SYMBOL(notify_before_auth_and_reset);
@@ -43,9 +37,6 @@ EXPORT_SYMBOL(notify_proxy_unvote);
 void notify_proxy_vote(void) __attribute__((weak));
 void notify_proxy_vote(void) {}
 EXPORT_SYMBOL(notify_proxy_vote);
-void register_system_pm_ops(void) __attribute__((weak));
-void register_system_pm_ops(void) {}
-EXPORT_SYMBOL(register_system_pm_ops);
 void slim_add_device(void) __attribute__((weak));
 void slim_add_device(void) {}
 EXPORT_SYMBOL(slim_add_device);

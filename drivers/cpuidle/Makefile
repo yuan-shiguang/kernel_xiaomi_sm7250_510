@@ -34,3 +34,9 @@ obj-$(CONFIG_MIPS_CPS_CPUIDLE)		+= cpuidle-cps.o
 # POWERPC drivers
 obj-$(CONFIG_PSERIES_CPUIDLE)		+= cpuidle-pseries.o
 obj-$(CONFIG_POWERNV_CPUIDLE)		+= cpuidle-powernv.o
+
+# [VENDOR-PORT Phase7] lpm-levels.o is intentionally NOT wired here.
+# REF builds it under CONFIG_MSM_PM, but this tree only needs the two
+# accessors (register_system_pm_ops, msm_cpuidle_get_deep_idle_latency)
+# and those are defined in drivers/soc/qcom/system_pm.c.  Enabling
+# lpm-levels.o would produce duplicate symbol definitions.

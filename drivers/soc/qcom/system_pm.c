@@ -125,3 +125,36 @@ static struct platform_driver sys_pm_driver = {
 	},
 };
 builtin_platform_driver(sys_pm_driver);
+
+/*
+ * [VENDOR-PORT Phase7] system PM ops registry + deep-idle latency.
+ *
+ * Both live in drivers/cpuidle/lpm-levels.c in REF, which is not built in this
+ * tree.  system_pm.o currently references register_system_pm_ops() as an
+ * undefined symbol, and techpack/audio/{swr-mstr-ctrl,wcd9xxx-irq,wcd_cpe_core,
+ * sdm660-cdc-irq}.c read the deep-idle latency to size their timeouts, so the
+ * two need real definitions rather than the void stubs they used to hit.
+ *
+ * Semantics are REF's: a single registry slot (EUSERS when already taken) and
+ * a fixed 2 ms deep-idle exit latency.  The PSCI deep-idle path that would
+ * consume sys_pm_ops is part of the unported lpm-levels.c, so the registry is
+ * effectively write-only today - same as in REF.
+ */
+static struct system_pm_ops *sys_pm_ops;
+
+uint32_t register_system_pm_ops(struct system_pm_ops *pm_ops)
+{
+	if (sys_pm_ops)
+		return -EUSERS;
+
+	sys_pm_ops = pm_ops;
+
+	return 0;
+}
+EXPORT_SYMBOL(register_system_pm_ops);
+
+s32 msm_cpuidle_get_deep_idle_latency(void)
+{
+	return 2;
+}
+EXPORT_SYMBOL(msm_cpuidle_get_deep_idle_latency);
