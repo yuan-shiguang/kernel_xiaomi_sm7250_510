@@ -65,3 +65,6 @@ obj-$(CONFIG_HDCP_QSEECOM)	+= msm_hdcp.o
 obj-$(CONFIG_QSEECOM)		+= qseecom.o
 # [VENDOR-PORT Phase6] makefile
 obj-$(CONFIG_SIMTRAY_STATUS)	+= simtray.o
+
+# [VENDOR-PORT Phase7] kernel profiles (Xiaomi battery/balanced/performance modes)
+obj-$(CONFIG_KPROFILES) += kprofiles/

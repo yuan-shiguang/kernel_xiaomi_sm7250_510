@@ -34,6 +34,20 @@
 #include <trace/events/timer.h>
 
 /*
+ * [VENDOR-PORT Phase7] RUN_QUEUE_STATS data objects.
+ *
+ * REF keeps these immediately after the includes (tick-sched.c:41-43).
+ * drivers/soc/qcom/rq_stats.c runs with CONFIG_QCOM_RUN_QUEUE_STATS and
+ * accesses rq_info as struct rq_data (include/linux/rq_stats.h, ~72 bytes),
+ * so the placeholder char[64] array the port used before truncated it and
+ * left rq_info.kobj NULL.  Definitions match REF verbatim in type.
+ */
+#include <linux/rq_stats.h>
+struct rq_data rq_info;
+struct workqueue_struct *rq_wq;
+spinlock_t rq_lock;
+
+/*
  * Per-CPU nohz control structure
  */
 static DEFINE_PER_CPU(struct tick_sched, tick_cpu_sched);

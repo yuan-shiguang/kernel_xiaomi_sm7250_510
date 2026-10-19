@@ -66,12 +66,4 @@ void usb_gsi_ep_op(void) {}
 EXPORT_SYMBOL(usb_gsi_ep_op);
 
 /* ---- data stubs (64-byte placeholder objects) ---- */
-char kp_active_mode[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(kp_active_mode);
-char rq_info[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(rq_info);
-char rq_lock[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(rq_lock);
-char rq_wq[64] __attribute__((weak, aligned(8)));
-EXPORT_SYMBOL(rq_wq);
 

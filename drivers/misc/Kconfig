@@ -519,3 +519,6 @@ config SIMTRAY_STATUS
 	  Say 'y' here to support SIM tray GPIO detection
 
 endmenu
+
+# [VENDOR-PORT Phase7] kernel profiles (Xiaomi battery/balanced/performance)
+source "drivers/misc/kprofiles/Kconfig"
