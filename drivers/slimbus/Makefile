@@ -4,6 +4,7 @@
 #
 obj-$(CONFIG_SLIMBUS)			+= slimbus.o
 slimbus-y				:= core.o messaging.o sched.o stream.o
+slimbus-y				+= slim_vendor_compat.o
 
 #Controllers
 obj-$(CONFIG_SLIM_QCOM_CTRL)		+= slim-qcom-ctrl.o

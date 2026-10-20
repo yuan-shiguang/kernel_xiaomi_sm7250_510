@@ -509,6 +509,27 @@ out:
 EXPORT_SYMBOL_GPL(usb_gadget_wakeup);
 
 /**
+ * usb_gsi_ep_op - performs operation on GSI accelerated EP based on EP op code
+ *
+ * Operations such as EP configuration, TRB allocation, StartXfer etc.
+ * See gsi_ep_op for more details.
+ *
+ * [VENDOR-PORT Phase7] GKI declares this (and enum gsi_ep_op /
+ * struct usb_gsi_request) in include/linux/usb/gadget.h and dwc3-msm.c
+ * implements the per-EP callback, but the forwarding wrapper was dropped.
+ * drivers/usb/gadget/function/f_gsi.c needs it for every IN/OUT transfer.
+ */
+int usb_gsi_ep_op(struct usb_ep *ep,
+		struct usb_gsi_request *req, enum gsi_ep_op op)
+{
+	if (ep->ops->gsi_ep_op)
+		return ep->ops->gsi_ep_op(ep, req, op);
+
+	return -EOPNOTSUPP;
+}
+EXPORT_SYMBOL(usb_gsi_ep_op);
+
+/**
  * usb_gadget_func_wakeup - raise a Function Wake notification
  * @gadget: the gadget to notify through
  * @interface_id: interface whose function is waking up

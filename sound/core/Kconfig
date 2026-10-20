@@ -27,7 +27,7 @@ config SND_RAWMIDI
 	select SND_SEQ_DEVICE if SND_SEQUENCER != n
 
 config SND_COMPRESS_OFFLOAD
-	tristate
+	tristate "Compressed audio offload support"
 
 config SND_JACK
 	bool

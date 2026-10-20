@@ -13,51 +13,6 @@
 #include <linux/export.h>
 
 /* ---- function stubs (no-op, safe default return) ---- */
-void ion_populate_vm_list(void) __attribute__((weak));
-void ion_populate_vm_list(void) {}
-EXPORT_SYMBOL(ion_populate_vm_list);
-void slim_add_device(void) __attribute__((weak));
-void slim_add_device(void) {}
-EXPORT_SYMBOL(slim_add_device);
-void slim_change_val_element(void) __attribute__((weak));
-void slim_change_val_element(void) {}
-EXPORT_SYMBOL(slim_change_val_element);
-void slim_connect_sink(void) __attribute__((weak));
-void slim_connect_sink(void) {}
-EXPORT_SYMBOL(slim_connect_sink);
-void slim_connect_src(void) __attribute__((weak));
-void slim_connect_src(void) {}
-EXPORT_SYMBOL(slim_connect_src);
-void slim_control_ch(void) __attribute__((weak));
-void slim_control_ch(void) {}
-EXPORT_SYMBOL(slim_control_ch);
-void slim_define_ch(void) __attribute__((weak));
-void slim_define_ch(void) {}
-EXPORT_SYMBOL(slim_define_ch);
-void slim_disconnect_ports(void) __attribute__((weak));
-void slim_disconnect_ports(void) {}
-EXPORT_SYMBOL(slim_disconnect_ports);
-void slim_driver_register(void) __attribute__((weak));
-void slim_driver_register(void) {}
-EXPORT_SYMBOL(slim_driver_register);
-void slim_get_slaveport(void) __attribute__((weak));
-void slim_get_slaveport(void) {}
-EXPORT_SYMBOL(slim_get_slaveport);
-void slim_query_ch(void) __attribute__((weak));
-void slim_query_ch(void) {}
-EXPORT_SYMBOL(slim_query_ch);
-void slim_remove_device(void) __attribute__((weak));
-void slim_remove_device(void) {}
-EXPORT_SYMBOL(slim_remove_device);
-void slim_request_val_element(void) __attribute__((weak));
-void slim_request_val_element(void) {}
-EXPORT_SYMBOL(slim_request_val_element);
-void snd_compr_stop_error(void) __attribute__((weak));
-void snd_compr_stop_error(void) {}
-EXPORT_SYMBOL(snd_compr_stop_error);
-void usb_gsi_ep_op(void) __attribute__((weak));
-void usb_gsi_ep_op(void) {}
-EXPORT_SYMBOL(usb_gsi_ep_op);
 
 /* ---- data stubs (64-byte placeholder objects) ---- */
 

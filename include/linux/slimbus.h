@@ -209,4 +209,130 @@ int slim_stream_disable(struct slim_stream_runtime *stream);
 int slim_stream_unprepare(struct slim_stream_runtime *stream);
 int slim_stream_free(struct slim_stream_runtime *stream);
 
+
+/*
+ * [VENDOR-PORT Phase 7/8] QCOM vendor SLIMbus channel/value API surface.
+ * Type layouts are copied verbatim from the 4.19 vendor public header so that
+ * vendor clients (btfm_slim) keep identical on-the-wire semantics. The
+ * implementations live in drivers/slimbus/slim_vendor_compat.c and run on top
+ * of the GKI core + GKI-style struct slim_controller/slim_device.
+ */
+
+/* enum slim_port_flow: Port flow type (inbound/outbound). */
+enum slim_port_flow {
+	SLIM_SRC,
+	SLIM_SINK,
+};
+
+enum slim_ch_proto {
+	SLIM_HARD_ISO,
+	SLIM_AUTO_ISO,
+	SLIM_PUSH,
+	SLIM_PULL,
+	SLIM_ASYNC_SMPLX,
+	SLIM_ASYNC_HALF_DUP,
+	SLIM_EXT_SMPLX,
+	SLIM_EXT_HALF_DUP,
+};
+
+enum slim_ch_rate {
+	SLIM_RATE_1HZ,
+	SLIM_RATE_4000HZ,
+	SLIM_RATE_11025HZ,
+};
+
+enum slim_ch_control {
+	SLIM_CH_ACTIVATE,
+	SLIM_CH_SUSPEND,
+	SLIM_CH_REMOVE,
+};
+
+/* enum slim_ch_dataf: Data format per table 60 from slimbus spec 1.01.01 */
+enum slim_ch_dataf {
+	SLIM_CH_DATAF_NOT_DEFINED = 0,
+	SLIM_CH_DATAF_LPCM_AUDIO = 1,
+	SLIM_CH_DATAF_IEC61937_COMP_AUDIO = 2,
+	SLIM_CH_DATAF_PACKED_PDM_AUDIO = 3,
+};
+
+/* enum slim_ch_auxf: Auxiliary field format per table 59 from slimbus spec */
+enum slim_ch_auxf {
+	SLIM_CH_AUXF_NOT_APPLICABLE = 0,
+	SLIM_CH_AUXF_ZCUV_TUNNEL_IEC60958 = 1,
+	SLIM_CH_USER_DEFINED = 0xF,
+};
+
+/*
+ * struct slim_ch: Channel structure used externally by users of channel APIs.
+ */
+struct slim_ch {
+	enum slim_ch_proto	prot;
+	enum slim_ch_rate	baser;
+	enum slim_ch_dataf	dataf;
+	enum slim_ch_auxf	auxf;
+	u32			ratem;
+	u32			sampleszbits;
+};
+
+struct slim_ele_access {
+	u16			start_offset;
+	u8			num_bytes;
+	struct completion	*comp;
+};
+
+/* Handle helpers (same encodings as the vendor framework) */
+#define SLIM_PORT_HDL(la, f, p) ((la)<<24 | (f) << 16 | (p))
+#define SLIM_HDL_TO_LA(hdl)	((u32)((hdl) & 0xFF000000) >> 24)
+#define SLIM_HDL_TO_FLOW(hdl)	(((u32)(hdl) & 0xFF0000) >> 16)
+#define SLIM_HDL_TO_PORT(hdl)	((u32)(hdl) & 0xFF)
+#define SLIM_HDL_TO_CHIDX(hdl)	((u16)(hdl) & 0xFF)
+#define SLIM_GRP_TO_NCHAN(hdl)	((u16)(hdl >> 8) & 0xFF)
+#define SLIM_START_GRP		(1 << 8)
+#define SLIM_END_GRP		(1 << 9)
+
+#ifndef SLIM_LA_MANAGER
+#define SLIM_LA_MANAGER		0xFF
+#endif
+#ifndef SLIM_MAX_CLK_GEAR
+#define SLIM_MAX_CLK_GEAR	10
+#endif
+#ifndef SLIM_SL_PER_SUPERFRAME
+#define SLIM_SL_PER_SUPERFRAME	(SLIM_CL_PER_SUPERFRAME >> 2)
+#endif
+#define SLIM_CL_PER_SL			4
+#define SLIM_CL_PER_SUPERFRAME_DIV8	(SLIM_CL_PER_SUPERFRAME >> 3)
+#define SLIM_MAX_INTR_COEFF_3	(SLIM_SL_PER_SUPERFRAME/3)
+#define SLIM_MAX_INTR_COEFF_1	SLIM_SL_PER_SUPERFRAME
+#define SLIM_FRM_SLOTS_PER_SUPERFRAME	16
+#define SLIM_GDE_SLOTS_PER_SUPERFRAME	2
+#define SLIM_COEFF_1			0
+#define SLIM_COEFF_3			1
+
+#ifndef SLIM_MSG_MC_NEXT_SUBFRAME_MODE
+#define SLIM_MSG_MC_NEXT_SUBFRAME_MODE   0x45
+#endif
+#ifndef SLIM_MSG_MC_NEXT_CLOCK_GEAR
+#define SLIM_MSG_MC_NEXT_CLOCK_GEAR      0x46
+#endif
+
+/* Value element management messages (vendor-style wrappers) */
+int slim_request_val_element(struct slim_device *sb,
+		struct slim_ele_access *msg, u8 *buf, u8 len);
+int slim_change_val_element(struct slim_device *sb,
+		struct slim_ele_access *msg, const u8 *buf, u8 len);
+
+/* Channel management APIs */
+int slim_define_ch(struct slim_device *sb, struct slim_ch *prop, u16 *chanh,
+		u8 nchan, bool grp, u16 *grph);
+int slim_connect_sink(struct slim_device *sb, u32 *sinkh, int nsink,
+		u16 chanh);
+int slim_connect_src(struct slim_device *sb, u32 srch, u16 chanh);
+int slim_disconnect_ports(struct slim_device *sb, u32 *ph, int nph);
+int slim_control_ch(struct slim_device *sb, u16 chanh,
+		enum slim_ch_control chctrl, bool commit);
+int slim_query_ch(struct slim_device *sb, u8 ch, u16 *chanh);
+int slim_get_slaveport(u8 la, int idx, u32 *rh, enum slim_port_flow flw);
+int slim_add_device(struct slim_controller *ctrl, struct slim_device *sbdev,
+		struct device_node *node);
+void slim_remove_device(struct slim_device *sbdev);
 #endif /* _LINUX_SLIMBUS_H */

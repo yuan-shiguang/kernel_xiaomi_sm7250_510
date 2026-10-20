@@ -5,7 +5,7 @@
 
 #ifndef BTFM_SLIM_H
 #define BTFM_SLIM_H
-#include <linux/slimbus/slimbus.h>
+#include <linux/slimbus.h>
 
 #define BTFMSLIM_DBG(fmt, arg...)  pr_debug("%s: " fmt "\n", __func__, ## arg)
 #define BTFMSLIM_INFO(fmt, arg...) pr_info("%s: " fmt "\n", __func__, ## arg)

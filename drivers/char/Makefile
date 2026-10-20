@@ -49,6 +49,10 @@ obj-$(CONFIG_POWERNV_OP_PANEL)	+= powernv-op-panel.o
 obj-$(CONFIG_ADI)		+= adi.o
 # [VENDOR-PORT Phase6] makefile
 obj-$(CONFIG_MSM_ADSPRPC)	+= adsprpc.o
+# [VENDOR-PORT Phase7] 32-bit compat ioctl for fastRPC (CONFIG_COMPAT=y)
+ifdef CONFIG_COMPAT
+obj-$(CONFIG_MSM_ADSPRPC)	+= adsprpc_compat.o
+endif
 # [VENDOR-PORT Phase6] makefile
 obj-$(CONFIG_MSM_FASTCVPD)	+= fastcvpd.o
 # [VENDOR-PORT Phase6] makefile

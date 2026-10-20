@@ -1065,7 +1065,12 @@ extern int slim_ctrl_clk_pause(struct slim_controller *ctrl, bool wakeup,
  * This API will register the client driver with the slimbus
  * It is called from the driver's module-init function.
  */
-extern int slim_driver_register(struct slim_driver *drv);
+extern int __slim_driver_register(struct slim_driver *drv,
+		struct module *owner, const char *mod_name);
+
+/* [VENDOR-PORT] 5.10-style: resolve caller module info at the call site */
+#define slim_driver_register(sdrv) \
+	__slim_driver_register(sdrv, THIS_MODULE, KBUILD_MODNAME)
 
 /*
  * slim_driver_unregister: Undo effects of slim_driver_register

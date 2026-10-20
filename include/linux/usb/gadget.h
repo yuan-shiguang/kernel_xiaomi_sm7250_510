@@ -240,6 +240,9 @@ struct usb_ep_ops {
 
 	int (*fifo_status) (struct usb_ep *ep);
 	void (*fifo_flush) (struct usb_ep *ep);
+	/* [VENDOR-PORT] GSI accelerated EP operations (dwc3-msm glue) */
+	int (*gsi_ep_op)(struct usb_ep *ep, void *op_data,
+			enum gsi_ep_op op);
 
 	ANDROID_KABI_RESERVE(1);
 };

@@ -159,7 +159,7 @@ static void slim_dev_release(struct device *dev)
 	kfree(sbdev);
 }
 
-static int slim_add_device(struct slim_controller *ctrl,
+int slim_add_device(struct slim_controller *ctrl,
 			   struct slim_device *sbdev,
 			   struct device_node *node)
 {
@@ -181,6 +181,7 @@ static int slim_add_device(struct slim_controller *ctrl,
 
 	return device_register(&sbdev->dev);
 }
+EXPORT_SYMBOL_GPL(slim_add_device);
 
 static struct slim_device *slim_alloc_device(struct slim_controller *ctrl,
 					     struct slim_eaddr *eaddr,
@@ -288,11 +289,12 @@ int slim_register_controller(struct slim_controller *ctrl)
 EXPORT_SYMBOL_GPL(slim_register_controller);
 
 /* slim_remove_device: Remove the effect of slim_add_device() */
-static void slim_remove_device(struct slim_device *sbdev)
+void slim_remove_device(struct slim_device *sbdev)
 {
 	of_node_put(sbdev->dev.of_node);
 	device_unregister(&sbdev->dev);
 }
+EXPORT_SYMBOL_GPL(slim_remove_device);
 
 static int slim_ctrl_remove_device(struct device *dev, void *null)
 {

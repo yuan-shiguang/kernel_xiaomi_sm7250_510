@@ -23,6 +23,17 @@
 
 #define DELAY_FOR_PORT_OPEN_MS (200)
 
+/* [VENDOR-PORT] GKI slim_eaddr is a struct (packed, 6 bytes); the vendor
+ * framework used a raw u8[6]. Byte access keeps the vendor code intact.
+ */
+#define BTFM_EA_B(ea, i)	(((u8 *)&(ea))[i])
+
+/* vendor slim_device::name no longer exists; the IFD name is only used for
+ * debug output, so keep a module-global copy.
+ */
+static const char *btfm_slim_ifd_name;
+
+
 bool btfm_is_port_opening_delayed = true;
 
 int btfm_slim_write(struct btfmslim *btfmslim,
@@ -323,8 +334,7 @@ static int btfm_slim_get_logical_addr(struct slim_device *slim)
 			      msecs_to_jiffies(SLIM_SLAVE_PRESENT_TIMEOUT);
 
 	do {
-		ret = slim_get_logical_addr(slim, slim->e_addr,
-			ARRAY_SIZE(slim->e_addr), &slim->laddr);
+		ret = slim_get_logical_addr(slim);
 		if (!ret)  {
 			BTFMSLIM_DBG("Assigned l-addr: 0x%x", slim->laddr);
 			break;
@@ -429,13 +439,13 @@ int btfm_slim_hw_init(struct btfmslim *btfmslim)
 	mutex_lock(&btfmslim->io_lock);
 		BTFMSLIM_INFO(
 			"PGD Enum Addr: %.02x:%.02x:%.02x:%.02x:%.02x: %.02x",
-			slim->e_addr[0], slim->e_addr[1], slim->e_addr[2],
-			slim->e_addr[3], slim->e_addr[4], slim->e_addr[5]);
+			BTFM_EA_B(slim->e_addr, 0), BTFM_EA_B(slim->e_addr, 1), BTFM_EA_B(slim->e_addr, 2),
+			BTFM_EA_B(slim->e_addr, 3), BTFM_EA_B(slim->e_addr, 4), BTFM_EA_B(slim->e_addr, 5));
 		BTFMSLIM_INFO(
 			"IFD Enum Addr: %.02x:%.02x:%.02x:%.02x:%.02x: %.02x",
-			slim_ifd->e_addr[0], slim_ifd->e_addr[1],
-			slim_ifd->e_addr[2], slim_ifd->e_addr[3],
-			slim_ifd->e_addr[4], slim_ifd->e_addr[5]);
+			BTFM_EA_B(slim_ifd->e_addr, 0), BTFM_EA_B(slim_ifd->e_addr, 1),
+			BTFM_EA_B(slim_ifd->e_addr, 2), BTFM_EA_B(slim_ifd->e_addr, 3),
+			BTFM_EA_B(slim_ifd->e_addr, 4), BTFM_EA_B(slim_ifd->e_addr, 5));
 
 	chipset_ver = get_chipset_version();
 	BTFMSLIM_INFO("chipset soc version:%x", chipset_ver);
@@ -446,44 +456,44 @@ int btfm_slim_hw_init(struct btfmslim *btfmslim)
 		chipset_ver == QCA_HSP_SOC_ID_1211 ||
 		chipset_ver == QCA_HSP_SOC_ID_0200) {
 		BTFMSLIM_INFO("chipset is hastings prime, overwriting EA");
-		slim->e_addr[0] = 0x00;
-		slim->e_addr[1] = 0x01;
-		slim->e_addr[2] = 0x21;
-		slim->e_addr[3] = 0x02;
-		slim->e_addr[4] = 0x17;
-		slim->e_addr[5] = 0x02;
+		BTFM_EA_B(slim->e_addr, 0) = 0x00;
+		BTFM_EA_B(slim->e_addr, 1) = 0x01;
+		BTFM_EA_B(slim->e_addr, 2) = 0x21;
+		BTFM_EA_B(slim->e_addr, 3) = 0x02;
+		BTFM_EA_B(slim->e_addr, 4) = 0x17;
+		BTFM_EA_B(slim->e_addr, 5) = 0x02;
 
-		slim_ifd->e_addr[0] = 0x00;
-		slim_ifd->e_addr[1] = 0x00;
-		slim_ifd->e_addr[2] = 0x21;
-		slim_ifd->e_addr[3] = 0x02;
-		slim_ifd->e_addr[4] = 0x17;
-		slim_ifd->e_addr[5] = 0x02;
+		BTFM_EA_B(slim_ifd->e_addr, 0) = 0x00;
+		BTFM_EA_B(slim_ifd->e_addr, 1) = 0x00;
+		BTFM_EA_B(slim_ifd->e_addr, 2) = 0x21;
+		BTFM_EA_B(slim_ifd->e_addr, 3) = 0x02;
+		BTFM_EA_B(slim_ifd->e_addr, 4) = 0x17;
+		BTFM_EA_B(slim_ifd->e_addr, 5) = 0x02;
 	} else if (chipset_ver == QCA_HASTINGS_SOC_ID_0200) {
 		BTFMSLIM_INFO("chipset is hastings 2.0, overwriting EA");
-		slim->e_addr[0] = 0x00;
-		slim->e_addr[1] = 0x01;
-		slim->e_addr[2] = 0x20;
-		slim->e_addr[3] = 0x02;
-		slim->e_addr[4] = 0x17;
-		slim->e_addr[5] = 0x02;
+		BTFM_EA_B(slim->e_addr, 0) = 0x00;
+		BTFM_EA_B(slim->e_addr, 1) = 0x01;
+		BTFM_EA_B(slim->e_addr, 2) = 0x20;
+		BTFM_EA_B(slim->e_addr, 3) = 0x02;
+		BTFM_EA_B(slim->e_addr, 4) = 0x17;
+		BTFM_EA_B(slim->e_addr, 5) = 0x02;
 
-		slim_ifd->e_addr[0] = 0x00;
-		slim_ifd->e_addr[1] = 0x00;
-		slim_ifd->e_addr[2] = 0x20;
-		slim_ifd->e_addr[3] = 0x02;
-		slim_ifd->e_addr[4] = 0x17;
-		slim_ifd->e_addr[5] = 0x02;
+		BTFM_EA_B(slim_ifd->e_addr, 0) = 0x00;
+		BTFM_EA_B(slim_ifd->e_addr, 1) = 0x00;
+		BTFM_EA_B(slim_ifd->e_addr, 2) = 0x20;
+		BTFM_EA_B(slim_ifd->e_addr, 3) = 0x02;
+		BTFM_EA_B(slim_ifd->e_addr, 4) = 0x17;
+		BTFM_EA_B(slim_ifd->e_addr, 5) = 0x02;
 	}
 		BTFMSLIM_INFO(
 			"PGD Enum Addr: %.02x:%.02x:%.02x:%.02x:%.02x: %.02x",
-			slim->e_addr[0], slim->e_addr[1], slim->e_addr[2],
-			slim->e_addr[3], slim->e_addr[4], slim->e_addr[5]);
+			BTFM_EA_B(slim->e_addr, 0), BTFM_EA_B(slim->e_addr, 1), BTFM_EA_B(slim->e_addr, 2),
+			BTFM_EA_B(slim->e_addr, 3), BTFM_EA_B(slim->e_addr, 4), BTFM_EA_B(slim->e_addr, 5));
 		BTFMSLIM_INFO(
 			"IFD Enum Addr: %.02x:%.02x:%.02x:%.02x:%.02x: %.02x",
-			slim_ifd->e_addr[0], slim_ifd->e_addr[1],
-			slim_ifd->e_addr[2], slim_ifd->e_addr[3],
-			slim_ifd->e_addr[4], slim_ifd->e_addr[5]);
+			BTFM_EA_B(slim_ifd->e_addr, 0), BTFM_EA_B(slim_ifd->e_addr, 1),
+			BTFM_EA_B(slim_ifd->e_addr, 2), BTFM_EA_B(slim_ifd->e_addr, 3),
+			BTFM_EA_B(slim_ifd->e_addr, 4), BTFM_EA_B(slim_ifd->e_addr, 5));
 
 	/* Assign Logical Address for PGD (Ported Generic Device)
 	 * enumeration address
@@ -491,7 +501,7 @@ int btfm_slim_hw_init(struct btfmslim *btfmslim)
 	ret = btfm_slim_get_logical_addr(btfmslim->slim_pgd);
 	if (ret) {
 		BTFMSLIM_ERR("failed to get slimbus %s logical address: %d",
-		       btfmslim->slim_pgd->name, ret);
+		       dev_name(&btfmslim->slim_pgd->dev), ret);
 		goto error;
 	}
 
@@ -501,7 +511,7 @@ int btfm_slim_hw_init(struct btfmslim *btfmslim)
 	ret = btfm_slim_get_logical_addr(&btfmslim->slim_ifd);
 	if (ret) {
 		BTFMSLIM_ERR("failed to get slimbus %s logical address: %d",
-		       btfmslim->slim_ifd.name, ret);
+		       btfm_slim_ifd_name, ret);
 		goto error;
 	}
 
@@ -555,16 +565,16 @@ static int btfm_slim_get_dt_info(struct btfmslim *btfmslim)
 
 	if (slim->dev.of_node) {
 		BTFMSLIM_DBG("Platform data from device tree (%s)",
-			slim->name);
+			dev_name(&slim->dev));
 		ret = of_property_read_string(slim->dev.of_node,
-			"qcom,btfm-slim-ifd", &slim_ifd->name);
+			"qcom,btfm-slim-ifd", &btfm_slim_ifd_name);
 		if (ret) {
 			BTFMSLIM_ERR("Looking up %s property in node %s failed",
 				"qcom,btfm-slim-ifd",
 				 slim->dev.of_node->full_name);
 			return -ENODEV;
 		}
-		BTFMSLIM_DBG("qcom,btfm-slim-ifd (%s)", slim_ifd->name);
+		BTFMSLIM_DBG("qcom,btfm-slim-ifd (%s)", btfm_slim_ifd_name);
 
 		prop = of_find_property(slim->dev.of_node,
 				"qcom,btfm-slim-ifd-elemental-addr", NULL);
@@ -579,16 +589,16 @@ static int btfm_slim_get_dt_info(struct btfmslim *btfmslim)
 				prop->length);
 			return -ENODEV;
 		}
-		memcpy(slim_ifd->e_addr, prop->value, 6);
+		memcpy(&slim_ifd->e_addr, prop->value, 6);
 		BTFMSLIM_DBG(
 			"PGD Enum Addr: %.02x:%.02x:%.02x:%.02x:%.02x: %.02x",
-			slim->e_addr[0], slim->e_addr[1], slim->e_addr[2],
-			slim->e_addr[3], slim->e_addr[4], slim->e_addr[5]);
+			BTFM_EA_B(slim->e_addr, 0), BTFM_EA_B(slim->e_addr, 1), BTFM_EA_B(slim->e_addr, 2),
+			BTFM_EA_B(slim->e_addr, 3), BTFM_EA_B(slim->e_addr, 4), BTFM_EA_B(slim->e_addr, 5));
 		BTFMSLIM_DBG(
 			"IFD Enum Addr: %.02x:%.02x:%.02x:%.02x:%.02x: %.02x",
-			slim_ifd->e_addr[0], slim_ifd->e_addr[1],
-			slim_ifd->e_addr[2], slim_ifd->e_addr[3],
-			slim_ifd->e_addr[4], slim_ifd->e_addr[5]);
+			BTFM_EA_B(slim_ifd->e_addr, 0), BTFM_EA_B(slim_ifd->e_addr, 1),
+			BTFM_EA_B(slim_ifd->e_addr, 2), BTFM_EA_B(slim_ifd->e_addr, 3),
+			BTFM_EA_B(slim_ifd->e_addr, 4), BTFM_EA_B(slim_ifd->e_addr, 5));
 	} else {
 		BTFMSLIM_ERR("Platform data is not valid");
 	}
@@ -630,7 +640,8 @@ static int btfm_slim_probe(struct slim_device *slim)
 		goto dealloc;
 
 	/* Add Interface Device for slimbus driver */
-	ret = slim_add_device(btfm_slim->slim_pgd->ctrl, &btfm_slim->slim_ifd);
+	ret = slim_add_device(btfm_slim->slim_pgd->ctrl,
+			&btfm_slim->slim_ifd, NULL);
 	if (ret) {
 		BTFMSLIM_ERR("error, adding SLIMBUS device failed");
 		goto dealloc;
@@ -660,7 +671,7 @@ dealloc:
 	kfree(btfm_slim);
 	return ret;
 }
-static int btfm_slim_remove(struct slim_device *slim)
+static void btfm_slim_remove(struct slim_device *slim)
 {
 	struct btfmslim *btfm_slim = slim->dev.platform_data;
 
@@ -676,7 +687,6 @@ static int btfm_slim_remove(struct slim_device *slim)
 
 	BTFMSLIM_DBG("slim_remove_device() - btfm_slim->slim_pgd");
 	slim_remove_device(slim);
-	return 0;
 }
 
 static const struct slim_device_id btfm_slim_id[] = {
